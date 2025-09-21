@@ -39,7 +39,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="REDACTED_ARCHIVE_CREDENTIAL" />
+            android:value="${googleMapsApiKey}" />
 
         <meta-data
             android:name="flutterEmbedding"
