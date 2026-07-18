@@ -1,6 +1,9 @@
+import os
+
 import requests
 
-key = "REDACTED_ARCHIVE_CREDENTIAL"
+# Dev-only experiment. The key is read from the environment — never hardcode it.
+key = os.environ.get("GMAPS_KEY", "")
 address = "Shaheed Sthal (New Bus Adda) Metro Station Ghaziabad"
 url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={key}"
 
