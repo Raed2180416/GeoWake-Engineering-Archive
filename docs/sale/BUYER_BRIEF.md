@@ -1,18 +1,23 @@
 # GeoWake
 
-**A transit alarm codebase with a substantial debugging and simulation history.**
+**An archived Flutter/Android codebase for AI training and software-engineering evaluation.**
 
 GeoWake lets a passenger choose a destination and a distance, time or metro-stop
 threshold, then monitors the trip and presents a wake alert. It was developed
 as a solo-led Flutter project, with Android native alarm integration and a
 Node/Express backend. Development includes AI assistance; author entries are
-not a team-size claim.
+not a team-size claim. The offered asset is the engineering work: source,
+development history, experiments, design records and tests. No further product
+development or deployment work is part of the proposed transaction.
 
 ## What a buyer can evaluate
 
-- Background location and route-session orchestration, with destination and
-  transfer handling.
-- Sensor fusion and an extended Kalman filter for degraded GPS conditions.
+- Route selection and caching, background location and route-session
+  orchestration, with destination and transfer handling.
+- Route-deviation detection, off-route handling and rerouting, including the
+  decisions needed to reconcile changing position with an active journey.
+- Underground and GPS-denied experiments: extended Kalman filtering, IMU
+  measurements, zero-velocity updates (ZUPT), and route/station constraints.
 - A reachability model that uses route progress, elapsed time and speed bounds
   to reason about an approaching destination.
 - Full-screen alarm notifications, sound/vibration, and an Android exact-alarm
@@ -20,13 +25,33 @@ not a team-size claim.
 - Deterministic replay, route-scale and clock tests; architecture notes and
   genuine before/after debugging changes.
 - Optional entitlement, journey-sharing, guardian, anti-theft and consent-gated
-  aggregation components, which require their own integration review.
+  aggregation components, with implementation status identified in the corpus.
 
 The engineering value lies in the interaction between asynchronous sensors,
 background Android execution, uncertain location, and an alarm that should not
 be silently delayed. This makes the code and its tests potentially useful for
-software-engineering evaluation as well as continued product development.
+AI training, code comprehension, debugging and software-engineering evaluation.
 Buyer demand and training suitability remain subject to the buyer's review.
+
+## The engineering story
+
+The founder reports that above-ground behavior worked mostly well, but reliable
+underground operation remained unresolved. When general GPS-denied position
+estimation proved unreliable, the research direction shifted toward using IMU
+and ZUPT evidence, route structure and stops to anchor progress. This was an
+evolution of the tracking approach; the archive still contains EKF code.
+
+The final constraint was the cost of obtaining a suitable dataset to tune and
+validate the measurements. The founder stopped pursuing the product rather
+than committing to that collection effort. This account was provided on
+20 September 2026; it is not a backdated project record.
+
+For a training buyer, the changes of approach are part of the material: noisy
+inputs, incorrect assumptions, calibration decisions, false stop detections,
+regressions and the difference between a passing simulation and evidence from
+a real journey. The component inventory and development chronology connect
+those decisions to actual files, commits and research notes. Plans remain
+labelled as plans; unfinished work is not silently presented as completed.
 
 ## Verified on 20 September 2026
 
@@ -43,13 +68,15 @@ coverage report** (10,610 / 15,699 executable lines). The repository contains
 coverage is **76.27% across 15 instrumented files** (315 / 413 lines).
 Coverage reports describe exercised code, not product reliability.
 
-## Current product limits
+## Corpus boundaries
 
 The original developer reports that above-ground use worked mostly well, and
-that underground consistency was the reason development stopped. The package
+that underground consistency and dataset cost led to development stopping. The package
 does not convert that experience into a measured success rate. The committed
 replay inputs are synthetic; field accuracy, OEM behavior and alarm audibility
-still need independent device testing. iOS background behavior is incomplete.
+were not independently validated for this corpus. iOS background behavior is
+incomplete. These are context for interpreting the code, not additional work
+the seller is committing to perform.
 
 Map and ride data need separate rights treatment. Third-party services,
 production credentials, Play Console accounts, signing keys, users, revenue and

@@ -1,8 +1,10 @@
 # GeoWake — buyer review
 
 Prepared 20 September 2026. GeoWake is an Android-first Flutter destination
-alarm. The proposed asset is the software and its documented development
-history. A licensed underground positioning dataset, a commercial mobility
+alarm. This archive is offered for AI training and software-engineering
+evaluation. The asset is the software and its documented development history;
+the seller is not undertaking further product development. A licensed
+underground positioning dataset, a commercial mobility
 dataset, revenue, active users, and a staffed company are not included claims.
 
 Start with the [buyer brief](BUYER_BRIEF.md), then the
@@ -29,7 +31,7 @@ changes, which have not been folded into this candidate or its test claims.
 | Item | What it provides |
 |---|---|
 | Buyer brief | Product, engineering value, offered scope and limitations |
-| Technical handover | Setup, local backend, tests, coverage scope and device checks |
+| Technical handover | Corpus setup, tests and the scope of existing verification |
 | Claims register | Evidence for material statements |
 | Rights and exclusions | Dependency/data provenance and items awaiting clearance |
 | Engineering retrospectives | Newly written explanations of authentic commits |

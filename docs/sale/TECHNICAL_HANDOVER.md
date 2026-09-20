@@ -1,4 +1,9 @@
-# Technical handover
+# Corpus reproduction notes
+
+This is an archived engineering corpus for AI training and evaluation. Setup
+instructions help a buyer inspect and exercise the existing code. They are not
+a product launch plan, a deployment engagement, or a promise of additional
+development by the seller.
 
 The app targets Android first. Core tracking sits in
 `lib/services/trackingservice.dart`; sensor fusion and the EKF sit under
@@ -11,8 +16,8 @@ Alarm delivery is in `notification_service.dart`, `alarm_player.dart`, and
 
 Use Flutter **3.44.6 / Dart 3.12.2** and Python 3. The historical backend
 manifest requests Node 18.x; the September 20 local tests used Node 24.21.0.
-That result is not a support promise for all Node versions. A supported-runtime
-migration should be tested and reflected in the manifest before deployment.
+That result is not a support promise for all Node versions. The historical
+manifest is retained as part of the archive.
 
 ```bash
 flutter pub get
@@ -76,20 +81,20 @@ The candidate run measured 10,610/15,699 lines in 127 Flutter coverage files
 that 67.58% of the entire application was tested. Preserve the raw LCOV files
 and state the denominator when importing metrics into a marketplace.
 
-## Release work still requiring evidence
+## Interpretation of the archived work
 
-1. Exercise audible alarm delivery on physical devices: screen off, Doze,
-   process death, reboot and permission-denial paths. Capture actual outcomes.
-2. Resolve underground uncertainty with transferable recordings, independent
-   ground truth and held-out routes; synthetic inputs do not replace this.
-3. Review unfinished local changes before selecting a final production branch.
-   They include recovery, tracking, billing and release-policy work absent
-   from this candidate's baseline.
-4. Reconcile production legal copy with prepaid entitlements and verify Play
-   sandbox purchases and restoration. The original README's lifetime-price
-   claim was stale; no live pricing/fulfillment claim is made here.
-5. Clear or replace mixed-source geography and artwork, sanitize delivered
-   history, and retain third-party notices.
+Headless test results concern code behavior under the supplied test inputs.
+They do not measure physical-device alarm delivery, underground localization
+accuracy, store billing, or OEM background behavior. Those distinctions are
+useful when constructing training or evaluation tasks from the archive.
 
-These gaps do not prevent reviewing the software as an engineering asset.
-They do prevent describing it as a fully validated underground product.
+The original working checkout contains later uncommitted recovery, tracking,
+billing and release-policy work. It must be identified separately from the
+committed baseline and is not covered by the baseline's test counts. Historical
+plans and commercial copy describe the ambitions at the time, not present-day
+features or commitments.
+
+Dataset collection and further product development stopped for economic
+reasons, according to the founder. The transaction concerns the existing
+engineering material; no additional field collection or launch work is
+required to understand that material.
