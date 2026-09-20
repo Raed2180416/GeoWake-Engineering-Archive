@@ -1,0 +1,28 @@
+00:00 +0: loading /tmp/geowake-zupt-eval-KdCnaB/pre/test/core/ekf/zupt_degraded_gating_test.dart
+00:00 +0: ZUPT degraded-mode gating (real-ride regression) DEGRADED + smooth cruise + pinned-zero velocity must NOT confirm (the Majestic false-ZUPT storm)
+00:00 +0 -1: ZUPT degraded-mode gating (real-ride regression) DEGRADED + smooth cruise + pinned-zero velocity must NOT confirm (the Majestic false-ZUPT storm) [E]
+  Expected: false
+    Actual: <true>
+  velocity-gated paths are invalid during GPS denial; without classifier corroboration this is a moving train
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/core/ekf/zupt_degraded_gating_test.dart 59:7   main.<fn>.<fn>
+  
+00:00 +0 -1: ZUPT degraded-mode gating (real-ride regression) DEGRADED + ultra-quiet + classifier-stationary DOES confirm (real in-tunnel dwell)
+00:00 +1 -1: ZUPT degraded-mode gating (real-ride regression) DEGRADED + quiet-but-not-ultra-quiet + stationary hint does NOT confirm (velocity paths disabled)
+00:00 +1 -2: ZUPT degraded-mode gating (real-ride regression) DEGRADED + quiet-but-not-ultra-quiet + stationary hint does NOT confirm (velocity paths disabled) [E]
+  Expected: false
+    Actual: <true>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/core/ekf/zupt_degraded_gating_test.dart 91:7   main.<fn>.<fn>
+  
+00:00 +1 -2: ZUPT degraded-mode gating (real-ride regression) NORMAL mode behaviour unchanged: quiet + low velocity confirms
+00:00 +2 -2: ZUPT degraded-mode gating (real-ride regression) NORMAL mode: moving train (noisy IMU) still never confirms
+00:00 +3 -2: Some tests failed.
+
+Failing tests:
+  /tmp/geowake-zupt-eval-KdCnaB/pre/test/core/ekf/zupt_degraded_gating_test.dart: ZUPT degraded-mode gating (real-ride regression) DEGRADED + quiet-but-not-ultra-quiet + stationary hint does NOT confirm (velocity paths disabled)
+  /tmp/geowake-zupt-eval-KdCnaB/pre/test/core/ekf/zupt_degraded_gating_test.dart: ZUPT degraded-mode gating (real-ride regression) DEGRADED + smooth cruise + pinned-zero velocity must NOT confirm (the Majestic false-ZUPT storm)

@@ -1,0 +1,5 @@
+00:00 +0: loading /home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/restore-evaluation/reference/test/monetization/purchase_backend_impl_test.dart
+00:00 +0: IapPurchaseBackend — restore()/queryPastPurchases() concurrency a concurrent restore() and queryPastPurchases() BOTH resolve IMMEDIATELY from a single stream event (no clobbered completer, no fall-through to the multi-second timeout fallback)
+00:00 +1: IapPurchaseBackend — restore()/queryPastPurchases() concurrency restore() started AFTER queryPastPurchases() already completed still resolves correctly (no leftover state from the earlier call)
+00:00 +2: IapPurchaseBackend — restore()/queryPastPurchases() concurrency a plain single restore() with no concurrent call still works
+00:00 +3: All tests passed!

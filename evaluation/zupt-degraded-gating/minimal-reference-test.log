@@ -1,0 +1,7 @@
+00:00 +0: loading /tmp/geowake-zupt-minimal-HrGGR1/reference/test/core/ekf/zupt_degraded_gating_test.dart
+00:00 +0: ZUPT degraded-mode gating (real-ride regression) DEGRADED + smooth cruise + pinned-zero velocity must NOT confirm (the Majestic false-ZUPT storm)
+00:00 +1: ZUPT degraded-mode gating (real-ride regression) DEGRADED + ultra-quiet + classifier-stationary DOES confirm (real in-tunnel dwell)
+00:00 +2: ZUPT degraded-mode gating (real-ride regression) DEGRADED + quiet-but-not-ultra-quiet + stationary hint does NOT confirm (velocity paths disabled)
+00:00 +3: ZUPT degraded-mode gating (real-ride regression) NORMAL mode behaviour unchanged: quiet + low velocity confirms
+00:00 +4: ZUPT degraded-mode gating (real-ride regression) NORMAL mode: moving train (noisy IMU) still never confirms
+00:00 +5: All tests passed!

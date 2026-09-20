@@ -1,0 +1,18 @@
+00:00 +0: loading /home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/restore-evaluation/task/test/monetization/purchase_backend_impl_test.dart
+00:00 +0: IapPurchaseBackend — restore()/queryPastPurchases() concurrency a concurrent restore() and queryPastPurchases() BOTH resolve IMMEDIATELY from a single stream event (no clobbered completer, no fall-through to the multi-second timeout fallback)
+00:03 +0 -1: IapPurchaseBackend — restore()/queryPastPurchases() concurrency a concurrent restore() and queryPastPurchases() BOTH resolve IMMEDIATELY from a single stream event (no clobbered completer, no fall-through to the multi-second timeout fallback) [E]
+  Expected: a value less than <1000>
+    Actual: <3000>
+     Which: is not a value less than <1000>
+  both calls must resolve immediately from the single stream event, not fall through to a multi-second timeout fallback (a symptom of a clobbered/orphaned completer)
+  
+  package:matcher                                          expect
+  package:flutter_test/src/widget_tester.dart 473:18       expect
+  test/monetization/purchase_backend_impl_test.dart 134:7  main.<fn>.<fn>
+  
+00:03 +0 -1: IapPurchaseBackend — restore()/queryPastPurchases() concurrency restore() started AFTER queryPastPurchases() already completed still resolves correctly (no leftover state from the earlier call)
+00:03 +1 -1: IapPurchaseBackend — restore()/queryPastPurchases() concurrency a plain single restore() with no concurrent call still works
+00:03 +2 -1: Some tests failed.
+
+Failing tests:
+  /home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/restore-evaluation/task/test/monetization/purchase_backend_impl_test.dart: IapPurchaseBackend — restore()/queryPastPurchases() concurrency a concurrent restore() and queryPastPurchases() BOTH resolve IMMEDIATELY from a single stream event (no clobbered completer, no fall-through to the multi-second timeout fallback)
