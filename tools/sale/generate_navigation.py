@@ -227,6 +227,8 @@ def choose_test_feature(p: str):
 
 
 def choose_feature(p: str, kind: str):
+    if p.startswith("evaluation/"):
+        return "archive_package", "explicit historical evaluation artifact"
     s = p.lower()
     name = PurePosixPath(p).stem.lower()
     if kind == "test":
