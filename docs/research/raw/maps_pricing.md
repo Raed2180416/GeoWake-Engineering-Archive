@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Google Maps Platform pricing as of 2026 (global + India), for GeoWake unit economics
 
 ## Summary

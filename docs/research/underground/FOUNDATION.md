@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake Underground Positioning — FOUNDATION
 
 **Scope:** the end-to-end model for never-late arrival alarming when GPS goes dark (metro tunnels, car tunnels/parking) on a **loosely handheld phone**. This document is the consolidated research foundation: one section per research facet, each with a summary, methods table, full derivation (equations preserved verbatim for the math facets), never-late implications, pitfalls, a recommendation, and — where an adversarial verifier flagged issues — a **Rigor check** with the corrections that must be applied.

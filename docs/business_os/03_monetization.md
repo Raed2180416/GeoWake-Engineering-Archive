@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Business OS — Monetization
 
 > This chapter tracks a decision that is **yours** (Raed's), not the audit's.

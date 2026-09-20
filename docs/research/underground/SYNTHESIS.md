@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Underground positioning — SYNTHESIS & VERDICT
 
 _Consolidates four deep, adversarially-verified research workflows (FOUNDATION, EMPIRICAL_RESULTS, MODES, ON_ROUTE_CONFIRMATION) + independent hands-on validation on the two REAL Bengaluru Purple-line rides. Every empirical number below was measured on real handheld data. The one hard rule held throughout: **never claim device/real-world proof from a simulation, and never ship a change that isn't provably never-late.**_

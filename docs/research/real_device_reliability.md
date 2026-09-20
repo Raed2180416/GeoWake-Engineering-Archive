@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Real-Device Reliability — will the wake-alarm actually work? (verified July 2026)
 
 > Deep research against **today's** Android 14/15/16, Google Play policy, and the major OEM skins, for the behaviors that **cannot be proven in the simulator** and must work on real hardware. The question was blunt: *does our approach work, and what can duck it up?*

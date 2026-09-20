@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake Monetization Benchmarks — India, 2026
 
 ## 1. AdMob eCPM in India (banner / interstitial / rewarded)

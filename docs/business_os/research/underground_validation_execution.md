@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Underground Reliability Validation (executable groundwork)
 
 > Generated 2026-07-24 by a workflow that reverse-engineered the EKF replay harness, fetched real Namma Purple Line tunnel geometry from Overpass, and checked public-dataset availability. This is the buildable plan + honest verdict.

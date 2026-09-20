@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Grounding Notes (Citation Backbone)
 
 > **Grounding note.** Every fact below was fetched live from primary sources during a single research session and passed through an adversarial verification pass. Treat this file as the citation backbone for `ECONOMICS.md` / monetization, `DATA_STRATEGY.md`, the Android hardening work, and the V_LINE never-late speed model. **Session `as_of` = 2026-07-18** for all topics unless a fact carries its own date. Facts are keyed to `targetSdk` API levels where behavior is version-gated (API 31 / 33 / 34 / 35 / 36 = Android 12 / 13 / 14 / 15 / 16). Historical milestone dates appear inside individual facts; the *source-retrieval* date for all of them is 2026-07-18.

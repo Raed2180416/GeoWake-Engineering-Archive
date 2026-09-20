@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Zero-Budget Marketing Playbook — GeoWake (India Transit Wake-Up Alarm), 2026
 
 **Scope note on method:** Live Reddit fetching was blocked in this environment (`reddit.com` and `old.reddit.com` both return fetch errors), so exact current rule text for r/bangalore, r/india, r/delhi, r/mumbai could not be quoted verbatim. Recommendations for those subreddits are marked **[ESTIMATE — verify live before posting]** and are based on well-documented general Reddit norms plus secondary reporting on these specific communities. Everything else is sourced to primary docs (Google, Android Developers) or named secondary sources with dates where available.

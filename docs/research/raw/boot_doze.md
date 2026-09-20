@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Surviving reboot and Doze on Android 14/15/16 for GeoWake (Android-first India transit wake-alarm)
 
 ## Summary

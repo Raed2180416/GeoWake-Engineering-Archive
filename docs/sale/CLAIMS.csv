@@ -1,10 +1,10 @@
 claim,status,evidence,limit
 Android-first Flutter destination alarm,code verified,lib/services/trackingservice.dart,Physical-device reliability not established by source
 Core alarm remains free,code and test evidence,lib/services/monetization/premium_service.dart,Optional premium integrations have separate completion requirements
-1400 visible Flutter tests pass,fresh local verification 2026-09-20,flutter-test-candidate.jsonl,Excludes hidden harness events; external real-ride paths can return early
-67.58 percent Flutter line coverage,measured instrumented scope,coverage/lcov.info,127 measured files out of 182 Dart files in lib
-55 Express backend tests pass,fresh local verification 2026-09-20,backend-tests-coverage.json,Mocks and dummy credentials; no production Maps or Play validation
-13 share backend tests pass,fresh local verification 2026-09-20,share-tests-baseline.log,Local single-process tests
+1466 visible Flutter tests pass,captured-source verification 49a98bc,controlled-final-verification/flutter-tests.log,218 hidden harness events excluded; 3 placeholder tests; external real-ride path can return early
+68.07 percent Flutter line coverage,measured at 49a98bc,controlled-final-verification/coverage-lcov.info,11436/16800 lines in133 instrumented files;185 lib Dart files overall
+61 Express backend tests pass,captured-source verification 49a98bc,controlled-final-verification/backend-tests.json,Mocks and dummy credentials; no live Maps or Play validation
+16 share backend tests pass,captured-source verification 49a98bc,controlled-final-verification/share-tests.log,Local single-process tests
 Never-late reachability,conditional mathematical and simulation evidence,lib/core/reachability/reachability.dart,Depends on fix accuracy and speed bound; not an unconditional device guarantee
 Above-ground mostly works,developer report,user statement,No measured field success rate claimed
 Underground positioning remains incomplete,developer report and research notes,docs/research/underground/VALIDATION_GAPS.md,No licensed robust underground dataset included
@@ -14,3 +14,4 @@ Replay data is synthetic,fixture declarations,test/fixtures/replay,No representa
 Mobility data product exists,not established,lib/services/data_asset/data_asset_config.dart,Egress disabled; no saleable user dataset or data revenue claimed
 Demo shows UI and notifications,recording inspected,GeoWake-buyer-demo-narrated.mp4,Development simulation; original silent audio; commit identity unknown
 DataVendor range 34387 to 38155 USD,platform estimate only,DataVendor estimate dated 2026-09-15,Not an offer; commissions and transaction unit require confirmation
+Historical ZUPT regression fails before and passes after fix,verified source-level pair,evaluation-example/manifest.json,Same five original tests; two intended pre-fix failures; no raw field replay

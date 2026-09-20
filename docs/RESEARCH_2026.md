@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Research: User Accounts, DI Framework, Backend Merge Engine, Maps Cost Strategy
 
 > Deep research conducted Jul 2026. Covers four areas: user accounts (Phase 2,

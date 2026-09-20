@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake Pass-Based Monetization Model — Deep Analysis
 
 > July 23, 2026. Analysis of the proposed pass-based subscription architecture

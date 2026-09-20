@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Business OS — City Expansion & Underground Reliability
 
 Two linked bets from the brief: (1) prove the algorithm works underground / off

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # TIGHTENING — minimizing early fires on long GPS-dark stretches
 
 **Scope.** How to shrink the never-late reachability cone so the alarm stops firing minutes

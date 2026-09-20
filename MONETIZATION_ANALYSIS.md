@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake Monetizability Analysis — Deep, Unbiased Assessment
 
 > July 23, 2026. Based on actual codebase analysis, verified market data,

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Legal-by-construction privacy tech for aggregate mobility (for GeoWake, an India Android transit wake-alarm considering an aggregate-mobility data product)
 
 ## Summary

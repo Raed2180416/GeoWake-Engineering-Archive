@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Website claims vs. shipping code
 
 Audit of `website/index.html` against HEAD of `production-ready-audit-v2`.

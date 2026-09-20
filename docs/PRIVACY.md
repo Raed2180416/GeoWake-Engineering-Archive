@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Privacy & Data Architecture
 
 > How GeoWake handles user data: consent, differential privacy, k-anonymity, and the data asset pipeline.

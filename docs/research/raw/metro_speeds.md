@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Maximum design and operational speeds (km/h) of Indian urban + regional rail lines, for GeoWake's never-late V_LINE overbound
 
 ## Summary

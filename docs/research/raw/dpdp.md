@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # India DPDP Act 2023 + DPDP Rules 2025 — compliance for GeoWake, a legal aggregate mobility-data product (Android transit wake-alarm)
 
 ## Summary

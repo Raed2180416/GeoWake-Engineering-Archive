@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Backend API Reference
 
 > Express.js server in `geowake-server/`. Deployed on Railway.

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake n8n Workflows — Import via n8n UI or API
 
 These are workflow descriptions for n8n. After deploying n8n on your Oracle VM,

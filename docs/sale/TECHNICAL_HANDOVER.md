@@ -14,16 +14,16 @@ Alarm delivery is in `notification_service.dart`, `alarm_player.dart`, and
 
 ## Reproduce headless verification
 
-Use Flutter **3.44.6 / Dart 3.12.2** and Python 3. The historical backend
-manifest requests Node 18.x; the September 20 local tests used Node 24.21.0.
-That result is not a support promise for all Node versions. The historical
-manifest is retained as part of the archive.
+Use Flutter **3.44.6 / Dart 3.12.2** and Python 3. The captured backend manifest requests Node 24.x; local verification uses
+Node 24.21.0. Older commits requested Node 18.x. Historical environment choices
+remain part of the development record.
 
 ```bash
 flutter pub get
 python3 tools/sale/verify.py --out /tmp/geowake-verification
 ```
 
+The runner defaults to two Flutter test workers to keep resource use bounded.
 The runner captures commands, exit codes, timestamps and log hashes. Its API
 test keys are explicit dummy values. It runs static analysis, the full Flutter
 suite with coverage, the Express suite and the share suite. It does not launch
@@ -50,8 +50,7 @@ for an independent evaluation. Do not copy the seller's API keys or tokens.
 
 For the backend, supply your own environment through its existing `.env`
 workflow: `GOOGLE_MAPS_API_KEY`, `JWT_SECRET` (at least 32 characters), and
-`APP_BUNDLE_ID=com.geowake.app`. The test runner's legacy fixture bundle ID is
-different and deliberately confined to test execution. Real Maps calls may
+`APP_BUNDLE_ID=com.geowake.app`. The test runner uses the same bundle ID with explicit dummy credentials. Real Maps calls may
 incur charges on the account whose key is supplied.
 
 The share service has its own configuration. Core wake behavior must remain
@@ -75,11 +74,17 @@ is supplied separately and should name the exact candidate revision.
 
 ## Coverage interpretation
 
-The candidate run measured 10,610/15,699 lines in 127 Flutter coverage files
-(67.58%) and 315/413 lines in 15 backend coverage files (76.27%). There are
-182 Dart files under `lib/`, so this is instrumented-file coverage, not a claim
-that 67.58% of the entire application was tested. Preserve the raw LCOV files
-and state the denominator when importing metrics into a marketplace.
+The captured source check at `49a98bc` measured 11,436/16,800 Flutter lines
+(68.07%) in 133 instrumented files, against 185 Dart files under `lib/`.
+Express coverage was 303/417 lines (72.66%) in 16 files. These are measured-file
+denominators. The older `42de864` run measured a different source tree and must
+not be substituted for this result. Final sanitized-export evidence is separate.
+
+The source check passed 1,466 visible Flutter tests, 61 Express tests and
+16 sharing tests. The receipt names the two-worker command, SDK, timestamp and
+log hashes. An earlier high-concurrency attempt ended without a completion
+receipt after a timing assertion and coverage-service errors; its partial log
+is preserved privately and is not counted as a completed run.
 
 ## Interpretation of the archived work
 
@@ -88,11 +93,10 @@ They do not measure physical-device alarm delivery, underground localization
 accuracy, store billing, or OEM background behavior. Those distinctions are
 useful when constructing training or evaluation tasks from the archive.
 
-The original working checkout contains later uncommitted recovery, tracking,
-billing and release-policy work. It must be identified separately from the
-committed baseline and is not covered by the baseline's test counts. Historical
-plans and commercial copy describe the ambitions at the time, not present-day
-features or commitments.
+The latest pre-existing recovery, tracking, billing and release-policy work was
+captured in `f4daa94`. `LOCAL_WORK_CAPTURE.md` records that provenance and the
+subsequent reproduction repairs. Baseline results are not relabelled as checks
+of the capture. Historical commercial plans remain context, not a commitment.
 
 Dataset collection and further product development stopped for economic
 reasons, according to the founder. The transaction concerns the existing

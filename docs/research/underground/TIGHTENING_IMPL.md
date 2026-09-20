@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # TIGHTENING_IMPL — Physics-only Reachability Tightening (NO crowd data)
 
 Implementation spec for tightening the never-late reachability cone in

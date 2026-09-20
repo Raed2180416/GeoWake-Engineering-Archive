@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 ## Google Play Launch Requirements — GeoWake (checked 2026-07-24)
 
 ### 1. Target API level

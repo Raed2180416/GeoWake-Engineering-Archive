@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Business OS — Zero-Budget Marketing
 
 Free-only, solo-dev, India-first. Full sourced version in

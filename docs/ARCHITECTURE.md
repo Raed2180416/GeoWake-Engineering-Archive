@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — System Architecture
 
 > Complete end-to-end architecture document. Current as of `production-ready-audit-v2` branch.

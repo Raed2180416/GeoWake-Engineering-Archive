@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # flutter_local_notifications for GeoWake's process-death alarm backstop — current version, mandatory manifest receivers, zonedSchedule/exact-alarm/full-screen-intent config, and upgrade breaking changes
 
 ## Summary

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Exact alarms on modern Android for GeoWake's never-late transit wake-alarm backstop (SCHEDULE_EXACT_ALARM vs USE_EXACT_ALARM, setAlarmClock, Play policy eligibility)
 
 ## Summary

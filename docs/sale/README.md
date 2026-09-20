@@ -1,52 +1,58 @@
-# GeoWake — buyer review
+# Buyer index
 
-Prepared 20 September 2026. GeoWake is an Android-first Flutter destination
-alarm. This archive is offered for AI training and software-engineering
-evaluation. The asset is the software and its documented development history;
-the seller is not undertaking further product development. A licensed
-underground positioning dataset, a commercial mobility
-dataset, revenue, active users, and a staffed company are not included claims.
+Prepared 20 September 2026 for licensing the existing GeoWake engineering archive
+to AI-training and software-engineering buyers. Start with the
+[brief](BUYER_BRIEF.md), then use the following reading paths.
 
-Start with the [buyer brief](BUYER_BRIEF.md), then the
-[technical handover](TECHNICAL_HANDOVER.md). The [claims register](CLAIMS.csv)
-separates code evidence, fresh verification, historical reports, and unfinished
-work. Read [rights and exclusions](RIGHTS_AND_EXCLUSIONS.md) before requesting
-source or history. [Engineering retrospectives](ENGINEERING_RETROSPECTIVES.md)
-connect two genuine changes to their code and regression tests.
+## The complete journey
 
-## Version being reviewed
+[Feature status matrix](FEATURES.md) is the quickest overview of implementation and limits.
 
-The preparation branch is `codex/geowake-sale-20260920`, based on
-`440e9003cbd3ec7ec78cea0accc56df9cb7d9b2e`. That base has 130 reachable commits
-from February 2025 to July 2026. Newly dated preparation commits add buyer
-materials and explicit improvements; they do not represent historical work.
+[Journey and routing](JOURNEY_AND_ROUTING.md) follows destination entry, saved
+trips, route selection, preflight, background handoff, progress, pre-boarding,
+transfers, destination alarms, deviation, rerouting, recovery and teardown.
+[Supporting systems](SUPPORTING_SYSTEMS.md) covers monetization, sharing,
+guardian, anti-theft, privacy, telemetry, APIs, localization and developer tools.
+[Data flow](DATA_FLOW.md) identifies producers, transformations, units, stored
+state and external boundaries. The [decision register](DECISIONS.csv) links
+choices to their evidence and distinguishes known intent from inference.
 
-The DataVendor estimate used `stable-release-1`, a different branch with
-114 commits at the time of its analysis. That estimate is not a price for this
-new preparation branch. The main local checkout also contains unpublished
-changes, which have not been folded into this candidate or its test claims.
+## What was learned
 
-## Review contents
+[Underground evolution](UNDERGROUND_EVOLUTION.md) connects raw IMU integration,
+EKF, ZUPT, station association, reachability and the experimental stop-anchoring
+pivot to dated commits and negative findings. [Founder clarifications](FOUNDER_CLARIFICATIONS.jsonl)
+record the 40% pre-boarding threshold as experimental, friend-phone recording
+provenance and the experimental-only stopping point.
+[Engineering retrospectives](ENGINEERING_RETROSPECTIVES.md) distinguish a
+verified historical regression from further task candidates.
 
-| Item | What it provides |
-|---|---|
-| Buyer brief | Product, engineering value, offered scope and limitations |
-| Technical handover | Corpus setup, tests and the scope of existing verification |
-| Claims register | Evidence for material statements |
-| Rights and exclusions | Dependency/data provenance and items awaiting clearance |
-| Engineering retrospectives | Newly written explanations of authentic commits |
-| `tools/sale/inventory.py` | Reproducible, commit-specific file hashes and history index |
-| `tools/sale/verify.py` | Repeatable verification with dated logs and exit codes |
-| Edited demonstration | Separately supplied 112-second historical screen recording |
+## What can be checked
 
-The demo shows a development simulation feeding a mirrored Android app. Its
-new narration explains the screen recording. It does not prove field accuracy,
-audible alarm delivery, or correspondence to the offered commit.
+[Reproduction notes](TECHNICAL_HANDOVER.md) explain the toolchain and local
+checks. [Claims](CLAIMS.csv) separates code, measured results, founder reports
+and unresolved claims. The separately supplied evidence bundle contains the
+exact-revision file/symbol/import/test index, verification receipts, dependency
+notices, history mapping and the runnable ZUPT evaluation example. Lexical
+source-to-test matches are navigation hints, not measured coverage.
 
-## Delivery status
+## Which version
 
-The preparation checkout is useful for local review. It is **not an unrestricted
-delivery archive**: mixed-source map data, raw recordings and historical
-credentials require the treatment described in the rights document. No
-license to those items is implied by this index. A delivery must name its
-exact revision, included paths, exclusions, usage rights and acceptance tests.
+The original development baseline was `440e9003cbd3ec7ec78cea0accc56df9cb7d9b2e`
+(130 reachable commits). [The local-work capture](LOCAL_WORK_CAPTURE.md)
+records 119 modified files and 24 additional files, captured in `f4daa94` at
+the founder's request. Subsequent small reproduction repairs are separately
+committed. The prior DataVendor estimate inspected `stable-release-1`, not this
+updated corpus. The delivery manifest and remote equality receipt identify the
+final offered Git revision; do not use the old estimate's SHA for this package.
+
+[Branch history](BRANCH_HISTORY.md) explains unique development/release/iOS
+lines. [Document curation](DOCUMENT_CURATION.md) records the earlier audit;
+[the historical index](../archive/README.md) is the current reading path.
+Original history is preserved privately. The buyer export removes identified
+credentials, optional raw data and excluded third-party material, with a
+mapping rather than pretending those bytes were never present.
+
+[Rights and exclusions](RIGHTS_AND_EXCLUSIONS.md) defines the delivery scope.
+The transaction concerns existing material, without a further-development
+commitment. The optional recording candidate has its own provenance and scope.

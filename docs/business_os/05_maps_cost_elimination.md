@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Business OS — Google Maps Cost Elimination
 
 Goal (from the brief): launch on Google Maps as-is; then, in the background,

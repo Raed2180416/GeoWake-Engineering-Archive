@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake Autopilot
 
 Round-the-clock maintenance loop that runs **on this machine at $0/month**, built

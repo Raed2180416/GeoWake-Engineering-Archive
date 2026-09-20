@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Zero-Cost AI Automation & Cost Elimination Blueprint
 
 > **Verified July 23, 2026.** All tool versions, pricing, and capabilities checked against

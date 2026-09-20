@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Underground Modes: Walk / Car / Mode-Classification
 
 Consolidated findings from the walking-underground, car-tunnel, and mode-classification

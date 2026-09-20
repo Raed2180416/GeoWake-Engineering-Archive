@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # On-Route / On-Train Confirmation — Consolidated Research
 
 **Scope.** How accurately can GeoWake tell that the rider is *on the train* (versus driving or walking along the same line), and can the founder's "use the observed speed" idea be made *never-late-safe* and useful? All numbers below are measured on the **two real Bengaluru Purple-line handheld rides** (Nallur↔Vijayanagar and Nadaprabhu/Majestic↔Nallurahalli — same line, opposite directions, a natural cross-validation) unless a source is cited. Analysis scripts live under `/home/developer/geowake_imu_analysis/work/`.

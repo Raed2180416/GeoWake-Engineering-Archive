@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # India mobile in-app ad monetization 2026 — realistic eCPM, fill rates, mediation, and rewarded-vs-interstitial reality for GeoWake (Android-first India transit utility app), for a break-even model
 
 ## Summary

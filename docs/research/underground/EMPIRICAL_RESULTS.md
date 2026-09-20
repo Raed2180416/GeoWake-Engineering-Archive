@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Underground Position — Empirical Results (Real Handheld Data)
 
 **Scope.** End-to-end validation of braking-force stop-anchoring for GeoWake's

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Aggressive OEM background-process killing on Indian-market Android phones (Xiaomi/HyperOS, Oppo/Vivo/Realme/ColorOS, Samsung One UI) and what a GeoWake foreground-location wake-alarm must do to survive
 
 ## Summary

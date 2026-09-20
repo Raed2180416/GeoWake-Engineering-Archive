@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — $0 Autonomous Business Automation Deck
 
 > Generated 2026-07-24. Every business function mapped to the smartest $0 tool/skill/MCP/OSS/SOTA a 24/7 LOCAL agent can drive. Verified where versions/pricing change. This is the buildable stack for the future local-LLM agent that runs the business.

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — End-to-End Component & Product-Intent Map
 
 > Generated 2026-07-24 by a 16-subsystem deep-dive workflow (each component read in code, state evidence-backed). 171 components across 16 subsystems.

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # geowake-share
 
 The Railway backend for **GeoWake journey sharing** — a tiny, zero-dependency

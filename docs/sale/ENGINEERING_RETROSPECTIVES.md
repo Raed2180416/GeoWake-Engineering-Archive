@@ -2,8 +2,8 @@
 
 Written 20 September 2026 from existing code and Git history. These are new
 explanations of genuine changes, not historical tickets, reviews, or records of
-a multi-person team. Proposed evaluation tasks below are not yet a validated
-benchmark or a priced task dataset.
+a multi-person team. The ZUPT example below has an observed fail-to-pass pair; the restore example
+remains a task candidate. Neither is a marketed benchmark dataset.
 
 ## GPS-denied cruising mistaken for a stop
 
@@ -22,10 +22,12 @@ regression test supplies a checkable behavioral target. The historical research
 also discusses real rides, but those externally referenced fixtures are absent
 from this checkout, so their reported improvements are not freshly reproduced.
 
-To establish a benchmark pair, isolate the pre-fix revision, carry over only
-the regression test, verify that it fails for the intended reason, then apply
-the historical fix and verify that it passes. Until both outcomes are captured,
-label this a task candidate, not a verified fail-to-pass example.
+On 20 September 2026, the original regression test was run unchanged against
+the immediate pre-fix source and the fixed source: **3 passed / 2 failed before,
+5 passed afterward**. The two intended failures concern quiet degraded-mode
+cruising and an insufficiently quiet stationary hint. The evidence bundle
+contains the candidate task, original test, separate reference patch, setup,
+source hashes and both logs. These tests do not replay the raw field ride.
 
 ## Concurrent purchase restoration
 

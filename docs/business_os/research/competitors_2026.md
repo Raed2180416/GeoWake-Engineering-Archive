@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 ## GeoWake Competitive Landscape — "Get Off At My Stop" Alarms, India, July 2026
 
 ### TL;DR threat ranking

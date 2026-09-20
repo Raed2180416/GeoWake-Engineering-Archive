@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Guaranteeing a visible + audible wake on modern Android (Android 13–15 / 2026): full-screen intent, DND bypass, and POST_NOTIFICATIONS for GeoWake (alarm app)
 
 ## Summary

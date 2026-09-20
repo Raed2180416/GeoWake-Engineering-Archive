@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Android foreground services (API 34/35/36) for a continuous location wake-alarm + alarm-sound playback
 
 ## Summary

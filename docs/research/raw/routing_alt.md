@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Escaping Google Directions cost for GeoWake by self-hosting OSM routing (OSRM/Valhalla + OTP) and tiles, at India / 100K-MAU scale
 
 ## Summary

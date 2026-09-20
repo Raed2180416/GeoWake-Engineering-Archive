@@ -55,18 +55,24 @@ labelled as plans; unfinished work is not silently presented as completed.
 
 ## Verified on 20 September 2026
 
-The initial committed baseline passed **1,399 visible Flutter tests**, static
-analysis with informational findings, **55 Express backend tests**, and
-**13 journey-sharing backend tests**. After the preparation changes, **1,400
-visible Flutter tests** passed. Hidden harness events are excluded from those
-counts. Real-ride branches that return early for missing external recordings
-are not evidence of real-ride validation.
+The captured local fixes and subsequent reproduction repairs passed **1,466
+visible Flutter tests, 61 Express tests and 16 sharing tests**, at source
+revision `49a98bce5d2bcb8dc88837d8bdd21d0874ce4e7e`. Flutter analysis returned
+zero errors and warnings, with 77 informational findings. The 218 hidden
+harness events are excluded from the visible test count. The external real-ride
+branch can return early when its recordings are absent; it is not fresh field
+validation. Three literal placeholder tests are identified in the source index.
 
-Measured Flutter line coverage is **67.58% across the 127 files present in the
-coverage report** (10,610 / 15,699 executable lines). The repository contains
-182 Dart files under `lib/`; the report does not measure every file. Backend
-coverage is **76.27% across 15 instrumented files** (315 / 413 lines).
-Coverage reports describe exercised code, not product reliability.
+Flutter line coverage was **68.07% across the 133 instrumented files**
+(11,436 / 16,800 executable lines); that source tree has 185 Dart files under
+`lib/`. Express coverage was **72.66% across 16 instrumented files**
+(303 / 417 lines). These denominators describe the measured files, not the
+entire application's reliability. Final export checks and any effects of data
+exclusions are reported separately against the actual delivered revision.
+
+One historical ZUPT defect is independently reproduced: the same original test
+has two intended failures before the fix and all five tests passing afterward.
+The task, source, tests, reference patch and logs are packaged for inspection.
 
 ## Corpus boundaries
 

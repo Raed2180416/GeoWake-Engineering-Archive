@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Developer Dashboard & Testing Flow (deep-dive, 2026-07-24)
 
 > Read-only code audit of the unified dashboard + the whole app-testing/simulation stack, against the founder's intended flow (USB phone + mock location + route sim + live EKF/ZUPT display + premium testing). Everything cited at file:line.

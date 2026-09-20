@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # The commercial aggregate origin-destination (O-D) / footfall data market GeoWake could sell station-granularity transit-intent data into
 
 ## Summary

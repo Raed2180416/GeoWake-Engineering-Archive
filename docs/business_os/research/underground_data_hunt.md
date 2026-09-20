@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # GeoWake — Underground Data Hunt (verified 2026-07-24)
 
 > Deep workflow: ~30 candidate datasets + methods checked by LIVE WebFetch to test/fix the km-scale underground StationAssociation drift. Honest verdict + the only viable $0 path.

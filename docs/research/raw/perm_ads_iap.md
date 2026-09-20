@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Current versions and Android/iOS setup gotchas for permission_handler, google_mobile_ads, and in_app_purchase (Flutter) for GeoWake — verified July 2026
 
 ## Summary

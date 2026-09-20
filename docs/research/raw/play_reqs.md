@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Google Play 2026 technical requirements (targetSdk, edge-to-edge, 16 KB pages, versionCode) — grounded for GeoWake
 
 ## Summary

@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # SCALE_SIMULATION — never-late safety of the GPS + reachability integration, proven at scale
 
 **Status:** consolidated from the SCALE simulation campaign (seed `20260718`, fixed/reproducible).

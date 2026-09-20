@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 # Business OS — Governance & Safety Rails
 
 The autonomy system is allowed to do a lot. This file defines what it may

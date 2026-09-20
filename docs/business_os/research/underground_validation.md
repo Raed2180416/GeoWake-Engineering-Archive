@@ -1,3 +1,5 @@
+> Historical engineering record. Retained for development context; plans and claims below are not the current sale description. See `docs/sale/README.md`.
+
 
 # Underground Positioning Validation — Public Data & Methods (Research Report)
 Compiled 2026-07-24 for GeoWake. Freshness notes reflect when I found/verified each claim, not necessarily the resource's true last-update date.
