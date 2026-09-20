@@ -2,10 +2,18 @@
 useDefault = true
 
 [allowlist]
-description = "Exact non-secret test value and SharedPreferences storage key"
+description = "Exact non-secret test/storage values and verified source-file SHA-256 digests"
 regexTarget = "secret"
 regexes = [
   '''^test-jwt-secret-at-least-32-characters-long$''',
   '''^gw_mobility_consent_v1$''',
   '''^REDACTED_ARCHIVE_CREDENTIAL$''',
+  # SHA-256 of lib/services/api_client.dart; coverage evidence, not a credential.
+  '''^23f96c5a75095a9a7162ca0bc7bd6bf65ca1228cecc2de7ca90416593fb5753d$''',
+  # SHA-256 of geowake-server/src/controllers/authController.js; coverage evidence, not a credential.
+  '''^58f2ffb6fd9d321da52f9b3ca913489875aea060e8e564261d4db1b144f068c6$''',
+  # SHA-256 of geowake-server/src/middleware/auth.js; coverage evidence, not a credential.
+  '''^51539e2b27bd1471c32cd40b2e6cf0394fe9595f3d6032e518a7dd63a3e353d8$''',
+  # SHA-256 of geowake-server/src/routes/auth.js; coverage evidence, not a credential.
+  '''^7201b9a33e931ce903f379b59a99f7f974a41a8dbcd48a05471eac42e691fe3b$''',
 ]
