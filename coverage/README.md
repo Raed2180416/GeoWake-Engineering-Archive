@@ -17,6 +17,9 @@ same measurements. Its zero branch denominator means no branch measurement in
 that conversion, not measured zero branch coverage. The original backend
 function and branch records remain in LCOV. The summary's combined line total
 describes these instrumented files only.
+Cobertura requires numeric complexity attributes; their zero values are format
+placeholders, not measured code complexity. Its timestamp comes from the
+verification receipt.
 
 Each new CI run produces its own `coverage` artifact and a job summary, pinned
 to that run's revision. Those are the current results; this snapshot remains

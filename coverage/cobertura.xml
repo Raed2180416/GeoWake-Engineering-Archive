@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<coverage line-rate="0.6526927784577723" branch-rate="0" lines-covered="10665" lines-valid="16340" branches-covered="0" branches-valid="0" version="geowake-line-coverage-1">
+<coverage line-rate="0.6526927784577723" branch-rate="0" lines-covered="10665" lines-valid="16340" branches-covered="0" branches-valid="0" complexity="0" timestamp="1789932103" version="geowake-line-coverage-1">
   <sources>
     <source>.</source>
   </sources>
   <packages>
-    <package name="flutter" line-rate="0.6507567669409031" branch-rate="0">
+    <package name="flutter" line-rate="0.6507567669409031" branch-rate="0" complexity="0">
       <classes>
-        <class name="lib/services/route_registry.dart" filename="lib/services/route_registry.dart" line-rate="0.9752066115702479" branch-rate="0">
+        <class name="lib/services/route_registry.dart" filename="lib/services/route_registry.dart" line-rate="0.9752066115702479" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="22" hits="28" branch="false" />
@@ -132,7 +132,7 @@
             <line number="245" hits="46" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/active_route_manager.dart" filename="lib/services/active_route_manager.dart" line-rate="0.7900552486187845" branch-rate="0">
+        <class name="lib/services/active_route_manager.dart" filename="lib/services/active_route_manager.dart" line-rate="0.7900552486187845" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="16" hits="8" branch="false" />
@@ -318,7 +318,7 @@
             <line number="480" hits="36" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/ekf_types.dart" filename="lib/core/ekf/ekf_types.dart" line-rate="0.5" branch-rate="0">
+        <class name="lib/core/ekf/ekf_types.dart" filename="lib/core/ekf/ekf_types.dart" line-rate="0.5" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="16" hits="23" branch="false" />
@@ -331,7 +331,7 @@
             <line number="118" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/snap_to_route.dart" filename="lib/services/snap_to_route.dart" line-rate="0.9367088607594937" branch-rate="0">
+        <class name="lib/services/snap_to_route.dart" filename="lib/services/snap_to_route.dart" line-rate="0.9367088607594937" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="14" hits="24" branch="false" />
@@ -415,7 +415,7 @@
             <line number="272" hits="24" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/alarm_evaluator.dart" filename="lib/services/alarm_evaluator.dart" line-rate="0.7655954631379962" branch-rate="0">
+        <class name="lib/services/alarm_evaluator.dart" filename="lib/services/alarm_evaluator.dart" line-rate="0.7655954631379962" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="28" hits="26" branch="false" />
@@ -949,7 +949,7 @@
             <line number="1590" hits="6" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/transfer_utils.dart" filename="lib/services/transfer_utils.dart" line-rate="0.6701570680628273" branch-rate="0">
+        <class name="lib/services/transfer_utils.dart" filename="lib/services/transfer_utils.dart" line-rate="0.6701570680628273" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="71" hits="26" branch="false" />
@@ -1718,13 +1718,13 @@
             <line number="1961" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/all_india_stops.dart" filename="lib/all_india_stops.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/all_india_stops.dart" filename="lib/all_india_stops.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="4" hits="24" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/logging/app_logger.dart" filename="lib/core/logging/app_logger.dart" line-rate="0.3017241379310345" branch-rate="0">
+        <class name="lib/core/logging/app_logger.dart" filename="lib/core/logging/app_logger.dart" line-rate="0.3017241379310345" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="40" hits="105" branch="false" />
@@ -1845,7 +1845,7 @@
             <line number="336" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/reachability/reachability.dart" filename="lib/core/reachability/reachability.dart" line-rate="0.9451476793248945" branch-rate="0">
+        <class name="lib/core/reachability/reachability.dart" filename="lib/core/reachability/reachability.dart" line-rate="0.9451476793248945" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="70" hits="1" branch="false" />
@@ -2087,13 +2087,13 @@
             <line number="963" hits="52" branch="false" />
           </lines>
         </class>
-        <class name="lib/data/metro_line_sequences.dart" filename="lib/data/metro_line_sequences.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/data/metro_line_sequences.dart" filename="lib/data/metro_line_sequences.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="7" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/polyline_decoder.dart" filename="lib/services/polyline_decoder.dart" line-rate="0.7961165048543689" branch-rate="0">
+        <class name="lib/services/polyline_decoder.dart" filename="lib/services/polyline_decoder.dart" line-rate="0.7961165048543689" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="7" hits="21" branch="false" />
@@ -2201,7 +2201,7 @@
             <line number="265" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/stop_matcher.dart" filename="lib/services/stop_matcher.dart" line-rate="0.9782608695652174" branch-rate="0">
+        <class name="lib/services/stop_matcher.dart" filename="lib/services/stop_matcher.dart" line-rate="0.9782608695652174" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="2" branch="false" />
@@ -2252,7 +2252,7 @@
             <line number="166" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/stop_logic_engine.dart" filename="lib/services/stop_logic_engine.dart" line-rate="0.8369565217391305" branch-rate="0">
+        <class name="lib/services/stop_logic_engine.dart" filename="lib/services/stop_logic_engine.dart" line-rate="0.8369565217391305" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="11" hits="2" branch="false" />
@@ -2349,7 +2349,7 @@
             <line number="286" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/config/app_config.dart" filename="lib/config/app_config.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/config/app_config.dart" filename="lib/config/app_config.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="4" hits="0" branch="false" />
@@ -2357,7 +2357,7 @@
             <line number="11" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/api_client.dart" filename="lib/services/api_client.dart" line-rate="0.3247422680412371" branch-rate="0">
+        <class name="lib/services/api_client.dart" filename="lib/services/api_client.dart" line-rate="0.3247422680412371" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="15" hits="70" branch="false" />
@@ -2556,13 +2556,13 @@
             <line number="516" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/config/deviation_config.dart" filename="lib/config/deviation_config.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/config/deviation_config.dart" filename="lib/config/deviation_config.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="6" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/config/platform_test_flag_io.dart" filename="lib/config/platform_test_flag_io.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/config/platform_test_flag_io.dart" filename="lib/config/platform_test_flag_io.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="3" hits="33" branch="false" />
@@ -2570,7 +2570,7 @@
             <line number="9" hits="66" branch="false" />
           </lines>
         </class>
-        <class name="lib/config/playground_bridge.dart" filename="lib/config/playground_bridge.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/config/playground_bridge.dart" filename="lib/config/playground_bridge.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="25" hits="87" branch="false" />
@@ -2578,7 +2578,7 @@
             <line number="35" hits="29" branch="false" />
           </lines>
         </class>
-        <class name="lib/config/power_policy.dart" filename="lib/config/power_policy.dart" line-rate="0.4" branch-rate="0">
+        <class name="lib/config/power_policy.dart" filename="lib/config/power_policy.dart" line-rate="0.4" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="10" hits="1" branch="false" />
@@ -2588,7 +2588,7 @@
             <line number="40" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/clock/app_clock.dart" filename="lib/core/clock/app_clock.dart" line-rate="0.8936170212765957" branch-rate="0">
+        <class name="lib/core/clock/app_clock.dart" filename="lib/core/clock/app_clock.dart" line-rate="0.8936170212765957" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="25" hits="103" branch="false" />
@@ -2640,7 +2640,7 @@
             <line number="240" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/degraded_mode.dart" filename="lib/core/ekf/degraded_mode.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/core/ekf/degraded_mode.dart" filename="lib/core/ekf/degraded_mode.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="4" hits="23" branch="false" />
@@ -2660,7 +2660,7 @@
             <line number="47" hits="14" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/ekf_logger.dart" filename="lib/core/ekf/ekf_logger.dart" line-rate="0.827027027027027" branch-rate="0">
+        <class name="lib/core/ekf/ekf_logger.dart" filename="lib/core/ekf/ekf_logger.dart" line-rate="0.827027027027027" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="1" branch="false" />
@@ -2850,7 +2850,7 @@
             <line number="548" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/ekf_orchestrator.dart" filename="lib/core/ekf/ekf_orchestrator.dart" line-rate="0.8171557562076749" branch-rate="0">
+        <class name="lib/core/ekf/ekf_orchestrator.dart" filename="lib/core/ekf/ekf_orchestrator.dart" line-rate="0.8171557562076749" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="20" hits="22" branch="false" />
@@ -3298,7 +3298,7 @@
             <line number="957" hits="126" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/ekf_pipeline.dart" filename="lib/core/ekf/ekf_pipeline.dart" line-rate="0.9110512129380054" branch-rate="0">
+        <class name="lib/core/ekf/ekf_pipeline.dart" filename="lib/core/ekf/ekf_pipeline.dart" line-rate="0.9110512129380054" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="11" hits="23" branch="false" />
@@ -3674,7 +3674,7 @@
             <line number="869" hits="8" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/gps_degradation_detector.dart" filename="lib/core/ekf/gps_degradation_detector.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/core/ekf/gps_degradation_detector.dart" filename="lib/core/ekf/gps_degradation_detector.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="4" hits="23" branch="false" />
@@ -3702,7 +3702,7 @@
             <line number="69" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/motion_classifier.dart" filename="lib/core/ekf/motion_classifier.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/core/ekf/motion_classifier.dart" filename="lib/core/ekf/motion_classifier.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="12" hits="9" branch="false" />
@@ -3747,7 +3747,7 @@
             <line number="155" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/route_geometry.dart" filename="lib/core/ekf/route_geometry.dart" line-rate="0.9398496240601504" branch-rate="0">
+        <class name="lib/core/ekf/route_geometry.dart" filename="lib/core/ekf/route_geometry.dart" line-rate="0.9398496240601504" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="8" hits="24" branch="false" />
@@ -3885,7 +3885,7 @@
             <line number="268" hits="168" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/tilt_filter.dart" filename="lib/core/ekf/tilt_filter.dart" line-rate="0.9736842105263158" branch-rate="0">
+        <class name="lib/core/ekf/tilt_filter.dart" filename="lib/core/ekf/tilt_filter.dart" line-rate="0.9736842105263158" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="22" hits="10" branch="false" />
@@ -4004,7 +4004,7 @@
             <line number="302" hits="40" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/station_association.dart" filename="lib/core/ekf/station_association.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/core/ekf/station_association.dart" filename="lib/core/ekf/station_association.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="20" hits="8" branch="false" />
@@ -4061,7 +4061,7 @@
             <line number="178" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/zupt_detector.dart" filename="lib/core/ekf/zupt_detector.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/core/ekf/zupt_detector.dart" filename="lib/core/ekf/zupt_detector.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="6" hits="24" branch="false" />
@@ -4085,7 +4085,7 @@
             <line number="110" hits="8" branch="false" />
           </lines>
         </class>
-        <class name="lib/dashboard/constraint_logger.dart" filename="lib/dashboard/constraint_logger.dart" line-rate="0.7966101694915254" branch-rate="0">
+        <class name="lib/dashboard/constraint_logger.dart" filename="lib/dashboard/constraint_logger.dart" line-rate="0.7966101694915254" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="59" hits="12" branch="false" />
@@ -4149,13 +4149,13 @@
             <line number="287" hits="6" branch="false" />
           </lines>
         </class>
-        <class name="lib/metro_color_map.dart" filename="lib/metro_color_map.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/metro_color_map.dart" filename="lib/metro_color_map.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="3" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/alarm_haptics.dart" filename="lib/services/alarm_haptics.dart" line-rate="0.1111111111111111" branch-rate="0">
+        <class name="lib/services/alarm_haptics.dart" filename="lib/services/alarm_haptics.dart" line-rate="0.1111111111111111" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="16" hits="0" branch="false" />
@@ -4178,7 +4178,7 @@
             <line number="87" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/alarm_player.dart" filename="lib/services/alarm_player.dart" line-rate="0.48484848484848486" branch-rate="0">
+        <class name="lib/services/alarm_player.dart" filename="lib/services/alarm_player.dart" line-rate="0.48484848484848486" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="22" hits="84" branch="false" />
@@ -4249,7 +4249,7 @@
             <line number="255" hits="54" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/notification_service.dart" filename="lib/services/notification_service.dart" line-rate="0.3609341825902335" branch-rate="0">
+        <class name="lib/services/notification_service.dart" filename="lib/services/notification_service.dart" line-rate="0.3609341825902335" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="42" hits="23" branch="false" />
@@ -4725,7 +4725,7 @@
             <line number="1804" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/monetization_service.dart" filename="lib/services/monetization/monetization_service.dart" line-rate="0.7214285714285714" branch-rate="0">
+        <class name="lib/services/monetization/monetization_service.dart" filename="lib/services/monetization/monetization_service.dart" line-rate="0.7214285714285714" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="21" hits="5" branch="false" />
@@ -4870,7 +4870,7 @@
             <line number="348" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/alarm_threshold_validator.dart" filename="lib/services/alarm_threshold_validator.dart" line-rate="0.9479166666666666" branch-rate="0">
+        <class name="lib/services/alarm_threshold_validator.dart" filename="lib/services/alarm_threshold_validator.dart" line-rate="0.9479166666666666" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="8" hits="1" branch="false" />
@@ -4971,7 +4971,7 @@
             <line number="243" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/anti_theft_service.dart" filename="lib/services/anti_theft_service.dart" line-rate="0.1912568306010929" branch-rate="0">
+        <class name="lib/services/anti_theft_service.dart" filename="lib/services/anti_theft_service.dart" line-rate="0.1912568306010929" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="58" hits="1" branch="false" />
@@ -5159,7 +5159,7 @@
             <line number="515" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/deviation_monitor.dart" filename="lib/services/deviation_monitor.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/deviation_monitor.dart" filename="lib/services/deviation_monitor.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="13" hits="20" branch="false" />
@@ -5206,7 +5206,7 @@
             <line number="141" hits="38" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/direction_service.dart" filename="lib/services/direction_service.dart" line-rate="0.8388278388278388" branch-rate="0">
+        <class name="lib/services/direction_service.dart" filename="lib/services/direction_service.dart" line-rate="0.8388278388278388" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="27" hits="33" branch="false" />
@@ -5484,7 +5484,7 @@
             <line number="770" hits="10" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/polyline_simplifier.dart" filename="lib/services/polyline_simplifier.dart" line-rate="0.8214285714285714" branch-rate="0">
+        <class name="lib/services/polyline_simplifier.dart" filename="lib/services/polyline_simplifier.dart" line-rate="0.8214285714285714" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="13" hits="6" branch="false" />
@@ -5545,7 +5545,7 @@
             <line number="124" hits="12" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/route_cache.dart" filename="lib/services/route_cache.dart" line-rate="0.8045977011494253" branch-rate="0">
+        <class name="lib/services/route_cache.dart" filename="lib/services/route_cache.dart" line-rate="0.8045977011494253" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="31" hits="8" branch="false" />
@@ -5637,7 +5637,7 @@
             <line number="242" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/route_logger.dart" filename="lib/services/route_logger.dart" line-rate="0.031496062992125984" branch-rate="0">
+        <class name="lib/services/route_logger.dart" filename="lib/services/route_logger.dart" line-rate="0.031496062992125984" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="18" hits="8" branch="false" />
@@ -5769,7 +5769,7 @@
             <line number="272" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/eta_engine.dart" filename="lib/services/eta_engine.dart" line-rate="0.8326693227091634" branch-rate="0">
+        <class name="lib/services/eta_engine.dart" filename="lib/services/eta_engine.dart" line-rate="0.8326693227091634" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="49" hits="28" branch="false" />
@@ -6025,7 +6025,7 @@
             <line number="626" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/location_manager.dart" filename="lib/services/location_manager.dart" line-rate="0.7625" branch-rate="0">
+        <class name="lib/services/location_manager.dart" filename="lib/services/location_manager.dart" line-rate="0.7625" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="14" hits="87" branch="false" />
@@ -6190,7 +6190,7 @@
             <line number="479" hits="42" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/simulation_client.dart" filename="lib/services/simulation_client.dart" line-rate="0.10362694300518134" branch-rate="0">
+        <class name="lib/services/simulation_client.dart" filename="lib/services/simulation_client.dart" line-rate="0.10362694300518134" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="10" hits="29" branch="false" />
@@ -6388,7 +6388,7 @@
             <line number="471" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/ad_policy.dart" filename="lib/services/monetization/ad_policy.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/monetization/ad_policy.dart" filename="lib/services/monetization/ad_policy.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="61" hits="2" branch="false" />
@@ -6400,7 +6400,7 @@
             <line number="117" hits="4" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/ad_service.dart" filename="lib/services/monetization/ad_service.dart" line-rate="0.3064516129032258" branch-rate="0">
+        <class name="lib/services/monetization/ad_service.dart" filename="lib/services/monetization/ad_service.dart" line-rate="0.3064516129032258" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="22" hits="3" branch="false" />
@@ -6467,7 +6467,7 @@
             <line number="204" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/premium_service.dart" filename="lib/services/monetization/premium_service.dart" line-rate="0.9868421052631579" branch-rate="0">
+        <class name="lib/services/monetization/premium_service.dart" filename="lib/services/monetization/premium_service.dart" line-rate="0.9868421052631579" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="82" hits="9" branch="false" />
@@ -6548,7 +6548,7 @@
             <line number="311" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/purchase_backend.dart" filename="lib/services/monetization/purchase_backend.dart" line-rate="0.9230769230769231" branch-rate="0">
+        <class name="lib/services/monetization/purchase_backend.dart" filename="lib/services/monetization/purchase_backend.dart" line-rate="0.9230769230769231" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="79" hits="2" branch="false" />
@@ -6592,7 +6592,7 @@
             <line number="162" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/purchase_backend_impl.dart" filename="lib/services/monetization/purchase_backend_impl.dart" line-rate="0.472" branch-rate="0">
+        <class name="lib/services/monetization/purchase_backend_impl.dart" filename="lib/services/monetization/purchase_backend_impl.dart" line-rate="0.472" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="83" hits="1" branch="false" />
@@ -6722,13 +6722,13 @@
             <line number="386" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/navigation_service.dart" filename="lib/services/navigation_service.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/navigation_service.dart" filename="lib/services/navigation_service.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="4" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/trackingservice.dart" filename="lib/services/trackingservice.dart" line-rate="0.48451548451548454" branch-rate="0">
+        <class name="lib/services/trackingservice.dart" filename="lib/services/trackingservice.dart" line-rate="0.48451548451548454" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="72" hits="2" branch="false" />
@@ -7734,7 +7734,7 @@
             <line number="3030" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking_state_store.dart" filename="lib/services/tracking_state_store.dart" line-rate="0.8829787234042553" branch-rate="0">
+        <class name="lib/services/tracking_state_store.dart" filename="lib/services/tracking_state_store.dart" line-rate="0.8829787234042553" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="14" hits="27" branch="false" />
@@ -8021,7 +8021,7 @@
             <line number="605" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/offline_coordinator.dart" filename="lib/services/offline_coordinator.dart" line-rate="0.8888888888888888" branch-rate="0">
+        <class name="lib/services/offline_coordinator.dart" filename="lib/services/offline_coordinator.dart" line-rate="0.8888888888888888" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="13" hits="4" branch="false" />
@@ -8062,7 +8062,7 @@
             <line number="209" hits="4" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/reliability/reliability_preflight_service.dart" filename="lib/services/reliability/reliability_preflight_service.dart" line-rate="0.9393939393939394" branch-rate="0">
+        <class name="lib/services/reliability/reliability_preflight_service.dart" filename="lib/services/reliability/reliability_preflight_service.dart" line-rate="0.9393939393939394" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="115" hits="6" branch="false" />
@@ -8133,7 +8133,7 @@
             <line number="430" hits="15" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/reliability/reliability_probe_impl.dart" filename="lib/services/reliability/reliability_probe_impl.dart" line-rate="0.6296296296296297" branch-rate="0">
+        <class name="lib/services/reliability/reliability_probe_impl.dart" filename="lib/services/reliability/reliability_probe_impl.dart" line-rate="0.6296296296296297" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="22" hits="1" branch="false" />
@@ -8165,7 +8165,7 @@
             <line number="95" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/reroute_constraints.dart" filename="lib/services/reroute_constraints.dart" line-rate="0.9245283018867925" branch-rate="0">
+        <class name="lib/services/reroute_constraints.dart" filename="lib/services/reroute_constraints.dart" line-rate="0.9245283018867925" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="1" branch="false" />
@@ -8223,7 +8223,7 @@
             <line number="178" hits="4" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/reroute_policy.dart" filename="lib/services/reroute_policy.dart" line-rate="0.967741935483871" branch-rate="0">
+        <class name="lib/services/reroute_policy.dart" filename="lib/services/reroute_policy.dart" line-rate="0.967741935483871" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="8" hits="5" branch="false" />
@@ -8259,7 +8259,7 @@
             <line number="88" hits="38" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/route_session_manager.dart" filename="lib/services/route_session_manager.dart" line-rate="0.851063829787234" branch-rate="0">
+        <class name="lib/services/route_session_manager.dart" filename="lib/services/route_session_manager.dart" line-rate="0.851063829787234" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="41" hits="75" branch="false" />
@@ -8828,7 +8828,7 @@
             <line number="1375" hits="9" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/soft_lock_manager.dart" filename="lib/services/soft_lock_manager.dart" line-rate="0.8666666666666667" branch-rate="0">
+        <class name="lib/services/soft_lock_manager.dart" filename="lib/services/soft_lock_manager.dart" line-rate="0.8666666666666667" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="12" branch="false" />
@@ -8848,7 +8848,7 @@
             <line number="79" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/sensor_fusion.dart" filename="lib/services/sensor_fusion.dart" line-rate="0.5223880597014925" branch-rate="0">
+        <class name="lib/services/sensor_fusion.dart" filename="lib/services/sensor_fusion.dart" line-rate="0.5223880597014925" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="57" hits="0" branch="false" />
@@ -9054,7 +9054,7 @@
             <line number="458" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/telemetry/file_telemetry_sink.dart" filename="lib/services/telemetry/file_telemetry_sink.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/telemetry/file_telemetry_sink.dart" filename="lib/services/telemetry/file_telemetry_sink.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="34" hits="1" branch="false" />
@@ -9087,7 +9087,7 @@
             <line number="104" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/telemetry/telemetry_service.dart" filename="lib/services/telemetry/telemetry_service.dart" line-rate="0.9369369369369369" branch-rate="0">
+        <class name="lib/services/telemetry/telemetry_service.dart" filename="lib/services/telemetry/telemetry_service.dart" line-rate="0.9369369369369369" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="51" hits="31" branch="false" />
@@ -9203,7 +9203,7 @@
             <line number="334" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/telemetry/http_telemetry_sink.dart" filename="lib/services/telemetry/http_telemetry_sink.dart" line-rate="0.9714285714285714" branch-rate="0">
+        <class name="lib/services/telemetry/http_telemetry_sink.dart" filename="lib/services/telemetry/http_telemetry_sink.dart" line-rate="0.9714285714285714" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="40" hits="1" branch="false" />
@@ -9243,7 +9243,7 @@
             <line number="127" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/telemetry/telemetry_session.dart" filename="lib/services/telemetry/telemetry_session.dart" line-rate="0.6521739130434783" branch-rate="0">
+        <class name="lib/services/telemetry/telemetry_session.dart" filename="lib/services/telemetry/telemetry_session.dart" line-rate="0.6521739130434783" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="18" hits="24" branch="false" />
@@ -9271,7 +9271,7 @@
             <line number="59" hits="24" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/alarm_context_builder.dart" filename="lib/services/tracking/alarm_context_builder.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/tracking/alarm_context_builder.dart" filename="lib/services/tracking/alarm_context_builder.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="14" hits="23" branch="false" />
@@ -9288,7 +9288,7 @@
             <line number="71" hits="23" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/alarm_controller.dart" filename="lib/services/tracking/alarm_controller.dart" line-rate="0.7185863874345549" branch-rate="0">
+        <class name="lib/services/tracking/alarm_controller.dart" filename="lib/services/tracking/alarm_controller.dart" line-rate="0.7185863874345549" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="74" hits="25" branch="false" />
@@ -10057,7 +10057,7 @@
             <line number="2217" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/background_handlers.dart" filename="lib/services/tracking/background_handlers.dart" line-rate="0.5915492957746479" branch-rate="0">
+        <class name="lib/services/tracking/background_handlers.dart" filename="lib/services/tracking/background_handlers.dart" line-rate="0.5915492957746479" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="71" hits="26" branch="false" />
@@ -10204,7 +10204,7 @@
             <line number="409" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/foreground_bridge.dart" filename="lib/services/tracking/foreground_bridge.dart" line-rate="0.029197080291970802" branch-rate="0">
+        <class name="lib/services/tracking/foreground_bridge.dart" filename="lib/services/tracking/foreground_bridge.dart" line-rate="0.029197080291970802" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="45" hits="23" branch="false" />
@@ -10346,7 +10346,7 @@
             <line number="376" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/heartbeat_monitor.dart" filename="lib/services/tracking/heartbeat_monitor.dart" line-rate="0.19444444444444445" branch-rate="0">
+        <class name="lib/services/tracking/heartbeat_monitor.dart" filename="lib/services/tracking/heartbeat_monitor.dart" line-rate="0.19444444444444445" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="22" hits="26" branch="false" />
@@ -10387,7 +10387,7 @@
             <line number="104" hits="23" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/location_stream_handler.dart" filename="lib/services/tracking/location_stream_handler.dart" line-rate="0.7360703812316716" branch-rate="0">
+        <class name="lib/services/tracking/location_stream_handler.dart" filename="lib/services/tracking/location_stream_handler.dart" line-rate="0.7360703812316716" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="72" hits="25" branch="false" />
@@ -10733,7 +10733,7 @@
             <line number="901" hits="14" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/notification_updater.dart" filename="lib/services/tracking/notification_updater.dart" line-rate="0.6428571428571429" branch-rate="0">
+        <class name="lib/services/tracking/notification_updater.dart" filename="lib/services/tracking/notification_updater.dart" line-rate="0.6428571428571429" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="48" hits="23" branch="false" />
@@ -10892,7 +10892,7 @@
             <line number="497" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/snapshot_route_restorer.dart" filename="lib/services/tracking/snapshot_route_restorer.dart" line-rate="0.125" branch-rate="0">
+        <class name="lib/services/tracking/snapshot_route_restorer.dart" filename="lib/services/tracking/snapshot_route_restorer.dart" line-rate="0.125" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="0" branch="false" />
@@ -10913,7 +10913,7 @@
             <line number="62" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking_recovery_policy.dart" filename="lib/services/tracking_recovery_policy.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/tracking_recovery_policy.dart" filename="lib/services/tracking_recovery_policy.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="15" hits="3" branch="false" />
@@ -10927,7 +10927,7 @@
             <line number="43" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking_termination_policy.dart" filename="lib/services/tracking_termination_policy.dart" line-rate="0.7023809523809523" branch-rate="0">
+        <class name="lib/services/tracking_termination_policy.dart" filename="lib/services/tracking_termination_policy.dart" line-rate="0.7023809523809523" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="36" hits="8" branch="false" />
@@ -11016,7 +11016,7 @@
             <line number="254" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/ekf_test_controller.dart" filename="lib/core/ekf/ekf_test_controller.dart" line-rate="0.5512820512820513" branch-rate="0">
+        <class name="lib/core/ekf/ekf_test_controller.dart" filename="lib/core/ekf/ekf_test_controller.dart" line-rate="0.5512820512820513" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="73" hits="0" branch="false" />
@@ -11645,7 +11645,7 @@
             <line number="1573" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/ekf_metrics.dart" filename="lib/core/ekf/ekf_metrics.dart" line-rate="0.7555555555555555" branch-rate="0">
+        <class name="lib/core/ekf/ekf_metrics.dart" filename="lib/core/ekf/ekf_metrics.dart" line-rate="0.7555555555555555" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="30" hits="0" branch="false" />
@@ -11695,7 +11695,7 @@
             <line number="122" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/core/ekf/imu_replay_engine_v2.dart" filename="lib/core/ekf/imu_replay_engine_v2.dart" line-rate="0.3374880153403643" branch-rate="0">
+        <class name="lib/core/ekf/imu_replay_engine_v2.dart" filename="lib/core/ekf/imu_replay_engine_v2.dart" line-rate="0.3374880153403643" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="112" hits="1" branch="false" />
@@ -12743,7 +12743,7 @@
             <line number="2950" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/dashboard/deviation_simulation_controller.dart" filename="lib/dashboard/deviation_simulation_controller.dart" line-rate="0.6873239436619718" branch-rate="0">
+        <class name="lib/dashboard/deviation_simulation_controller.dart" filename="lib/dashboard/deviation_simulation_controller.dart" line-rate="0.6873239436619718" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="19" hits="1" branch="false" />
@@ -13103,7 +13103,7 @@
             <line number="816" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/dashboard/simulation_state.dart" filename="lib/dashboard/simulation_state.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/dashboard/simulation_state.dart" filename="lib/dashboard/simulation_state.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="30" hits="9" branch="false" />
@@ -13144,7 +13144,7 @@
             <line number="120" hits="6" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/testing/osm_graph.dart" filename="lib/services/testing/osm_graph.dart" line-rate="0.9748427672955975" branch-rate="0">
+        <class name="lib/services/testing/osm_graph.dart" filename="lib/services/testing/osm_graph.dart" line-rate="0.9748427672955975" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="34" hits="1" branch="false" />
@@ -13308,7 +13308,7 @@
             <line number="440" hits="4" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/testing/osm_loader.dart" filename="lib/services/testing/osm_loader.dart" line-rate="0.4381443298969072" branch-rate="0">
+        <class name="lib/services/testing/osm_loader.dart" filename="lib/services/testing/osm_loader.dart" line-rate="0.4381443298969072" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="24" hits="0" branch="false" />
@@ -13507,7 +13507,7 @@
             <line number="448" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/testing/pathfinder.dart" filename="lib/services/testing/pathfinder.dart" line-rate="0.9746835443037974" branch-rate="0">
+        <class name="lib/services/testing/pathfinder.dart" filename="lib/services/testing/pathfinder.dart" line-rate="0.9746835443037974" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="3" branch="false" />
@@ -13670,7 +13670,7 @@
             <line number="445" hits="9" branch="false" />
           </lines>
         </class>
-        <class name="lib/dashboard/osm_overlay_manager.dart" filename="lib/dashboard/osm_overlay_manager.dart" line-rate="0.84" branch-rate="0">
+        <class name="lib/dashboard/osm_overlay_manager.dart" filename="lib/dashboard/osm_overlay_manager.dart" line-rate="0.84" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="23" hits="1" branch="false" />
@@ -13750,7 +13750,7 @@
             <line number="209" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/dashboard/alarm_debouncer.dart" filename="lib/dashboard/alarm_debouncer.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/dashboard/alarm_debouncer.dart" filename="lib/dashboard/alarm_debouncer.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="7" hits="1" branch="false" />
@@ -13769,7 +13769,7 @@
             <line number="45" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/mobility_consent_service.dart" filename="lib/services/data_asset/mobility_consent_service.dart" line-rate="0.9642857142857143" branch-rate="0">
+        <class name="lib/services/data_asset/mobility_consent_service.dart" filename="lib/services/data_asset/mobility_consent_service.dart" line-rate="0.9642857142857143" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="46" hits="2" branch="false" />
@@ -13830,7 +13830,7 @@
             <line number="151" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/differential_privacy.dart" filename="lib/services/data_asset/differential_privacy.dart" line-rate="0.9523809523809523" branch-rate="0">
+        <class name="lib/services/data_asset/differential_privacy.dart" filename="lib/services/data_asset/differential_privacy.dart" line-rate="0.9523809523809523" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="30" hits="2" branch="false" />
@@ -13856,7 +13856,7 @@
             <line number="81" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/k_anonymity_filter.dart" filename="lib/services/data_asset/k_anonymity_filter.dart" line-rate="0.6666666666666666" branch-rate="0">
+        <class name="lib/services/data_asset/k_anonymity_filter.dart" filename="lib/services/data_asset/k_anonymity_filter.dart" line-rate="0.6666666666666666" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="0" branch="false" />
@@ -13864,7 +13864,7 @@
             <line number="25" hits="10" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/od_cell.dart" filename="lib/services/data_asset/od_cell.dart" line-rate="0.509090909090909" branch-rate="0">
+        <class name="lib/services/data_asset/od_cell.dart" filename="lib/services/data_asset/od_cell.dart" line-rate="0.509090909090909" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="29" hits="3" branch="false" />
@@ -13924,14 +13924,14 @@
             <line number="226" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/aggregate_egress_sink.dart" filename="lib/services/data_asset/aggregate_egress_sink.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/data_asset/aggregate_egress_sink.dart" filename="lib/services/data_asset/aggregate_egress_sink.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="30" hits="1" branch="false" />
             <line number="32" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/aggregate_schema.dart" filename="lib/services/data_asset/aggregate_schema.dart" line-rate="0.2857142857142857" branch-rate="0">
+        <class name="lib/services/data_asset/aggregate_schema.dart" filename="lib/services/data_asset/aggregate_schema.dart" line-rate="0.2857142857142857" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="34" hits="1" branch="false" />
@@ -13964,7 +13964,7 @@
             <line number="122" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/data_asset_pipeline.dart" filename="lib/services/data_asset/data_asset_pipeline.dart" line-rate="0.6507936507936508" branch-rate="0">
+        <class name="lib/services/data_asset/data_asset_pipeline.dart" filename="lib/services/data_asset/data_asset_pipeline.dart" line-rate="0.6507936507936508" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="37" hits="3" branch="false" />
@@ -14032,7 +14032,7 @@
             <line number="216" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/http_aggregate_egress_sink.dart" filename="lib/services/data_asset/http_aggregate_egress_sink.dart" line-rate="0.2727272727272727" branch-rate="0">
+        <class name="lib/services/data_asset/http_aggregate_egress_sink.dart" filename="lib/services/data_asset/http_aggregate_egress_sink.dart" line-rate="0.2727272727272727" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="53" hits="1" branch="false" />
@@ -14048,7 +14048,7 @@
             <line number="100" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/contribution_cap.dart" filename="lib/services/data_asset/contribution_cap.dart" line-rate="0.6136363636363636" branch-rate="0">
+        <class name="lib/services/data_asset/contribution_cap.dart" filename="lib/services/data_asset/contribution_cap.dart" line-rate="0.6136363636363636" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="31" hits="1" branch="false" />
@@ -14097,7 +14097,7 @@
             <line number="117" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/http_candidate_egress_sink.dart" filename="lib/services/data_asset/http_candidate_egress_sink.dart" line-rate="0.22727272727272727" branch-rate="0">
+        <class name="lib/services/data_asset/http_candidate_egress_sink.dart" filename="lib/services/data_asset/http_candidate_egress_sink.dart" line-rate="0.22727272727272727" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="30" hits="1" branch="false" />
@@ -14124,7 +14124,7 @@
             <line number="99" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/od_aggregator.dart" filename="lib/services/data_asset/od_aggregator.dart" line-rate="0.575" branch-rate="0">
+        <class name="lib/services/data_asset/od_aggregator.dart" filename="lib/services/data_asset/od_aggregator.dart" line-rate="0.575" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="40" hits="1" branch="false" />
@@ -14209,7 +14209,7 @@
             <line number="212" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/data_asset/station_binner.dart" filename="lib/services/data_asset/station_binner.dart" line-rate="0.7380952380952381" branch-rate="0">
+        <class name="lib/services/data_asset/station_binner.dart" filename="lib/services/data_asset/station_binner.dart" line-rate="0.7380952380952381" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="35" hits="1" branch="false" />
@@ -14256,7 +14256,7 @@
             <line number="154" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/deviation_detection.dart" filename="lib/services/deviation_detection.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/deviation_detection.dart" filename="lib/services/deviation_detection.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="12" hits="1" branch="false" />
@@ -14278,14 +14278,14 @@
             <line number="65" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/models/route_models.dart" filename="lib/models/route_models.dart" line-rate="0.5" branch-rate="0">
+        <class name="lib/models/route_models.dart" filename="lib/models/route_models.dart" line-rate="0.5" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="11" hits="0" branch="false" />
             <line number="33" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/eta_utils.dart" filename="lib/services/eta_utils.dart" line-rate="0.32142857142857145" branch-rate="0">
+        <class name="lib/services/eta_utils.dart" filename="lib/services/eta_utils.dart" line-rate="0.32142857142857145" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="2" branch="false" />
@@ -14346,7 +14346,7 @@
             <line number="116" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/gps_health_monitor.dart" filename="lib/services/gps_health_monitor.dart" line-rate="0.6" branch-rate="0">
+        <class name="lib/services/gps_health_monitor.dart" filename="lib/services/gps_health_monitor.dart" line-rate="0.6" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="39" hits="2" branch="false" />
@@ -14396,7 +14396,7 @@
             <line number="144" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/reliability/reliability_preflight_runner.dart" filename="lib/services/reliability/reliability_preflight_runner.dart" line-rate="0.6212121212121212" branch-rate="0">
+        <class name="lib/services/reliability/reliability_preflight_runner.dart" filename="lib/services/reliability/reliability_preflight_runner.dart" line-rate="0.6212121212121212" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="25" hits="1" branch="false" />
@@ -14467,7 +14467,7 @@
             <line number="222" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/oem_autostart_service.dart" filename="lib/services/oem_autostart_service.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/services/oem_autostart_service.dart" filename="lib/services/oem_autostart_service.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="0" branch="false" />
@@ -14500,7 +14500,7 @@
             <line number="135" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/ios/ios_backstop_planner.dart" filename="lib/services/ios/ios_backstop_planner.dart" line-rate="0.8780487804878049" branch-rate="0">
+        <class name="lib/services/ios/ios_backstop_planner.dart" filename="lib/services/ios/ios_backstop_planner.dart" line-rate="0.8780487804878049" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="52" hits="2" branch="false" />
@@ -14546,7 +14546,7 @@
             <line number="265" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/monetization/post_arrival_service.dart" filename="lib/services/monetization/post_arrival_service.dart" line-rate="0.9166666666666666" branch-rate="0">
+        <class name="lib/services/monetization/post_arrival_service.dart" filename="lib/services/monetization/post_arrival_service.dart" line-rate="0.9166666666666666" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="38" hits="1" branch="false" />
@@ -14623,7 +14623,7 @@
             <line number="306" hits="6" branch="false" />
           </lines>
         </class>
-        <class name="lib/screens/monetization/post_arrival_screen.dart" filename="lib/screens/monetization/post_arrival_screen.dart" line-rate="0.5855263157894737" branch-rate="0">
+        <class name="lib/screens/monetization/post_arrival_screen.dart" filename="lib/screens/monetization/post_arrival_screen.dart" line-rate="0.5855263157894737" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="47" hits="1" branch="false" />
@@ -14780,7 +14780,7 @@
             <line number="450" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/journey_share_service.dart" filename="lib/services/share/journey_share_service.dart" line-rate="0.6549295774647887" branch-rate="0">
+        <class name="lib/services/share/journey_share_service.dart" filename="lib/services/share/journey_share_service.dart" line-rate="0.6549295774647887" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="34" hits="2" branch="false" />
@@ -14927,7 +14927,7 @@
             <line number="403" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/share_link_builder.dart" filename="lib/services/share/share_link_builder.dart" line-rate="0.9705882352941176" branch-rate="0">
+        <class name="lib/services/share/share_link_builder.dart" filename="lib/services/share/share_link_builder.dart" line-rate="0.9705882352941176" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="16" hits="0" branch="false" />
@@ -14966,7 +14966,7 @@
             <line number="107" hits="6" branch="false" />
           </lines>
         </class>
-        <class name="lib/widgets/post_arrival_card.dart" filename="lib/widgets/post_arrival_card.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/widgets/post_arrival_card.dart" filename="lib/widgets/post_arrival_card.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="20" hits="3" branch="false" />
@@ -15003,7 +15003,7 @@
             <line number="84" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/journey_share_models.dart" filename="lib/services/share/journey_share_models.dart" line-rate="0.8953488372093024" branch-rate="0">
+        <class name="lib/services/share/journey_share_models.dart" filename="lib/services/share/journey_share_models.dart" line-rate="0.8953488372093024" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="32" hits="6" branch="false" />
@@ -15094,7 +15094,7 @@
             <line number="280" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/live_share_backend.dart" filename="lib/services/share/live_share_backend.dart" line-rate="0.7121212121212122" branch-rate="0">
+        <class name="lib/services/share/live_share_backend.dart" filename="lib/services/share/live_share_backend.dart" line-rate="0.7121212121212122" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="75" hits="1" branch="false" />
@@ -15165,7 +15165,7 @@
             <line number="227" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/pending_ack_manager.dart" filename="lib/services/pending_ack_manager.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/pending_ack_manager.dart" filename="lib/services/pending_ack_manager.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="24" hits="1" branch="false" />
@@ -15204,7 +15204,7 @@
             <line number="140" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/places_service.dart" filename="lib/services/places_service.dart" line-rate="0.8709677419354839" branch-rate="0">
+        <class name="lib/services/places_service.dart" filename="lib/services/places_service.dart" line-rate="0.8709677419354839" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="15" hits="2" branch="false" />
@@ -15240,7 +15240,7 @@
             <line number="94" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/screens/otherimpservices/recent_locations_service.dart" filename="lib/screens/otherimpservices/recent_locations_service.dart" line-rate="0.7592592592592593" branch-rate="0">
+        <class name="lib/screens/otherimpservices/recent_locations_service.dart" filename="lib/screens/otherimpservices/recent_locations_service.dart" line-rate="0.7592592592592593" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="18" hits="1" branch="false" />
@@ -15299,7 +15299,7 @@
             <line number="123" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/screens/report_problem_screen.dart" filename="lib/screens/report_problem_screen.dart" line-rate="0.7727272727272727" branch-rate="0">
+        <class name="lib/screens/report_problem_screen.dart" filename="lib/screens/report_problem_screen.dart" line-rate="0.7727272727272727" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="14" hits="1" branch="false" />
@@ -15326,7 +15326,7 @@
             <line number="69" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/telemetry/telemetry_report_builder.dart" filename="lib/services/telemetry/telemetry_report_builder.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/services/telemetry/telemetry_report_builder.dart" filename="lib/services/telemetry/telemetry_report_builder.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="20" hits="0" branch="false" />
@@ -15362,7 +15362,7 @@
             <line number="75" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/saved_route.dart" filename="lib/services/saved_route.dart" line-rate="0.8088235294117647" branch-rate="0">
+        <class name="lib/services/saved_route.dart" filename="lib/services/saved_route.dart" line-rate="0.8088235294117647" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="55" hits="1" branch="false" />
@@ -15435,7 +15435,7 @@
             <line number="186" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/saved_routes_service.dart" filename="lib/services/saved_routes_service.dart" line-rate="0.7802197802197802" branch-rate="0">
+        <class name="lib/services/saved_routes_service.dart" filename="lib/services/saved_routes_service.dart" line-rate="0.7802197802197802" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="39" hits="1" branch="false" />
@@ -15531,7 +15531,7 @@
             <line number="261" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/metro_stop_service.dart" filename="lib/services/metro_stop_service.dart" line-rate="0.025974025974025976" branch-rate="0">
+        <class name="lib/services/metro_stop_service.dart" filename="lib/services/metro_stop_service.dart" line-rate="0.025974025974025976" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="11" hits="1" branch="false" />
@@ -15613,7 +15613,7 @@
             <line number="212" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/followed_rides_service.dart" filename="lib/services/share/followed_rides_service.dart" line-rate="0.823943661971831" branch-rate="0">
+        <class name="lib/services/share/followed_rides_service.dart" filename="lib/services/share/followed_rides_service.dart" line-rate="0.823943661971831" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="56" hits="1" branch="false" />
@@ -15760,7 +15760,7 @@
             <line number="379" hits="3" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/guardian_service.dart" filename="lib/services/share/guardian_service.dart" line-rate="0.75" branch-rate="0">
+        <class name="lib/services/share/guardian_service.dart" filename="lib/services/share/guardian_service.dart" line-rate="0.75" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="36" hits="1" branch="false" />
@@ -15897,7 +15897,7 @@
             <line number="392" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/post_alarm_multicast.dart" filename="lib/services/tracking/post_alarm_multicast.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/tracking/post_alarm_multicast.dart" filename="lib/services/tracking/post_alarm_multicast.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="35" hits="3" branch="false" />
@@ -15916,7 +15916,7 @@
             <line number="69" hits="4" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/share/share_deep_link.dart" filename="lib/services/share/share_deep_link.dart" line-rate="0.7777777777777778" branch-rate="0">
+        <class name="lib/services/share/share_deep_link.dart" filename="lib/services/share/share_deep_link.dart" line-rate="0.7777777777777778" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="18" hits="1" branch="false" />
@@ -15948,7 +15948,7 @@
             <line number="75" hits="2" branch="false" />
           </lines>
         </class>
-        <class name="lib/widgets/share/share_journey_action.dart" filename="lib/widgets/share/share_journey_action.dart" line-rate="0.42857142857142855" branch-rate="0">
+        <class name="lib/widgets/share/share_journey_action.dart" filename="lib/widgets/share/share_journey_action.dart" line-rate="0.42857142857142855" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="26" hits="1" branch="false" />
@@ -15981,7 +15981,7 @@
             <line number="103" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/widgets/share/share_sheet.dart" filename="lib/widgets/share/share_sheet.dart" line-rate="0.7291666666666666" branch-rate="0">
+        <class name="lib/widgets/share/share_sheet.dart" filename="lib/widgets/share/share_sheet.dart" line-rate="0.7291666666666666" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="1" branch="false" />
@@ -16034,7 +16034,7 @@
             <line number="123" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/test_service_instance.dart" filename="lib/services/test_service_instance.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/services/test_service_instance.dart" filename="lib/services/test_service_instance.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="9" hits="0" branch="false" />
@@ -16052,7 +16052,7 @@
             <line number="33" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/testing/harness_runner.dart" filename="lib/testing/harness_runner.dart" line-rate="0.5508196721311476" branch-rate="0">
+        <class name="lib/testing/harness_runner.dart" filename="lib/testing/harness_runner.dart" line-rate="0.5508196721311476" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="73" hits="0" branch="false" />
@@ -16362,7 +16362,7 @@
             <line number="761" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/tracking/arrival_hooks.dart" filename="lib/services/tracking/arrival_hooks.dart" line-rate="0.7777777777777778" branch-rate="0">
+        <class name="lib/services/tracking/arrival_hooks.dart" filename="lib/services/tracking/arrival_hooks.dart" line-rate="0.7777777777777778" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="51" hits="0" branch="false" />
@@ -16376,7 +16376,7 @@
             <line number="119" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/widget/widget_arm_handler.dart" filename="lib/services/widget/widget_arm_handler.dart" line-rate="0.4875" branch-rate="0">
+        <class name="lib/services/widget/widget_arm_handler.dart" filename="lib/services/widget/widget_arm_handler.dart" line-rate="0.4875" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="49" hits="2" branch="false" />
@@ -16461,13 +16461,13 @@
             <line number="294" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/widget/widget_render_state.dart" filename="lib/services/widget/widget_render_state.dart" line-rate="1.0" branch-rate="0">
+        <class name="lib/services/widget/widget_render_state.dart" filename="lib/services/widget/widget_render_state.dart" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="30" hits="1" branch="false" />
           </lines>
         </class>
-        <class name="lib/widgets/monetization/pro_gate.dart" filename="lib/widgets/monetization/pro_gate.dart" line-rate="0.0" branch-rate="0">
+        <class name="lib/widgets/monetization/pro_gate.dart" filename="lib/widgets/monetization/pro_gate.dart" line-rate="0.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="34" hits="0" branch="false" />
@@ -16486,7 +16486,7 @@
             <line number="68" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="lib/services/widget/home_widget_bridge.dart" filename="lib/services/widget/home_widget_bridge.dart" line-rate="0.08737864077669903" branch-rate="0">
+        <class name="lib/services/widget/home_widget_bridge.dart" filename="lib/services/widget/home_widget_bridge.dart" line-rate="0.08737864077669903" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="47" hits="1" branch="false" />
@@ -16596,9 +16596,9 @@
         </class>
       </classes>
     </package>
-    <package name="express" line-rate="0.7266187050359713" branch-rate="0">
+    <package name="express" line-rate="0.7266187050359713" branch-rate="0" complexity="0">
       <classes>
-        <class name="geowake-server/src/server.js" filename="geowake-server/src/server.js" line-rate="0.582089552238806" branch-rate="0">
+        <class name="geowake-server/src/server.js" filename="geowake-server/src/server.js" line-rate="0.582089552238806" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="7" branch="false" />
@@ -16670,7 +16670,7 @@
             <line number="191" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/config/config.js" filename="geowake-server/src/config/config.js" line-rate="0.5555555555555556" branch-rate="0">
+        <class name="geowake-server/src/config/config.js" filename="geowake-server/src/config/config.js" line-rate="0.5555555555555556" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="8" branch="false" />
@@ -16684,7 +16684,7 @@
             <line number="102" hits="8" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/controllers/aggregateController.js" filename="geowake-server/src/controllers/aggregateController.js" line-rate="0.17142857142857143" branch-rate="0">
+        <class name="geowake-server/src/controllers/aggregateController.js" filename="geowake-server/src/controllers/aggregateController.js" line-rate="0.17142857142857143" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="11" hits="7" branch="false" />
@@ -16724,7 +16724,7 @@
             <line number="85" hits="0" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/controllers/authController.js" filename="geowake-server/src/controllers/authController.js" line-rate="0.8571428571428571" branch-rate="0">
+        <class name="geowake-server/src/controllers/authController.js" filename="geowake-server/src/controllers/authController.js" line-rate="0.8571428571428571" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="1" hits="7" branch="false" />
@@ -16743,7 +16743,7 @@
             <line number="60" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/controllers/mapsController.js" filename="geowake-server/src/controllers/mapsController.js" line-rate="0.8333333333333334" branch-rate="0">
+        <class name="geowake-server/src/controllers/mapsController.js" filename="geowake-server/src/controllers/mapsController.js" line-rate="0.8333333333333334" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="1" hits="8" branch="false" />
@@ -16796,7 +16796,7 @@
             <line number="142" hits="8" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/middleware/auth.js" filename="geowake-server/src/middleware/auth.js" line-rate="0.8095238095238095" branch-rate="0">
+        <class name="geowake-server/src/middleware/auth.js" filename="geowake-server/src/middleware/auth.js" line-rate="0.8095238095238095" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="7" branch="false" />
@@ -16822,7 +16822,7 @@
             <line number="77" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/middleware/mapsGuard.js" filename="geowake-server/src/middleware/mapsGuard.js" line-rate="1.0" branch-rate="0">
+        <class name="geowake-server/src/middleware/mapsGuard.js" filename="geowake-server/src/middleware/mapsGuard.js" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="17" hits="7" branch="false" />
@@ -16848,7 +16848,7 @@
             <line number="64" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/middleware/security.js" filename="geowake-server/src/middleware/security.js" line-rate="0.7777777777777778" branch-rate="0">
+        <class name="geowake-server/src/middleware/security.js" filename="geowake-server/src/middleware/security.js" line-rate="0.7777777777777778" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="7" branch="false" />
@@ -16871,7 +16871,7 @@
             <line number="79" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/routes/aggregate.js" filename="geowake-server/src/routes/aggregate.js" line-rate="1.0" branch-rate="0">
+        <class name="geowake-server/src/routes/aggregate.js" filename="geowake-server/src/routes/aggregate.js" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="8" hits="7" branch="false" />
@@ -16886,7 +16886,7 @@
             <line number="29" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/routes/auth.js" filename="geowake-server/src/routes/auth.js" line-rate="1.0" branch-rate="0">
+        <class name="geowake-server/src/routes/auth.js" filename="geowake-server/src/routes/auth.js" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="7" branch="false" />
@@ -16897,7 +16897,7 @@
             <line number="11" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/routes/billing.js" filename="geowake-server/src/routes/billing.js" line-rate="0.7894736842105263" branch-rate="0">
+        <class name="geowake-server/src/routes/billing.js" filename="geowake-server/src/routes/billing.js" line-rate="0.7894736842105263" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="1" hits="7" branch="false" />
@@ -16921,7 +16921,7 @@
             <line number="54" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/routes/legal.js" filename="geowake-server/src/routes/legal.js" line-rate="1.0" branch-rate="0">
+        <class name="geowake-server/src/routes/legal.js" filename="geowake-server/src/routes/legal.js" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="21" hits="7" branch="false" />
@@ -16936,7 +16936,7 @@
             <line number="155" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/routes/maps.js" filename="geowake-server/src/routes/maps.js" line-rate="1.0" branch-rate="0">
+        <class name="geowake-server/src/routes/maps.js" filename="geowake-server/src/routes/maps.js" line-rate="1.0" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="2" hits="7" branch="false" />
@@ -16953,7 +16953,7 @@
             <line number="27" hits="7" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/services/playBillingVerifier.js" filename="geowake-server/src/services/playBillingVerifier.js" line-rate="0.1724137931034483" branch-rate="0">
+        <class name="geowake-server/src/services/playBillingVerifier.js" filename="geowake-server/src/services/playBillingVerifier.js" line-rate="0.1724137931034483" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="1" hits="6" branch="false" />
@@ -16987,7 +16987,7 @@
             <line number="61" hits="6" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/utils/mergeEngine.js" filename="geowake-server/src/utils/mergeEngine.js" line-rate="0.9625" branch-rate="0">
+        <class name="geowake-server/src/utils/mergeEngine.js" filename="geowake-server/src/utils/mergeEngine.js" line-rate="0.9625" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="12" hits="8" branch="false" />
@@ -17072,7 +17072,7 @@
             <line number="253" hits="8" branch="false" />
           </lines>
         </class>
-        <class name="geowake-server/src/utils/quotaTracker.js" filename="geowake-server/src/utils/quotaTracker.js" line-rate="0.7777777777777778" branch-rate="0">
+        <class name="geowake-server/src/utils/quotaTracker.js" filename="geowake-server/src/utils/quotaTracker.js" line-rate="0.7777777777777778" branch-rate="0" complexity="0">
           <methods />
           <lines>
             <line number="20" hits="7" branch="false" />

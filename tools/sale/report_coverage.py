@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+from datetime import datetime
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -84,7 +85,9 @@ def publish(verification_dir, out, ci_url=None, job_summary=None):
     root = ET.Element('coverage', {'line-rate': str(totals['covered'] / totals['total']),
         'branch-rate': '0', 'lines-covered': str(totals['covered']),
         'lines-valid': str(totals['total']), 'branches-covered': '0',
-        'branches-valid': '0', 'version': 'geowake-line-coverage-1'})
+        'branches-valid': '0', 'complexity': '0',
+        'timestamp': str(int(datetime.fromisoformat(receipt['finished_at']).timestamp())),
+        'version': 'geowake-line-coverage-1'})
     ET.SubElement(ET.SubElement(root, 'sources'), 'source').text = '.'
     packages = ET.SubElement(root, 'packages')
     for name in projects:
@@ -92,13 +95,13 @@ def publish(verification_dir, out, ci_url=None, job_summary=None):
             'lib/' if name == 'flutter' else 'geowake-server/')]
         c = counts(records)
         package = ET.SubElement(packages, 'package', {'name': name,
-            'line-rate': str(c['covered'] / c['total']), 'branch-rate': '0'})
+            'line-rate': str(c['covered'] / c['total']), 'branch-rate': '0', 'complexity': '0'})
         classes = ET.SubElement(package, 'classes')
         for record in records:
             c = counts([record])
             cls = ET.SubElement(classes, 'class', {'name': record['path'],
                 'filename': record['path'], 'line-rate': str(c['covered'] / c['total']),
-                'branch-rate': '0'})
+                'branch-rate': '0', 'complexity': '0'})
             ET.SubElement(cls, 'methods')
             lines = ET.SubElement(cls, 'lines')
             for number, hits in sorted(record['lines'].items()):
@@ -115,6 +118,7 @@ def publish(verification_dir, out, ci_url=None, job_summary=None):
         markdown.append(f'| {name} | {c["covered"]} / {c["total"]} | {c["pct"]:.2f}% | {data["instrumented_files"]} |')
     markdown.extend(['', f'{len(receipt["excluded_test_files"])} dataset-dependent test files are explicitly excluded.',
         summary['scope'], 'Cobertura contains line coverage only; see LCOV for the original branch/function records.',
+        'Cobertura complexity=0 is a required format placeholder; complexity was not measured by this conversion.',
         '', f'CI receipt: {ci_url}' if ci_url else 'See the verification.json receipt beside this report.', ''])
     text = '\n'.join(markdown)
     (out / 'SUMMARY.md').write_text(text)
