@@ -2,7 +2,7 @@ claim,status,evidence,limit
 Android-first Flutter destination alarm,code verified,lib/services/trackingservice.dart,Physical-device reliability not established by source
 Core alarm remains free,code and test evidence,lib/services/monetization/premium_service.dart,Optional premium integrations have separate completion requirements
 1423 visible Flutter tests pass,code-profile verification 8b96ef8,docs/sale/verification/verification.json,8 dataset-dependent files excluded; 210 hidden events excluded; 3 placeholder cases included
-64.92 percent Flutter line coverage,code-profile measurement,docs/sale/verification/coverage-lcov.info,10338/15923 instrumented lines in133 files; not whole-repository coverage
+64.92 percent Flutter line coverage,code-profile measurement,docs/sale/verification/coverage-lcov.info,10337/15923 instrumented lines in133 files; not whole-repository coverage
 1466 visible Flutter tests pass before data exclusions,captured-source verification 49a98bc,docs/sale/verification/pre-exclusion-receipt.json,Different inputs; not a full export pass; raw full-data logs withheld
 61 Express backend tests pass,code-profile verification,docs/sale/verification/backend-tests.json,Mocks and dummy credentials; no live Maps or Play validation
 16 share backend tests pass,code-profile verification,docs/sale/verification/share-tests.log,Local single-process tests
@@ -10,10 +10,12 @@ Never-late reachability,conditional mathematical and simulation evidence,lib/cor
 Above-ground mostly works,founder report,docs/sale/FOUNDER_CLARIFICATIONS.jsonl,No measured field success rate claimed
 Underground positioning remains incomplete,founder report and research notes,docs/research/underground/VALIDATION_GAPS.md,Stop anchoring remained experimental; no robust calibrated underground dataset offered
 203 selected original commits map to147 sanitized identities,Git mapping,docs/sale/ORIGINAL_TO_EXPORT_COMMITS.txt,New dated packaging commits are additional; sanitized commits are not original hashes
-Solo-led development with AI assistance,founder report and Git metadata,docs/sale/BUYER_BRIEF.md,Contributor entries are not a team-size claim
+Solo-led development,founder report and Git metadata,docs/sale/FOUNDER_CLARIFICATIONS.jsonl,Contributor entries are not a team-size claim; authoring tools do not imply additional developers
 Replay motion is synthetic,fixture declarations,test/fixtures/replay,Not recorded field rides; geographic generation provenance is not fully established
 Mobility data product exists,not established,lib/services/data_asset/data_asset_config.dart,Egress disabled; no saleable user dataset or data revenue claimed
 Demo shows UI and notifications,recording inspected,docs/sale/demo/README.md,Historical development simulation; original silent audio; recorded commit identity unknown
 DataVendor range34387 to38155 USD,platform estimate only,DataVendor estimate dated2026-09-15,Older repository scope; not an offer; fees and transaction unit require confirmation
 Historical ZUPT regression fails before and passes after fix,verified standalone source-level pair,evaluation/zupt-degraded-gating/manifest.json,Same5original tests;2intended pre-fix failures; no raw field replay
 Historical concurrent restore regression fails before and passes after fix,verified standalone source-level pair,evaluation/purchase-restore/manifest.json,Same3original tests;1intended pre-fix failure; fake store platform; not live billing
+65.08 percent Flutter line coverage,GitHub code-profile measurement at0752b78,coverage/coverage-summary.json,10362/15923 instrumented lines in133 files; 8 dataset-dependent test files excluded
+72.66 percent Express line coverage,GitHub code-profile measurement at0752b78,coverage/coverage-summary.json,303/417 instrumented lines in16 files; sharing coverage not measured

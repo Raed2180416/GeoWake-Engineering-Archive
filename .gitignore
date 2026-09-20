@@ -22,8 +22,16 @@
 .pub/
 .pub-cache/
 /build/
-/coverage/
 **/coverage/
+# Pinned, documented verification evidence for archive consumers. Fresh CI
+# reports are separate artifacts; do not silently refresh this snapshot.
+!/coverage/
+/coverage/*
+!/coverage/README.md
+!/coverage/SUMMARY.md
+!/coverage/lcov.info
+!/coverage/cobertura.xml
+!/coverage/coverage-summary.json
 
 # Android specific
 *.apk

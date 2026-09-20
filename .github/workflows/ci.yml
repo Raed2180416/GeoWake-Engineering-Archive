@@ -30,6 +30,18 @@ jobs:
           cache-dependency-path: geowake-server/package-lock.json
       - name: Available code, analysis and both backends
         run: python3 tools/sale/verify.py --profile code --out "$RUNNER_TEMP/geowake-verification"
+      - name: Publish measured Flutter and Express line coverage
+        run: >-
+          python3 tools/sale/report_coverage.py
+          --verification-dir "$RUNNER_TEMP/geowake-verification"
+          --out "$RUNNER_TEMP/geowake-verification/coverage"
+          --ci-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          --job-summary "$GITHUB_STEP_SUMMARY"
+      - name: Preserve standard coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: ${{ runner.temp }}/geowake-verification/coverage
       - name: Preserve the exact check receipt
         if: always()
         uses: actions/upload-artifact@v4
