@@ -34,7 +34,7 @@ establish equivalent runtime behavior.
 | Alternative maps-provider migration | Design contract and probe | Supporting systems; no completed deployment claimed |
 | Route memory and home widget | Implemented foreground handoff | Journey; widget action can open normal app arming flow |
 | Localization | Five ARB inputs | Supporting systems; English, Hindi, Bengali, Tamil, Telugu |
-| Simulation dashboard, replay, clock and scale tooling | Implemented development tools | Guides and test index; synthetic simulations differ from recorded rides |
+| Simulation dashboard, replay, clock and scale tooling | Implemented development tools | Guides and test index; dataset-dependent route/scale cases are explicitly excluded in the export code profile |
 | Marketing site, pricing, launch and expansion plans | Historical context | [Historical index](../archive/README.md); not current commitments or revenue evidence |
 | Friend-phone sensor recordings | Separate optional candidate | Rights and exclusions; transformed local bundle, not included in core code grant |
 

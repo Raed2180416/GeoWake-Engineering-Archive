@@ -1,3 +1,5 @@
+> Earlier audit snapshot, retained as a curation record. Its action items were addressed by the current buyer index, historical labels, exclusion manifest and two verified exercises. It is not a current task list. See EXPORT_SCOPE.md.
+
 # GeoWake document curation for the AI-training archive
 
 Audited 20 September 2026 from the sale worktree at /home/developer/.codex/worktrees/geowake-sale-20260920. The enumeration was taken after capture of existing local work, when HEAD was 7c10fb0d28236056577470ce4095005eced9267c. The original committed base remains 440e9003cbd3ec7ec78cea0accc56df9cb7d9b2e. This is a documentation and delivery classification, not an edit to product source or a claim that the buyer archive is cleared for transfer.

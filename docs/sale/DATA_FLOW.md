@@ -55,7 +55,7 @@ flowchart TD
 | OD contribution | Completed-trip endpoints and time after current-version consent | Station binning → local date/hour/day type → cap/reserve → aggregate cell | Local Hive; withdrawal erases local aggregate state and records erasure |
 | Release candidate | Cell key, noisy candidate count, contributor count and method metadata | Candidate sink interface and backend merge scaffold | Default no-op sinks/egress-disabled configuration; not a released population dataset |
 | Released aggregate | Backend cell/device sets; suppression/noise output | Flow, catchment and summary responses | In-memory backend methodology; no live aggregation business or formal privacy proof is included |
-| Synthetic fixtures | Generator-authored GPS/IMU scenarios, with `synthetic: true` | Replay, scale and deterministic regression tests | Included as identified synthetic inputs; city names are scenario labels |
+| Synthetic fixtures | Generator-authored GPS/IMU scenarios, with `synthetic: true` | Replay, scale and deterministic regression tests | Replay inputs retained with provenance caveat; scale inputs withheld because their geography came from the mixed catalog |
 | Experimental recordings | Phone sensor CSVs and related analysis inputs; founder says friends' phones | Offline replay, synchronization, stop/position experiments | Separate optional bundle; manifest explains capture gaps and privacy transformations; not part of default code license |
 
 ## Critical invariants across the boundaries
