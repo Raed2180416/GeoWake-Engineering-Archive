@@ -1,5 +1,5 @@
 npm notice run geowake-server@1.0.0 test
-npm notice run jest --runInBand --coverage --json --outputFile=/home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/export-code-verification/backend-tests.json
+npm notice run jest --runInBand --coverage --json --outputFile=/home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/delivery-final-verification/backend-tests.json
 PASS test/maps.test.js
   ● Console
 
@@ -16,86 +16,86 @@ PASS test/maps.test.js
 
       at error (src/controllers/mapsController.js:30:13)
 
-🚀 POST /api/auth/token 200 344 - 2.985 ms
-🚀 POST /api/maps/directions 401 92 - 0.415 ms
-🚀 POST /api/maps/autocomplete 401 92 - 0.189 ms
-🚀 POST /api/maps/place-details 401 92 - 0.138 ms
-🚀 POST /api/maps/geocode 401 92 - 0.125 ms
-🚀 POST /api/maps/nearby-search 401 92 - 0.113 ms
-🚀 POST /api/maps/directions 200 15 - 1.282 ms
-🚀 POST /api/maps/directions 200 15 - 0.357 ms
-🚀 POST /api/maps/directions 200 15 - 0.314 ms
-🚀 POST /api/maps/autocomplete 200 15 - 0.407 ms
-🚀 POST /api/maps/autocomplete 200 15 - 0.323 ms
-🚀 POST /api/maps/autocomplete 200 15 - 0.243 ms
-🚀 POST /api/maps/place-details 200 15 - 0.344 ms
-🚀 POST /api/maps/geocode 200 15 - 0.370 ms
-🚀 POST /api/maps/geocode 200 15 - 0.352 ms
-🚀 POST /api/maps/nearby-search 200 15 - 0.383 ms
-🚀 POST /api/maps/nearby-search 200 15 - 0.268 ms
-🚀 POST /api/maps/directions 200 15 - 0.230 ms
-🚀 POST /api/maps/directions 200 15 - 0.253 ms
-🚀 POST /api/maps/autocomplete 200 15 - 0.245 ms
-🚀 POST /api/maps/autocomplete 200 15 - 0.229 ms
-🚀 POST /api/maps/directions 400 64 - 0.232 ms
-🚀 POST /api/maps/directions 502 114 - 1.459 ms
+🚀 POST /api/auth/token 200 344 - 3.528 ms
+🚀 POST /api/maps/directions 401 92 - 0.509 ms
+🚀 POST /api/maps/autocomplete 401 92 - 0.166 ms
+🚀 POST /api/maps/place-details 401 92 - 0.139 ms
+🚀 POST /api/maps/geocode 401 92 - 0.132 ms
+🚀 POST /api/maps/nearby-search 401 92 - 0.104 ms
+🚀 POST /api/maps/directions 200 15 - 1.238 ms
+🚀 POST /api/maps/directions 200 15 - 0.322 ms
+🚀 POST /api/maps/directions 200 15 - 0.397 ms
+🚀 POST /api/maps/autocomplete 200 15 - 0.412 ms
+🚀 POST /api/maps/autocomplete 200 15 - 0.305 ms
+🚀 POST /api/maps/autocomplete 200 15 - 0.473 ms
+🚀 POST /api/maps/place-details 200 15 - 0.430 ms
+🚀 POST /api/maps/geocode 200 15 - 0.403 ms
+🚀 POST /api/maps/geocode 200 15 - 0.614 ms
+🚀 POST /api/maps/nearby-search 200 15 - 0.442 ms
+🚀 POST /api/maps/nearby-search 200 15 - 0.253 ms
+🚀 POST /api/maps/directions 200 15 - 0.281 ms
+🚀 POST /api/maps/directions 200 15 - 0.353 ms
+🚀 POST /api/maps/autocomplete 200 15 - 0.272 ms
+🚀 POST /api/maps/autocomplete 200 15 - 0.207 ms
+🚀 POST /api/maps/directions 400 64 - 0.267 ms
+🚀 POST /api/maps/directions 502 114 - 1.304 ms
 PASS test/auth.test.js
-🚀 POST /api/auth/token 200 344 - 0.644 ms
-🚀 POST /api/auth/token 401 73 - 0.133 ms
-🚀 POST /api/auth/token 401 73 - 0.085 ms
+🚀 POST /api/auth/token 200 344 - 0.700 ms
+🚀 POST /api/auth/token 401 73 - 0.139 ms
+🚀 POST /api/auth/token 401 73 - 0.108 ms
 🚀 POST /api/auth/token 401 73 - 0.088 ms
-🚀 POST /api/auth/token 200 344 - 0.244 ms
-🚀 POST /api/auth/token 200 344 - 0.177 ms
-🚀 POST /api/auth/token 200 344 - 0.155 ms
-🚀 POST /api/auth/token 200 344 - 0.196 ms
-🚀 POST /api/auth/token 200 344 - 0.163 ms
-🚀 POST /api/auth/token 200 344 - 0.178 ms
-🚀 POST /api/maps/directions 200 15 - 0.394 ms
-🚀 POST /api/maps/directions 401 92 - 0.084 ms
+🚀 POST /api/auth/token 200 344 - 0.381 ms
+🚀 POST /api/auth/token 200 344 - 0.216 ms
+🚀 POST /api/auth/token 200 344 - 0.156 ms
+🚀 POST /api/auth/token 200 344 - 0.169 ms
+🚀 POST /api/auth/token 200 344 - 0.149 ms
+🚀 POST /api/auth/token 200 344 - 0.209 ms
+🚀 POST /api/maps/directions 200 15 - 0.363 ms
+🚀 POST /api/maps/directions 401 92 - 0.102 ms
 🚀 POST /api/maps/directions 401 49 - 0.139 ms
-🚀 POST /api/maps/directions 401 92 - 0.066 ms
-🚀 GET / 200 146 - 0.191 ms
-🚀 GET /api/health 200 132 - 0.147 ms
-🚀 GET /api/nonexistent 404 72 - 0.167 ms
-🚀 POST /api/invalid/endpoint 404 77 - 0.090 ms
+🚀 POST /api/maps/directions 401 92 - 0.130 ms
+🚀 GET / 200 146 - 0.197 ms
+🚀 GET /api/health 200 132 - 0.154 ms
+🚀 GET /api/nonexistent 404 72 - 0.224 ms
+🚀 POST /api/invalid/endpoint 404 77 - 0.104 ms
+🚀 POST /api/auth/token 200 344 - 0.597 ms
 PASS test/cost_protection_quota.test.js
 PASS test/aggregate.test.js
-🚀 POST /api/auth/token 200 344 - 0.644 ms
-🚀 POST /api/maps/directions 200 15 - 0.399 ms
-🚀 POST /api/maps/directions 200 15 - 0.260 ms
-🚀 POST /api/maps/directions 429 146 - 0.183 ms
-🚀 POST /api/auth/token 200 344 - 0.236 ms
-🚀 POST /api/auth/token 200 344 - 0.166 ms
-🚀 POST /api/maps/directions 200 15 - 0.194 ms
-🚀 POST /api/maps/directions 200 15 - 0.175 ms
-🚀 POST /api/maps/directions 429 146 - 0.181 ms
-🚀 POST /api/maps/directions 200 15 - 0.291 ms
-🚀 POST /api/auth/token 200 344 - 0.197 ms
-🚀 POST /api/maps/geocode 200 15 - 0.224 ms
-🚀 POST /api/auth/token 200 344 - 0.167 ms
-🚀 POST /api/maps/geocode 200 15 - 0.185 ms
-🚀 POST /api/auth/token 200 344 - 0.157 ms
-🚀 POST /api/maps/geocode 200 15 - 0.178 ms
-🚀 POST /api/auth/token 200 344 - 0.169 ms
-🚀 POST /api/maps/geocode 200 15 - 0.386 ms
-🚀 POST /api/auth/token 200 344 - 0.246 ms
-🚀 POST /api/maps/geocode 200 15 - 0.286 ms
-🚀 POST /api/auth/token 200 344 - 0.237 ms
-🚀 POST /api/maps/geocode 429 172 - 0.237 ms
-🚀 POST /api/auth/token 200 344 - 0.289 ms
-🚀 POST /api/maps/directions 200 15 - 0.226 ms
-🚀 POST /api/auth/token 200 344 - 0.215 ms
-🚀 POST /api/maps/directions 200 15 - 0.243 ms
-🚀 POST /api/auth/token 200 344 - 0.151 ms
-🚀 POST /api/maps/directions 200 15 - 0.175 ms
-🚀 POST /api/auth/token 200 344 - 0.236 ms
-🚀 POST /api/maps/directions 200 15 - 0.268 ms
-🚀 POST /api/auth/token 200 344 - 0.165 ms
-🚀 POST /api/maps/directions 200 15 - 0.196 ms
-🚀 POST /api/auth/token 200 344 - 0.148 ms
-🚀 POST /api/maps/directions 429 174 - 0.171 ms
-🚀 POST /api/auth/token 200 344 - 0.157 ms
-🚀 POST /api/maps/geocode 200 15 - 0.299 ms
+🚀 POST /api/maps/directions 200 15 - 0.506 ms
+🚀 POST /api/maps/directions 200 15 - 0.337 ms
+🚀 POST /api/maps/directions 429 146 - 0.234 ms
+🚀 POST /api/auth/token 200 344 - 0.279 ms
+🚀 POST /api/auth/token 200 344 - 0.238 ms
+🚀 POST /api/maps/directions 200 15 - 0.254 ms
+🚀 POST /api/maps/directions 200 15 - 0.242 ms
+🚀 POST /api/maps/directions 429 146 - 0.188 ms
+🚀 POST /api/maps/directions 200 15 - 0.210 ms
+🚀 POST /api/auth/token 200 344 - 0.198 ms
+🚀 POST /api/maps/geocode 200 15 - 0.207 ms
+🚀 POST /api/auth/token 200 344 - 0.185 ms
+🚀 POST /api/maps/geocode 200 15 - 0.193 ms
+🚀 POST /api/auth/token 200 344 - 0.182 ms
+🚀 POST /api/maps/geocode 200 15 - 0.195 ms
+🚀 POST /api/auth/token 200 344 - 0.171 ms
+🚀 POST /api/maps/geocode 200 15 - 0.198 ms
+🚀 POST /api/auth/token 200 344 - 0.185 ms
+🚀 POST /api/maps/geocode 200 15 - 0.207 ms
+🚀 POST /api/auth/token 200 344 - 0.178 ms
+🚀 POST /api/maps/geocode 429 172 - 0.204 ms
+🚀 POST /api/auth/token 200 344 - 0.187 ms
+🚀 POST /api/maps/directions 200 15 - 0.189 ms
+🚀 POST /api/auth/token 200 344 - 0.156 ms
+🚀 POST /api/maps/directions 200 15 - 0.179 ms
+🚀 POST /api/auth/token 200 344 - 0.155 ms
+🚀 POST /api/maps/directions 200 15 - 0.205 ms
+🚀 POST /api/auth/token 200 344 - 0.174 ms
+🚀 POST /api/maps/directions 200 15 - 0.209 ms
+🚀 POST /api/auth/token 200 344 - 0.154 ms
+🚀 POST /api/maps/directions 200 15 - 0.195 ms
+🚀 POST /api/auth/token 200 344 - 0.164 ms
+🚀 POST /api/maps/directions 429 174 - 0.175 ms
+🚀 POST /api/auth/token 200 344 - 0.182 ms
+🚀 POST /api/maps/geocode 200 15 - 0.234 ms
 PASS test/maps_error_body.test.js
   ● Console
 
@@ -127,35 +127,35 @@ PASS test/maps_error_body.test.js
 
 PASS test/cost_protection_kill_switch.test.js
 PASS test/billing.test.js
-🚀 POST /api/auth/token 200 344 - 0.587 ms
-🚀 POST /api/maps/directions 503 87 - 0.117 ms
-🚀 POST /api/maps/autocomplete 503 87 - 0.080 ms
-🚀 POST /api/maps/place-details 503 87 - 0.113 ms
-🚀 POST /api/maps/geocode 503 87 - 0.069 ms
-🚀 POST /api/maps/nearby-search 503 87 - 0.083 ms
-🚀 POST /api/maps/directions 503 87 - 0.058 ms
-🚀 POST /api/auth/token 200 344 - 0.248 ms
-🚀 POST /api/billing/verify 401 92 - 0.256 ms
-🚀 POST /api/billing/verify 400 57 - 0.394 ms
-🚀 POST /api/billing/verify 200 202 - 0.279 ms
-🚀 POST /api/billing/verify 403 82 - 0.216 ms
+🚀 POST /api/auth/token 200 344 - 0.564 ms
+🚀 POST /api/maps/directions 503 87 - 0.113 ms
+🚀 POST /api/maps/autocomplete 503 87 - 0.178 ms
+🚀 POST /api/maps/place-details 503 87 - 0.070 ms
+🚀 POST /api/maps/geocode 503 87 - 0.083 ms
+🚀 POST /api/maps/nearby-search 503 87 - 0.081 ms
+🚀 POST /api/maps/directions 503 87 - 0.068 ms
+🚀 POST /api/auth/token 200 344 - 0.296 ms
+🚀 POST /api/billing/verify 401 92 - 0.242 ms
+🚀 POST /api/billing/verify 400 57 - 0.470 ms
+🚀 POST /api/billing/verify 200 202 - 0.326 ms
+🚀 POST /api/billing/verify 403 82 - 0.208 ms
 PASS test/token_issuance_rate_limit.test.js
 PASS test/legal.test.js
 
 Test Suites: 9 passed, 9 total
 Tests:       61 passed, 61 total
 Snapshots:   0 total
-Time:        1.278 s
+Time:        1.327 s
 Ran all test suites.
-Test results written to: ../../../evidence/export-code-verification/backend-tests.json
-🚀 POST /api/auth/token 401 73 - 0.320 ms
-🚀 POST /api/auth/token 401 73 - 0.095 ms
-🚀 POST /api/auth/token 401 73 - 0.081 ms
-🚀 POST /api/auth/token 401 73 - 0.072 ms
-🚀 POST /api/auth/token 401 73 - 0.071 ms
-🚀 POST /api/auth/token 200 344 - 0.361 ms
-🚀 POST /api/auth/token 200 344 - 0.305 ms
-🚀 POST /api/auth/token 200 344 - 0.160 ms
-🚀 POST /api/auth/token 429 81 - 0.202 ms
-🚀 GET /legal/terms 200 - - 0.423 ms
-🚀 GET /legal/privacy 200 - - 0.199 ms
+Test results written to: ../../../evidence/delivery-final-verification/backend-tests.json
+🚀 POST /api/auth/token 401 73 - 0.317 ms
+🚀 POST /api/auth/token 401 73 - 0.099 ms
+🚀 POST /api/auth/token 401 73 - 0.091 ms
+🚀 POST /api/auth/token 401 73 - 0.070 ms
+🚀 POST /api/auth/token 401 73 - 0.069 ms
+🚀 POST /api/auth/token 200 344 - 0.334 ms
+🚀 POST /api/auth/token 200 344 - 0.166 ms
+🚀 POST /api/auth/token 200 344 - 0.330 ms
+🚀 POST /api/auth/token 429 81 - 0.172 ms
+🚀 GET /legal/terms 200 - - 0.369 ms
+🚀 GET /legal/privacy 200 - - 0.231 ms

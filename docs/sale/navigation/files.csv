@@ -9,7 +9,7 @@ path,mode,object_type,blob_oid,size_bytes,kind,language,generated_vs_authored,ru
 .githooks/post-rewrite,100644,blob,5237d18eb839d96e8849f9b6048520fef29d6fe2,422,source,,authored,tooling,dev_tooling,,tooling_path,,,,0,0,no
 .githooks/pre-commit,100644,blob,03e65f0013aa145e82b5ed6ebdc00260946b8cb1,732,source,,authored,tooling,dev_tooling,,tooling_path,,,,0,0,no
 .github/dependabot.yml,100644,blob,2ae08e202a989be06ec6ea6aa1fd1ece4486ee29,537,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
-.github/workflows/ci.yml,100644,blob,1e8807e63d55dc4bc9d5cc019d5e978607f3d378,4382,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
+.github/workflows/ci.yml,100644,blob,dc59703dd4af1021a3107761d94adef34a13658b,1587,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
 .github/workflows/deploy-website.yml,100644,blob,881c9b85f43b47b1069b029000086760f39833e8,738,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
 .github/workflows/qodana_code_quality.yml,100644,blob,cba09bca34db870de08c3ba9885a58930b88a821,1292,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
 .gitignore,100644,blob,86e202caf934c4b5ee7475d235e977b55de5a83b,1706,config,,authored,tooling,dev_tooling,,root_dotfile,,,,0,0,no
@@ -17,7 +17,7 @@ path,mode,object_type,blob_oid,size_bytes,kind,language,generated_vs_authored,ru
 .mcp.json,100644,blob,6e5abb4fb02fc804a10e050d1bb817eb39b303ea,509,config,JSON,authored,tooling,dev_tooling,,root_config,,,,0,0,no
 .metadata,100644,blob,e8f7bf911cbc662c0c90dfb58863b3bae9149b6d,1706,config,,authored,tooling,dev_tooling,,root_dotfile,,,,0,0,no
 .semgrep.yml,100644,blob,e726f528783936e5cf4e0ac134c11f116f33a547,7169,config,YAML,authored,tooling,dev_tooling,,root_config,,,,0,0,no
-AGENTS.md,100644,blob,6e0c045f5c84b939ae7792a2ca6f469692189392,4847,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
+AGENTS.md,100644,blob,9526e26a4706387e4cf350b3d1d7a13f3985509c,1539,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
 AUTOMATION_BLUEPRINT.md,100644,blob,1ca3d2539daaf8c7d8584ae2ea57b78913c3ed7d,49848,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
 MONETIZATION_ANALYSIS.md,100644,blob,1a9bbc69044e8af7f962705c9f6371f69d71657c,23381,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
 PASS_PRICING_ANALYSIS.md,100644,blob,cc6028ed6115806537303c5ff9dff77d917a42db,25576,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
@@ -128,9 +128,11 @@ docs/PRIVACY.md,100644,blob,e222dee54f689bd474da3d7e5c2d42741dea9e60,6088,docume
 docs/RESEARCH_2026.md,100644,blob,158cb6e51e4942a3f2ea280cc8801b8a28a6c90d,35319,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/TESTING.md,100644,blob,f1fe27bef73acd3ee67b235293a3bbe6647a78d6,5741,documentation,,authored,reference,dev_tooling,,doc_path,,,,0,0,no
 docs/WEBSITE_CLAIMS_AUDIT.md,100644,blob,b60a1c3e86952912e72bc0dc0aec25208f6fae5f,8131,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
+docs/archive/AGENTS-before-corpus.md,100644,blob,065731a81fdb3cb7c5aa13d24a8122f93f1dd781,4963,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/archive/AGENT_CONTEXT.md,100644,blob,6b4a2044a2e6d6e07584e0aa523e430b33a8d230,13961,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/archive/README-before-corpus-preparation.md,100644,blob,b0fa541b59ea2d60ded24808ae3f7ea58065d093,5337,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/archive/README.md,100644,blob,6afb7f0164f1eb31653e64fb42189bac1e29691a,13006,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
+docs/archive/ci-before-corpus.yml.txt,100644,blob,1e8807e63d55dc4bc9d5cc019d5e978607f3d378,4382,data,,unknown,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/business_os/00_DECK.md,100644,blob,313029b1c5229853f1ea2095363b54040a240bf6,4264,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/business_os/01_launch_readiness.md,100644,blob,5423b8bc4af7c7b80f30b9a69222e1b64f07b114,7101,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/business_os/02_engineering_autopilot.md,100644,blob,0837e00b7ec3de0f1f2f6758bf9d9b1262ce1485,4635,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
@@ -150,7 +152,7 @@ docs/business_os/research/monetization_benchmarks.md,100644,blob,d256f3de19d02b2
 docs/business_os/research/play_policy_2026.md,100644,blob,be2e697bb6e1830e1509bbdb6af94bea4f2f4eea,16593,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/business_os/research/underground_data_hunt.md,100644,blob,918aeb127b86224a8d50ffe8170fb5fbb097fc3f,62698,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
 docs/business_os/research/underground_validation.md,100644,blob,40e1d51258450058f92e21ff5ae12a6e2300a72c,30321,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
-docs/business_os/research/underground_validation_execution.md,100644,blob,1e888718781ecdf8664ff1ee206cdf66e423b37f,75621,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
+docs/business_os/research/underground_validation_execution.md,100644,blob,e34aa3557f98e5e4ad85c81e9eed065bb54e98c7,75536,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
 docs/production/maps-provider-parity-contract.md,100644,blob,50b341e94e0c624adfe644cb79ad7acc0c094dd9,7623,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/grounding_notes.md,100644,blob,0dfaa67f5be785e294a174c3261e95f14bffb6e8,127581,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/android_fgs.md,100644,blob,d5be044d696f2b0b4b3775e5bbd43c5683a79f70,13192,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
@@ -159,7 +161,6 @@ docs/research/raw/dpdp.md,100644,blob,e9c75211ca7bf1ba97137357d31d154aa372d941,1
 docs/research/raw/ecpm.md,100644,blob,9f2963ce2741ab04140d7446c971debeb7d0ce5d,12297,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/exact_alarm.md,100644,blob,95c7fea26bd2b7a33652db43770ed36fe237c0f2,11630,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/fbs_geo.md,100644,blob,c9f535a6489c940dc93b4b386349d5498a5d9a2e,236,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
-docs/research/raw/flagged_lines.md,100644,blob,b62f37442da0542d4f836a5a89bcd54ee09dc3b7,16011,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/fln.md,100644,blob,20a635a3f0d67a192b06804e03888f50011dc7b0,11914,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/fullscreen_dnd.md,100644,blob,99443403f50e2839b2f509a1a9a9a572656a3712,12827,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/maps_pricing.md,100644,blob,e1268f26010f1e26731a0a2cd16e53e75b559a5c,11176,documentation,,authored,reference,monetization,,doc_path,,,,0,0,no
@@ -171,8 +172,7 @@ docs/research/raw/play_reqs.md,100644,blob,dd8d445e70db776989472be09ec7aa571e80d
 docs/research/raw/privacy_tech.md,100644,blob,8f17ada7504a1f85452e6b443d392b2e2dd07e3c,15921,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/raw/routing_alt.md,100644,blob,7d74b590b513ae95cce769af373af6e2b6772915,12788,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
 docs/research/real_device_reliability.md,100644,blob,f7c22796d5740d8573fe6024ae56c2c09b81a8f3,7818,documentation,,authored,reference,repository_documentation,,doc_path,,,,0,0,no
-docs/research/underground/DATA_CONTRACT.md,100644,blob,dd98ff57e0bd806e0d4eab0ae593e84ea5761ca4,5178,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
-docs/research/underground/EMPIRICAL_RESULTS.md,100644,blob,333e6def4acc35ab9af9870f99207cf0ce35acc9,15358,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
+docs/research/underground/EMPIRICAL_RESULTS.md,100644,blob,e151c41c58e777777b1ecdc3a2db033bce793032,15359,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
 docs/research/underground/FOUNDATION.md,100644,blob,8c4e4ca2b1d7d4c9b42ae5e58ad8bef19985f942,126805,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
 docs/research/underground/MODES.md,100644,blob,9a481890e0a3954027b82ba97c3def85e1e7b318,12615,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
 docs/research/underground/ON_ROUTE_CONFIRMATION.md,100644,blob,3c58811861210ec8cb7d07317524a75a1e28ec93,45511,documentation,,authored,reference,ekf,,doc_path,,,,0,0,no
@@ -188,41 +188,54 @@ docs/research/underground/plots/e4_position_Nallur.png,100644,blob,ba245cb7408df
 docs/research/underground/plots/e5_cone_Nadaprabhu.png,100644,blob,a5a87c6f57b803a6161f88a5d21e83c79c0c59e4,76106,asset,,unknown,reference,ekf,,doc_path,,,,0,0,no
 docs/research/underground/plots/e5_cone_Nallur.png,100644,blob,eada9bcf57cb68d79c4e083249333ea4e84c5d35,76377,asset,,unknown,reference,ekf,,doc_path,,,,0,0,no
 docs/research/underground/plots/mode_fusion.png,100644,blob,6d4d40169e561008905a4d075b8b3d52ba57a076,128012,asset,,unknown,reference,ekf,,doc_path,,,,0,0,no
-docs/research/underground/scripts/core_probe.py,100644,blob,92812a6af82fb92dc8a60a80dd144116de29270c,7167,source,Python,authored,reference,ekf,,doc_path,,,,8,0,yes
-docs/research/underground/scripts/e1_signals.py,100644,blob,f9bbc09be2e92d0f8da95db0296492fadc5ea65d,13400,source,Python,authored,reference,ekf,,doc_path,,,,7,0,yes
+docs/research/underground/scripts/core_probe.py,100644,blob,87d1abd380aee839920676d9ca0628f7bfec17ff,7125,source,Python,authored,reference,ekf,,doc_path,,,,8,0,yes
+docs/research/underground/scripts/e1_signals.py,100644,blob,071d2b5b2308328ce0a77b7adc952a023b288d0e,13358,source,Python,authored,reference,ekf,,doc_path,,,,7,0,yes
 docs/research/underground/scripts/mutation_test.sh,100644,blob,e2e154f5643ead0ec84eaa0df2ddb642b622c657,1835,source,Shell,authored,reference,ekf,,doc_path,,,,0,0,yes
 docs/research/underground/scripts/scale_baseline_check.py,100644,blob,a045c08880e951b7652030761d5d1a2da26caea9,3793,source,Python,authored,reference,ekf,,doc_path,,,,3,0,yes
-docs/sale/BRANCH_HISTORY.md,100644,blob,bac42bc232df974c8a929fa0f801c20ad97e85e2,8564,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/BUYER_BRIEF.md,100644,blob,d2ba9ddab00950c78ac59581d00a796aa97ed23f,5688,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/CLAIMS.csv,100644,blob,c753e2256d99a89953130de9345b500c066cfcd6,2537,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/BRANCH_HISTORY.md,100644,blob,d7030c456f14334885215af78fcff3e6c8041ac2,8965,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/BUYER_BRIEF.md,100644,blob,0e49956023ed879a64b19e35363a530702723a6c,6158,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/CLAIMS.csv,100644,blob,9ab28c831ea3afc39e2f7eb61e9b18acc1509e78,3173,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/CODE_PREPARATION_REVIEW.md,100644,blob,9bf7d2765052862bb306c6b07eb3be2c6bc428c5,6921,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/DATA_FLOW.md,100644,blob,372b7b4735cb19a637f125947a2e5f4d0930186b,9621,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/DECISIONS.csv,100644,blob,d5d8e4bcc8bc3250a37140e5e96830e9e5626948,14066,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/DOCUMENT_CURATION.csv,100644,blob,7e35de8970f0584f5fe8a9116da4a6703d05226a,42900,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/DOCUMENT_CURATION.md,100644,blob,0389d14f762310743b4ffdd2e72f06200f17ef0b,9260,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/ENGINEERING_RETROSPECTIVES.md,100644,blob,1a8a699fed51089013dcc8e7a1b092fdfeaea07e,2944,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/EXPORT_SCOPE.md,100644,blob,9d78253c1687fc9cff90731afe7c3972ddc0a2cf,4183,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/EXPORT_SCOPE.md,100644,blob,5a4cc263deffbdd9636d5a52a0b937da6a7eaae5,4519,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/FEATURES.md,100644,blob,3cbd6be1bb17584ef8d2c8c7784687fefd1569d5,4880,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/FOUNDER_CLARIFICATIONS.jsonl,100644,blob,e986e28b2750122767837e267b25d0b70459c895,1825,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/JOURNEY_AND_ROUTING.md,100644,blob,2a684eb858f679f6a2ec292daa0d0cc9473bb55a,24831,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/LOCAL_WORK_CAPTURE.md,100644,blob,71a20006c38e9042fe2cb38eeb67510ca197a43a,2416,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/ORIGINAL_TO_EXPORT_COMMITS.txt,100644,blob,20fe44d21d816fd37bea73e268b5884870fc98c5,16691,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/README.md,100644,blob,cbc1f50b635a204dc7fa3afe57a85642f23ce832,3398,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/ORIGINAL_TO_EXPORT_COMMITS.txt,100644,blob,88f901d7f59f54acaa104fbe3f27250c852ac954,16691,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/PRE_EXPORT_TO_DELIVERY_COMMITS.txt,100644,blob,05a03c8437b9a03969ee6f80cfb6f250320a797c,12837,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/README.md,100644,blob,a2f09f8b54306b07c10b54fbea8d75f7b4bddb10,4560,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/RIGHTS_AND_EXCLUSIONS.md,100644,blob,73159e0dd0110f050c867c914c8c695e1e015b95,4368,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/SUPPORTING_SYSTEMS.md,100644,blob,cf9ea07ea9a369a54aabbddf0dd3f755f7f172e9,14505,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/TECHNICAL_HANDOVER.md,100644,blob,64082bbaf58521407a8ad600e60b8d5f60f9f239,5433,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/TECHNICAL_HANDOVER.md,100644,blob,5cb272a4ffcadc8812a7d1ec283e75e1bd3a6625,5806,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/UNDERGROUND_EVOLUTION.md,100644,blob,34a75a43a036bec38056f13919984695198c2084,26215,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/VERIFICATION.md,100644,blob,466cc0ef2c190be9a646a728dca116ea2b432b30,2679,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/demo/GeoWake-demo.mp4,100644,blob,2b404a7529d22bc90ae4628d12751f13e78874d8,6505151,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/demo/NARRATION_PROVENANCE.md,100644,blob,9908a0d26909f6f52f1d25ecb8cb3b178d6e5260,3510,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/demo/NARRATION_PROVENANCE.md,100644,blob,c4ff59fe025bebc63177bf241361b46957dad7ff,3720,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/demo/README.md,100644,blob,432ed52c1595df11e93d6c28b284fcd36e64a3b6,862,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/demo/captions.srt,100644,blob,a2ed7654cba8b9e381afd5e4159723639fa6bd83,2291,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/demo/narration-script.md,100644,blob,050478308947d79adf4bd28b52b62a096b746866,2937,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/navigation/README.md,100644,blob,e96e6d0ca39daf07b44da0d8b861331126114cf8,1536,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/navigation/counts.json,100644,blob,1f5ef3d9a48e103dee964e81df49447c8f0decd0,3536,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/README.md,100644,blob,f4f74eef85861aa40baa034dab443bbf35b94a27,1536,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/counts.json,100644,blob,58ddb22b36f76379f32dde6ec9f8193387825950,1403,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/navigation/dependencies.csv,100644,blob,34374fd4a8a424508f4e8a639c0edf2ae7989c97,159036,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/navigation/features.json,100644,blob,8f1198fa9cfc829510daa8745f760fd2dec8c85c,59073,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/navigation/files.csv,100644,blob,4975b5e47a27f15c4ce4b39507d195dc9e6e6835,195615,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/navigation/symbols.csv,100644,blob,5e7d14a201d7beb4eba49eeac9dbec5287c6dd36,494959,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/features.json,100644,blob,5c4b674835459d326a11b9d1a61762a769afffa9,59383,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/files.csv,100644,blob,8fe0068bf3de09127e797603d0fcd78fdf8d81d3,197940,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/symbols.csv,100644,blob,369c2e457c172583687811de76abff02fd76847e,494959,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/navigation/test_matches.csv,100644,blob,ea73d6202fbb3ed5d7152dc316d74dcf2fb79f51,58630,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/analyze.log,100644,blob,fc4e0d5be057f8e3c3159a1cd98e1b671965791c,18809,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/backend-tests.json,100644,blob,e5383506c7df32a061767ee1fd6a554a52423260,101767,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/backend-tests.log,100644,blob,a55e8c68f31763a8e09e8808f2f865450f4a7e10,7149,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/coverage-lcov.info,100644,blob,00ae02bd5fe4b4bce1228ae9797a802e1a23ce61,156902,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/flutter-tests.log,100644,blob,30c2b7ffa54df82a6d3d3ae867236fcf341ae7f3,2878778,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/geowake-server-coverage-lcov.info,100644,blob,d4a348dde19f6855d63d5ee3c525406e88a50fd7,10813,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/pre-exclusion-receipt.json,100644,blob,891380680378cd749dc4801ae2895df1676f853e,2436,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/share-tests.log,100644,blob,9e659fb97809dee0a1dd34d7cf33f54a307973ef,3161,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/toolchain.log,100644,blob,e5898a1fa925547252a1ef6c56bc2c6d2834af52,321,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/verification/verification.json,100644,blob,f3b75caeaee20961aba86e369d31b5b62cf1f2db,14114,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
 evaluation/README.md,100644,blob,a92d6a6cf7f0e713cdfcbd3328aa775812b3fb2c,674,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/purchase-restore/README.md,100644,blob,14b03a513b7d6405ffdf03c4288a57559096803c,1300,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/purchase-restore/manifest.json,100644,blob,ea2aef54736cf9349b121a80d7689c6bf1b103b7,4190,config,JSON,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
@@ -244,24 +257,26 @@ evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl
 evaluation/purchase-restore/task/pubspec.lock,100644,blob,92cec8312e3f6ce4dc51991c4a25807d297b4d70,10752,config,,generated,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/purchase-restore/task/pubspec.yaml,100644,blob,80318fa0828f8d53d737ef06bc031398b0bab0ca,318,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart,100644,blob,aa0fa4a9d52417744f540142c36af725650bb36b,7578,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart|evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart|lib/services/monetization/purchase_backend_impl.dart,test_or_support,8,1,yes
-evaluation/zupt-degraded-gating/README.md,100644,blob,d7c9456db3c91a3ab1ae7838bd0adf05ae041c8d,2350,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/README.md,100644,blob,6e551d9b3b98c31a9d69c650be5cabcff8bd14f7,2490,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/fixed-regression-test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,3,2,yes
-evaluation/zupt-degraded-gating/manifest.json,100644,blob,9f1563296781172b686beb8b4d03592d99694a8b,4919,config,JSON,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-reference-pub-get.log,100644,blob,fed85ed0c794fef0f5bea52adb2598bc6a6743b2,627,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-reference-test.log,100644,blob,6c9d2c6e1d1a6cc628556e250e8e03fcb176620a,829,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-task-pub-get.log,100644,blob,fed85ed0c794fef0f5bea52adb2598bc6a6743b2,627,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-task-test.log,100644,blob,e8f165477177ba2952f35abd2283a1896095e403,2226,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/manifest.json,100644,blob,83431aec525441f365f86cb480ea1ef6794b24e6,5404,config,JSON,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-reference-pub-get.log,100644,blob,350f1e21695963db04c33c55f4fd8b2d26060d47,68,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-reference-test.log,100644,blob,86763cefb2bb31cbf5a68af355afbb2e6bcbb5ed,829,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-task-pub-get.log,100644,blob,350f1e21695963db04c33c55f4fd8b2d26060d47,68,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-task-test.log,100644,blob,f0d494f6a7f44f841aaf4a69a97b92bb79311722,2226,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/post-fix-test.log,100644,blob,67ce09226c3974ce7c3f6489e8581c0870354d87,821,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/pre-fix-test.log,100644,blob,475eafc82346c70227c7453259cbec97b88b5c2e,2214,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/reference/lib/core/ekf/ekf_types.dart,100644,blob,9af18527a8a51e2100ca693d3afefe4693d5917c,3670,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,10,0,yes
 evaluation/zupt-degraded-gating/reference/lib/core/ekf/zupt_detector.dart,100644,blob,11f5f7ae69f4257ed59a2bc9aae1d51b0c5c3a04,4805,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,test/core/ekf/zupt_detector_test.dart,,,4,1,yes
+evaluation/zupt-degraded-gating/reference/pubspec.lock,100644,blob,88cd28f80f0a585b06b97a39e0f7db869a7d6477,5382,config,,generated,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/reference/pubspec.yaml,100644,blob,32773729fb91b1e4dc4d723f971cd4fa4650a5de,233,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/reference/test/core/ekf/zupt_degraded_gating_test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,lib/core/ekf/ekf_types.dart|lib/core/ekf/zupt_detector.dart,test_or_support,3,2,yes
-evaluation/zupt-degraded-gating/run_example.sh,100755,blob,7d6426c67efc8f7bd82b13e3f99e7355fb0ca2bb,2733,source,Shell,authored,reference,archive_package,,explicit historical evaluation artifact,,,,2,0,yes
+evaluation/zupt-degraded-gating/run_example.sh,100755,blob,9df58f33b41d2403e0fe4d9dd7123c8e00051f49,2848,source,Shell,authored,reference,archive_package,,explicit historical evaluation artifact,,,,2,0,yes
 evaluation/zupt-degraded-gating/solution.patch,100644,blob,fb0a34e7c86aa924ee279f0ac3745a1a4907a628,3117,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
-evaluation/zupt-degraded-gating/task.md,100644,blob,c8e32e6889f6f5303e616e97572d0da052d8af06,1500,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/task.md,100644,blob,1fe0fac3453f6061e408db9139600f99747de276,1866,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/task/lib/core/ekf/ekf_types.dart,100644,blob,9af18527a8a51e2100ca693d3afefe4693d5917c,3670,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,10,0,yes
 evaluation/zupt-degraded-gating/task/lib/core/ekf/zupt_detector.dart,100644,blob,728cd5eb57d0dc4fed7fa954f45569bb7493826b,3850,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,test/core/ekf/zupt_detector_test.dart,,,4,1,yes
+evaluation/zupt-degraded-gating/task/pubspec.lock,100644,blob,88cd28f80f0a585b06b97a39e0f7db869a7d6477,5382,config,,generated,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/task/pubspec.yaml,100644,blob,32773729fb91b1e4dc4d723f971cd4fa4650a5de,233,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 evaluation/zupt-degraded-gating/task/test/core/ekf/zupt_degraded_gating_test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,lib/core/ekf/ekf_types.dart|lib/core/ekf/zupt_detector.dart,test_or_support,3,2,yes
 evaluation/zupt-degraded-gating/test.patch,100644,blob,2a70048ee585f7c7d2297fe2a673ca48a9a52807,4695,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
@@ -668,7 +683,7 @@ test/direction_service_behavior_test.dart,100644,blob,1508c16d61b3b57439db3f3eef
 test/direction_service_caching_test.dart,100644,blob,b953bff8f4e7ad70deecc65451aac73715772d15,154,test,Dart,authored,test,route_cache,,test_filename,,,placeholder,2,0,yes
 test/driving_coalesce_test.dart,100644,blob,1008e3557127388dd1f6c51a986be2c5c84ccea6,3549,test,Dart,authored,test,route_session,,explicit_test_review,,lib/services/transfer_utils.dart,test_or_support,2,1,yes
 test/ekf/replay_harness_test.dart,100644,blob,e2aa87847a107c4864552e6f6ac5bc8600d9fe23,54287,test,Dart,authored,test,ekf,,test_directory,,lib/config/fire_decision_config.dart|lib/core/ekf/ekf_metrics.dart|lib/core/ekf/ekf_orchestrator.dart|lib/core/ekf/ekf_types.dart|lib/core/ekf/route_geometry.dart|lib/core/logging/app_logger.dart|lib/core/reachability/reachability.dart|lib/services/alarm_evaluator.dart|lib/services/transfer_utils.dart,test_or_support,32,9,yes
-test/ekf/underground_drift_probe_test.dart,100644,blob,162a33534e487b3a46401280ff39991c7c6c5b29,3235,test,Dart,authored,test,ekf,,test_directory,,,diagnostic_probe,2,1,yes
+test/ekf/underground_drift_probe_test.dart,100644,blob,db04123bb23420821bebff28d415c0da3e3d0f41,3192,test,Dart,authored,test,ekf,,test_directory,,,diagnostic_probe,2,1,yes
 test/eta_engine_test.dart,100644,blob,d7a414eba8d4a5bd0303c26e65210a3ab1e100b6,5783,test,Dart,authored,test,alarm_evaluation,,test_filename,,lib/services/eta_engine.dart,test_or_support,9,1,yes
 test/eta_sigma_floor_test.dart,100644,blob,df11405b94265195f917f11f080bc7809bcb15bf,2008,test,Dart,authored,test,alarm_evaluation,,test_filename,,lib/config/fire_decision_config.dart|lib/services/alarm_evaluator.dart,test_or_support,6,2,yes
 test/eta_utils_test.dart,100644,blob,9acb8db06ba45845b66bc068e1ba254e92f4d306,905,test,Dart,authored,test,alarm_evaluation,,test_filename,,lib/services/eta_utils.dart,test_or_support,3,1,yes
@@ -866,7 +881,8 @@ tools/sale/dataset-dependent-tests.json,100644,blob,dc36ab723b4e7d530e8794407e44
 tools/sale/generate_alarm_tones.py,100644,blob,034517fa1f2d12e7680d2759af72702aa7245402,1394,source,Python,authored,tooling,archive_package,,tool_path,,,,1,0,yes
 tools/sale/generate_navigation.py,100644,blob,347bb47d553584f1b7611e14f1c4869246bfe415,39078,source,Python,authored,tooling,archive_package,,tool_path,,,,14,0,yes
 tools/sale/inventory.py,100644,blob,61923054f40003509972974852ec17c5e8b77fbe,5224,source,Python,authored,tooling,archive_package,,tool_path,,,,4,0,yes
-tools/sale/verify.py,100644,blob,5dca7b4df36f1375e34c3a4942338bcfbb397538,4419,source,Python,authored,tooling,archive_package,,tool_path,,,,1,0,yes
+tools/sale/resolve_original_commit.py,100644,blob,6539fdc46c354894fad17783a4d514e0471ef283,1651,source,Python,authored,tooling,archive_package,,tool_path,,,,0,0,yes
+tools/sale/verify.py,100644,blob,81d86f51bc3704e0c4cf20164ac04043a0d99f7b,5116,source,Python,authored,tooling,archive_package,,tool_path,,,,2,0,yes
 tools/validate_metro_data.py,100644,blob,de1f3ab04424984b2c48b8c16a6d7d25b5fafbcd,6882,source,Python,authored,tooling,metro_data,,tool_filename,,,,2,0,yes
 tools/wake-manifest.mjs,100644,blob,8740f4a180a864c44ea4ab4611e319b44fcc0564,5426,source,JavaScript,authored,tooling,dev_tooling,,tool_path,,,,16,0,yes
 tools/wakepoint-build-intent-graph.mjs,100644,blob,7da8324150f93b7ac492061aafcb31eb11901a9b,8102,source,JavaScript,authored,tooling,dev_tooling,,tool_path,,,,21,0,yes

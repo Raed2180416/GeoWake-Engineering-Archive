@@ -199,4 +199,4 @@ Analyzing lib...
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/widget/widget_arm_handler.dart:72:7 • curly_braces_in_flow_control_structures
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/widget/widget_arm_handler.dart:250:9 • curly_braces_in_flow_control_structures
 
-77 issues found. (ran in 0.9s)
+77 issues found. (ran in 2.9s)

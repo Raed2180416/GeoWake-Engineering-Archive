@@ -1,7 +1,9 @@
 {
-  "started_at": "2026-09-20T18:20:31.300164+00:00",
-  "revision": "59421267011127de8b585d2bdc1b01871c931e81",
-  "working_tree_status": "?? repro_mumbai_alarm_trace.txt\n",
+  "started_at": "2026-09-20T18:51:54.421844+00:00",
+  "revision": "8b96ef8e2c89800f4704e2b6a99bd288d8206c65",
+  "working_tree_status": "",
+  "source_mode": "git-checkout",
+  "verification_script_sha256": "f41e12696204ac22058acc001dc4cdb21b0a51207d1558607c54be120efd3a1e",
   "profile": "code",
   "excluded_test_files": {
     "test/dashboard/playground_reachability_e2e_test.dart": "Recorded-route asset withheld; two observed missing-asset failures in full export probe.",
@@ -27,6 +29,33 @@
       "sha256": "62621559d31ca4d16743e535ac4cea0668245665483ccb744329e186e2be00b4"
     },
     {
+      "name": "flutter-dependencies",
+      "command": [
+        "/home/raed/flutter/bin/flutter",
+        "pub",
+        "get"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 1.09,
+      "log": "flutter-dependencies.log",
+      "sha256": "52958ea67e7eceea32b7b0f0f23f1a0b29c9663c2aebec10dceeea26f6340c69"
+    },
+    {
+      "name": "node-dependencies",
+      "command": [
+        "npm",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit"
+      ],
+      "cwd": "geowake-server",
+      "exit_code": 0,
+      "seconds": 1.28,
+      "log": "node-dependencies.log",
+      "sha256": "47dd448bed16c88317c357df21c8d8614d169597cdbc0c1aecb83a30a7273512"
+    },
+    {
       "name": "analyze",
       "command": [
         "/home/raed/flutter/bin/flutter",
@@ -36,9 +65,9 @@
       ],
       "cwd": ".",
       "exit_code": 0,
-      "seconds": 1.94,
+      "seconds": 3.94,
       "log": "analyze.log",
-      "sha256": "8b440caa89f7f913e9933f05aa0b4d2bc56c7a19815e1926743d140f3109a014"
+      "sha256": "deb5eed99199a747f50e75ac622d80a00688ab27a3e5840a0213e08af9f0a0a4"
     },
     {
       "name": "flutter-tests",
@@ -257,9 +286,9 @@
       ],
       "cwd": ".",
       "exit_code": 0,
-      "seconds": 144.02,
+      "seconds": 156.25,
       "log": "flutter-tests.log",
-      "sha256": "6322a0cc2a3943313604b357f6a421ee49676fb908d0bb6067102c9c5196da25"
+      "sha256": "15a4ef49ba5d3052a6504d303a20b1332eb633b918d0406effd9297644d5ceca"
     },
     {
       "name": "backend-tests",
@@ -270,13 +299,13 @@
         "--runInBand",
         "--coverage",
         "--json",
-        "--outputFile=/home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/export-code-verification/backend-tests.json"
+        "--outputFile=/home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/delivery-final-verification/backend-tests.json"
       ],
       "cwd": "geowake-server",
       "exit_code": 0,
-      "seconds": 1.66,
+      "seconds": 1.71,
       "log": "backend-tests.log",
-      "sha256": "32d97408f2bce71c49c06c17c9aeae8e0c25297de3a2a18c6be96da82cb20976"
+      "sha256": "4401dccebcc6db549c69ed5523b85790e47bb8e3f3e0368273f7319da4bc6fc7"
     },
     {
       "name": "share-tests",
@@ -286,11 +315,11 @@
       ],
       "cwd": "backend/share",
       "exit_code": 0,
-      "seconds": 0.22,
+      "seconds": 0.23,
       "log": "share-tests.log",
-      "sha256": "f7a74907be3bd41e9a9746764a086fc796f42e4aa69dbf4d4642217ce8a27350"
+      "sha256": "3f2339a0ba86af46a081f54d33ff822627f625f1be0b86c38a5f4cf1b2db6b64"
     }
   ],
   "scope": "Headless/local checks; no field, OEM, real-store, or live-service validation.",
-  "finished_at": "2026-09-20T18:22:59.357796+00:00"
+  "finished_at": "2026-09-20T18:54:39.145390+00:00"
 }

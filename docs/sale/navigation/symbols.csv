@@ -4618,7 +4618,8 @@ tools/sale/inventory.py,20,git,def,Python,regex_candidate
 tools/sale/inventory.py,24,classification,def,Python,regex_candidate
 tools/sale/inventory.py,39,write_csv,def,Python,regex_candidate
 tools/sale/inventory.py,46,main,def,Python,regex_candidate
-tools/sale/verify.py,21,main,def,Python,regex_candidate
+tools/sale/verify.py,21,git_metadata,def,Python,regex_candidate
+tools/sale/verify.py,36,main,def,Python,regex_candidate
 tools/validate_metro_data.py,37,haversine_m,def,Python,regex_candidate
 tools/validate_metro_data.py,48,main,def,Python,regex_candidate
 tools/wake-manifest.mjs,23,repoRoot,binding_candidate,JavaScript,regex_candidate

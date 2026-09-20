@@ -1,7 +1,7 @@
 claim,status,evidence,limit
 Android-first Flutter destination alarm,code verified,lib/services/trackingservice.dart,Physical-device reliability not established by source
 Core alarm remains free,code and test evidence,lib/services/monetization/premium_service.dart,Optional premium integrations have separate completion requirements
-1423 visible Flutter tests pass,code-profile verification 5942126,docs/sale/verification/verification.json,8 dataset-dependent files excluded; 210 hidden events excluded; 3 placeholder cases included
+1423 visible Flutter tests pass,code-profile verification 8b96ef8,docs/sale/verification/verification.json,8 dataset-dependent files excluded; 210 hidden events excluded; 3 placeholder cases included
 64.92 percent Flutter line coverage,code-profile measurement,docs/sale/verification/coverage-lcov.info,10338/15923 instrumented lines in133 files; not whole-repository coverage
 1466 visible Flutter tests pass before data exclusions,captured-source verification 49a98bc,docs/sale/verification/pre-exclusion-receipt.json,Different inputs; not a full export pass; raw full-data logs withheld
 61 Express backend tests pass,code-profile verification,docs/sale/verification/backend-tests.json,Mocks and dummy credentials; no live Maps or Play validation

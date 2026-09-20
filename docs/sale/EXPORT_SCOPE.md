@@ -26,7 +26,7 @@ export commits are additional and are not historical development work.
 | Mixed OSM/YoMetro catalog, derived station sequences and complete copied catalog in `docs/research/raw/flagged_lines.md` | Generated payloads withheld; public Dart interfaces remain as empty, labeled schema stubs |
 | Fifteen scale-fixture pairs using the mixed catalog | Withheld despite synthetic motion; geographic input shares the catalog's boundary |
 | Recorded-ride route asset, identifying `DATA_CONTRACT.md` and aligned historical analysis data | Withheld; summarized engineering findings retained |
-| Identified credentials and local home-directory strings | Redacted in text and commit messages; scan receipt supplied |
+| Identified credentials and original local home-directory strings | Redacted during history curation; raw verification receipts retain their execution paths; scan receipt supplied |
 | Installed dependencies, build/cache output, duplicate indexes and annotated code copies | Omitted as redundant artifacts; lockfiles and source tools retained |
 | Stash/internal tool refs | Outside selected delivery refs |
 
