@@ -1,0 +1,84 @@
+{
+  "assembled_on": "2026-09-20",
+  "copied_file_provenance": {
+    "reference/lib/services/monetization/purchase_backend.dart": {
+      "git_blob": "90c678e880b8e89890c68ce327a999d7421d9f65",
+      "original_git_spec": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756:lib/services/monetization/purchase_backend.dart",
+      "sha256": "3e8db6aa25e2c641b3eaf8a566e4dd4dea6dd13ed05b2c81abf6f056e3faebe4"
+    },
+    "reference/lib/services/monetization/purchase_backend_impl.dart": {
+      "git_blob": "54259b7c305f173ca545d929f250b5850e056deb",
+      "original_git_spec": "5877dee569bc5dee80b98398bdcd79d3f705b596:lib/services/monetization/purchase_backend_impl.dart",
+      "sha256": "c134e814884ed2b57405a3353d5c41b39c9fe47a0152ae49014e440e93019676"
+    },
+    "reference/test/monetization/purchase_backend_impl_test.dart": {
+      "git_blob": "aa0fa4a9d52417744f540142c36af725650bb36b",
+      "original_git_spec": "5877dee569bc5dee80b98398bdcd79d3f705b596:test/monetization/purchase_backend_impl_test.dart",
+      "sha256": "b5dde763afb5b0d547eb1bee469761518f2eb4d9c2d772e5312b142aa12d306d"
+    },
+    "task/lib/services/monetization/purchase_backend.dart": {
+      "git_blob": "90c678e880b8e89890c68ce327a999d7421d9f65",
+      "original_git_spec": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756:lib/services/monetization/purchase_backend.dart",
+      "sha256": "3e8db6aa25e2c641b3eaf8a566e4dd4dea6dd13ed05b2c81abf6f056e3faebe4"
+    },
+    "task/lib/services/monetization/purchase_backend_impl.dart": {
+      "git_blob": "dd8731eba5555ec71455a9ebedf5adafdb11cd52",
+      "original_git_spec": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756:lib/services/monetization/purchase_backend_impl.dart",
+      "sha256": "7dc4a1402e7885e3471c4d37571f8fd68f82d1f8c917659376ebcc173eee6192"
+    },
+    "task/test/monetization/purchase_backend_impl_test.dart": {
+      "git_blob": "aa0fa4a9d52417744f540142c36af725650bb36b",
+      "original_git_spec": "5877dee569bc5dee80b98398bdcd79d3f705b596:test/monetization/purchase_backend_impl_test.dart",
+      "sha256": "b5dde763afb5b0d547eb1bee469761518f2eb4d9c2d772e5312b142aa12d306d"
+    }
+  },
+  "harness": {
+    "command": "FLUTTER_BIN=/home/raed/flutter/bin/flutter ./run_example.sh --both --offline",
+    "dart": "3.12.2",
+    "direct_package_versions": {
+      "in_app_purchase": "3.3.0",
+      "in_app_purchase_platform_interface": "1.4.0",
+      "shared_preferences": "2.5.3"
+    },
+    "flutter": "3.44.6",
+    "worker_cap": 2
+  },
+  "historical_pair": {
+    "fix": "5877dee569bc5dee80b98398bdcd79d3f705b596",
+    "fix_is_immediate_child": true,
+    "pre_fix": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756",
+    "regression_test_first_present_in_fix": true
+  },
+  "kind": "historical-code-regression-exercise",
+  "limitations": [
+    "Original test comments disclose the historical fix; not a blind benchmark.",
+    "Fake store platform, not a device or real billing validation.",
+    "The historical fix commit also changes unrelated files; solution.patch contains only purchase_backend_impl.dart."
+  ],
+  "observed": {
+    "independent_runner_check": "results/recheck/",
+    "reference": {
+      "exit_code": 0,
+      "failing_tests": 0,
+      "log": "results/reference-test.log",
+      "passing_tests": 3
+    },
+    "task": {
+      "concurrent_call_elapsed_ms": 3000,
+      "exit_code": 1,
+      "intended_failing_tests": 1,
+      "log": "results/task-test.log",
+      "passing_tests": 2
+    }
+  },
+  "packaging_sha256": {
+    "README.md": "4d646130627d0c85988ba5b75843e3824f20178a81395c0c3ca727456f47e868",
+    "reference/pubspec.lock": "36f235e83f108906d1b381065e8a5b1a5cebc5b212c56e11ae477ae03aa61897",
+    "reference/pubspec.yaml": "04f9983581296375351d39927a6eb5d94c959d21c83b77609474f220d77ae461",
+    "reference/solution.patch": "7eef1811f20535939aa3d633331e7c8c82e9769e7f8230fe14fd8204fb4c9597",
+    "run_example.sh": "6f416b6f82b5b9f934b3defff1f6b206aa687466020bb812df5f0bc1b79db293",
+    "task.md": "571d4fb778c601b0eecc810710b769eae8408e17484e1fd4c276e5db227f9ba6",
+    "task/pubspec.lock": "36f235e83f108906d1b381065e8a5b1a5cebc5b212c56e11ae477ae03aa61897",
+    "task/pubspec.yaml": "04f9983581296375351d39927a6eb5d94c959d21c83b77609474f220d77ae461"
+  }
+}

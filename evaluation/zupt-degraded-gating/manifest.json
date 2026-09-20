@@ -1,0 +1,96 @@
+{
+  "case_id": "zupt-degraded-gating-f956929",
+  "packaged_at_utc": "2026-09-20T18:01:00.290033+00:00",
+  "repository_commits": {
+    "post_fix": "f95692932f8d6051f3b56e742de91e49c9144e3e",
+    "post_fix_parent_is_pre_fix": true,
+    "pre_fix": "d0d76e5a391f62bcb6bc9a41cc66c46709762224"
+  },
+  "toolchain": {
+    "flutter": "3.44.6",
+    "dart": "3.12.2"
+  },
+  "method": "Minimal newly authored pubspec and runner; original source and regression tests preserved byte-for-byte",
+  "source_verification": [
+    {
+      "path": "task/lib/core/ekf/ekf_types.dart",
+      "original_commit": "d0d76e5a391f62bcb6bc9a41cc66c46709762224",
+      "original_path": "lib/core/ekf/ekf_types.dart",
+      "sha256": "788b638d9b19c6d18bf794e3da14092af6f69f54efd2b64a98a3ffeb2b335d80",
+      "byte_identical": true
+    },
+    {
+      "path": "task/lib/core/ekf/zupt_detector.dart",
+      "original_commit": "d0d76e5a391f62bcb6bc9a41cc66c46709762224",
+      "original_path": "lib/core/ekf/zupt_detector.dart",
+      "sha256": "36527a18216942d2ca498543dc17a7aa7b699253a99fdc0bd6e8b361e35fedc3",
+      "byte_identical": true
+    },
+    {
+      "path": "task/test/core/ekf/zupt_degraded_gating_test.dart",
+      "original_commit": "f95692932f8d6051f3b56e742de91e49c9144e3e",
+      "original_path": "test/core/ekf/zupt_degraded_gating_test.dart",
+      "sha256": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
+      "byte_identical": true
+    },
+    {
+      "path": "reference/lib/core/ekf/ekf_types.dart",
+      "original_commit": "f95692932f8d6051f3b56e742de91e49c9144e3e",
+      "original_path": "lib/core/ekf/ekf_types.dart",
+      "sha256": "788b638d9b19c6d18bf794e3da14092af6f69f54efd2b64a98a3ffeb2b335d80",
+      "byte_identical": true
+    },
+    {
+      "path": "reference/lib/core/ekf/zupt_detector.dart",
+      "original_commit": "f95692932f8d6051f3b56e742de91e49c9144e3e",
+      "original_path": "lib/core/ekf/zupt_detector.dart",
+      "sha256": "564817b46767160f30c003a87df71547eb79cd4b98b8d23819fd5d1ac6ea5339",
+      "byte_identical": true
+    },
+    {
+      "path": "reference/test/core/ekf/zupt_degraded_gating_test.dart",
+      "original_commit": "f95692932f8d6051f3b56e742de91e49c9144e3e",
+      "original_path": "test/core/ekf/zupt_degraded_gating_test.dart",
+      "sha256": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
+      "byte_identical": true
+    }
+  ],
+  "results": {
+    "task": {
+      "expected_exit": 1,
+      "passed": 3,
+      "failed": 2,
+      "log": "minimal-task-test.log"
+    },
+    "reference": {
+      "expected_exit": 0,
+      "passed": 5,
+      "failed": 0,
+      "log": "minimal-reference-test.log"
+    }
+  },
+  "runner_exit": 0,
+  "limits": "Deterministic test values are attributed by historical comments to a ride probe; raw measurements were not replayed or independently checked in this example.",
+  "artifact_sha256": {
+    "README.md": "6324a17283d9a11badefb1e247643e90d0cc58ebe178e06ec16334a12443c6e9",
+    "fixed-regression-test.dart": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
+    "minimal-reference-pub-get.log": "5d935c84ec529ba7abf3364938f0b9d70de812f162ce1598ffd254a5d03ab804",
+    "minimal-reference-test.log": "3a7c73431900081f528c49c70214df256f1b70801274b8afa14c81061e498d7e",
+    "minimal-task-pub-get.log": "5d935c84ec529ba7abf3364938f0b9d70de812f162ce1598ffd254a5d03ab804",
+    "minimal-task-test.log": "113b8449601c0f5b1be01c5680b95703c5ea746c8577b6ed46488d66aec226ca",
+    "post-fix-test.log": "c3a4b97429ad2275dedbdf3ba93fe0c649f29d36fc7fbb366a60c287b4e1f3e9",
+    "pre-fix-test.log": "cff2f1a31519d3a231028f1b409baf7c14343f17508afd2e39f7b17989e2d3fd",
+    "reference/lib/core/ekf/ekf_types.dart": "788b638d9b19c6d18bf794e3da14092af6f69f54efd2b64a98a3ffeb2b335d80",
+    "reference/lib/core/ekf/zupt_detector.dart": "564817b46767160f30c003a87df71547eb79cd4b98b8d23819fd5d1ac6ea5339",
+    "reference/pubspec.yaml": "448fdf6e3afd52f2f821edfb1e84e4936b386e6c80c22da2262487cc0dae75e1",
+    "reference/test/core/ekf/zupt_degraded_gating_test.dart": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
+    "run_example.sh": "98ac0b5244ffdea40a76c156f9993c23f619e7e245cf392cb442d65b31f3aadc",
+    "solution.patch": "52812420d4e6b0fbb4c2321ca035a890ecaaa813ce6f1f314f21586c500b1f40",
+    "task/lib/core/ekf/ekf_types.dart": "788b638d9b19c6d18bf794e3da14092af6f69f54efd2b64a98a3ffeb2b335d80",
+    "task/lib/core/ekf/zupt_detector.dart": "36527a18216942d2ca498543dc17a7aa7b699253a99fdc0bd6e8b361e35fedc3",
+    "task/pubspec.yaml": "448fdf6e3afd52f2f821edfb1e84e4936b386e6c80c22da2262487cc0dae75e1",
+    "task/test/core/ekf/zupt_degraded_gating_test.dart": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
+    "task.md": "e9d5e4234b2a2a912999980802d81b8b102b5d1397e5688eca91ab456aba1c03",
+    "test.patch": "9f2f792c3ff6a5ff0c1c6abafe88738ea9696a4125189703d26f9e7a685f53a9"
+  }
+}

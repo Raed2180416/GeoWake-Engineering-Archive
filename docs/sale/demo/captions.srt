@@ -1,0 +1,137 @@
+1
+00:00:00,400 --> 00:00:04,212
+Meet GeoWake: a destination alarm app built by a
+solo
+
+2
+00:00:04,212 --> 00:00:07,775
+developer, shown here in a controlled Android
+demo.
+
+3
+00:00:08,400 --> 00:00:12,300
+Choose a destination, then set when you would
+like to be alerted
+
+4
+00:00:12,300 --> 00:00:12,500
+.
+
+5
+00:00:12,500 --> 00:00:16,150
+This example uses a metro stop threshold before
+the journey
+
+6
+00:00:16,150 --> 00:00:16,975
+starts.
+
+7
+00:00:20,350 --> 00:00:24,062
+The app displays the route, estimated time
+remaining, and
+
+8
+00:00:24,062 --> 00:00:26,038
+distance to destination.
+
+9
+00:00:26,038 --> 00:00:29,750
+Beside it, the developer dashboard feeds a
+simulated journey into the
+
+10
+00:00:29,750 --> 00:00:30,600
+demo.
+
+11
+00:00:36,375 --> 00:00:40,350
+Speed and time controls make route scenarios
+easier to inspect
+
+12
+00:00:40,350 --> 00:00:40,488
+.
+
+13
+00:00:40,488 --> 00:00:43,838
+This edit skips waiting time, while keeping the
+setup,
+
+14
+00:00:43,838 --> 00:00:47,475
+tracking, transfer notice, and arrival alert
+visible.
+
+15
+00:00:52,375 --> 00:00:56,288
+As the simulated journey approaches a transfer,
+an Upcoming transfer
+
+16
+00:00:56,288 --> 00:01:00,188
+notification appears, with controls to stop the
+alarm or
+
+17
+00:01:00,188 --> 00:01:01,325
+end tracking.
+
+18
+00:01:04,400 --> 00:01:08,112
+Near the destination, a Wake Up notification
+appears.
+
+19
+00:01:08,112 --> 00:01:10,837
+The recording shows the visual alert state;
+
+20
+00:01:10,837 --> 00:01:14,725
+its original audio track contains no audible
+alarm.
+
+21
+00:01:17,375 --> 00:01:21,050
+A second excerpt shows Map Tracking in dark
+mode, with a road
+
+22
+00:01:21,050 --> 00:01:25,000
+route and the same time, distance, and end-
+tracking controls
+
+23
+00:01:25,000 --> 00:01:25,175
+.
+
+24
+00:01:25,175 --> 00:01:27,900
+These are recorded interface demonstrations.
+
+25
+00:01:34,400 --> 00:01:38,238
+GeoWake 's archived codebase is offered for AI
+training and
+
+26
+00:01:38,238 --> 00:01:39,650
+evaluation.
+
+27
+00:01:39,650 --> 00:01:43,575
+Its history includes route tracking, sensor
+fusion experiments
+
+28
+00:01:43,575 --> 00:01:45,362
+, and regression tests.
+
+29
+00:01:45,362 --> 00:01:49,312
+Development stopped because collecting
+underground calibration data
+
+30
+00:01:49,312 --> 00:01:51,050
+became too costly.

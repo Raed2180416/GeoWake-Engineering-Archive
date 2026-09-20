@@ -35,6 +35,9 @@ withheld. Labeled schema stubs preserve code interfaces. Read the
 | What history and local fixes are included? | [Branch history](docs/sale/BRANCH_HISTORY.md), [local capture](docs/sale/LOCAL_WORK_CAPTURE.md) |
 | What is excluded or separately licensed? | [Rights and scope](docs/sale/RIGHTS_AND_EXCLUSIONS.md) |
 
+[Watch the historical demo](docs/sale/demo/README.md) or
+[run the two historical exercises](evaluation/README.md).
+
 The delivered evidence bundle supplies exact-revision file hashes, a source and
 test navigation index, raw check receipts and two verified historical
 fail-to-pass examples. The short narrated demo is a historical development
