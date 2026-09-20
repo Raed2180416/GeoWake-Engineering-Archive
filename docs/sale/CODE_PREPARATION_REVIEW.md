@@ -18,6 +18,8 @@ are part of the asset. New cleanup work is dated separately from original work.
 | Export CI still attempted withheld dataset gates | Uses the explicit code profile and publishes its exact receipt; preserves the original workflow as history | Avoids representing absent data or vacuous loops as proof of complete verification | .github/workflows/ci.yml; dataset-dependent-tests.json |
 | ZUPT exercise resolved dependencies afresh and accepted an insufficiently specific failure signature | Added paired locks, enforce-lockfile, exit1 and exact3-pass/2-failure gate; clarified task/ entry instructions | Reduces dependency drift and false acceptance of unrelated failures | evaluation/zupt-degraded-gating/manifest.json; rerun task3pass2fail/reference5pass |
 | Original historical hashes no longer resolved after sanitization | Added a lookup command and explicit maps | Restores a usable navigation path from decisions to original code changes | tools/sale/resolve_original_commit.py |
+| GitHub exposed a race in the guardian arrival test | Waits for the injected arrival sender and the completed sharing-status refresh instead of six event-loop turns | A slow runner no longer asserts delivery prematurely or deletes Hive storage during unfinished work; the production alarm stays nonblocking | test/share/guardian_service_test.dart; first GitHub run 35530763692 |
+| GitHub's Gitleaks version ignored the newer allowlist table name | Uses its supported singular table with the same three exact non-secret values | Keeps real secret detection active without false positives on the fixed dummy test secret | .gitleaks.toml; security job in run 35531022159 |
 
 ## Runtime findings retained with the archive
 

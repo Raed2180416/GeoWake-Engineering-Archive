@@ -1,6 +1,7 @@
 // Guardian mode gating + arrived-on-wake behaviour. Free users are blocked at
 // every mutation; Pro users can configure, auto-share on arm, and the "arrived
 // safely" signal fires exactly once via the post-alarm multicast.
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -34,6 +35,26 @@ class _RecBackend implements ShareBackend {
 Future<void> _pump() async {
   for (var i = 0; i < 6; i++) {
     await Future<void>.delayed(Duration.zero);
+  }
+}
+
+Future<void> _waitForSharingFlag(
+  JourneyShareService share,
+  bool expected,
+) async {
+  if (share.isSharing.value == expected) return;
+  final completed = Completer<void>();
+  void changed() {
+    if (share.isSharing.value == expected && !completed.isCompleted) {
+      completed.complete();
+    }
+  }
+
+  share.isSharing.addListener(changed);
+  try {
+    await completed.future.timeout(const Duration(seconds: 5));
+  } finally {
+    share.isSharing.removeListener(changed);
   }
 }
 
@@ -232,6 +253,8 @@ void main() {
     final share = JourneyShareService.forTest();
     final launched = <Uri>[];
     final autoMsgs = <String>[];
+    final armDelivered = Completer<void>();
+    final arrivalDelivered = Completer<void>();
     final g = GuardianService.forTest(
       entitlement: () => true,
       share: share,
@@ -239,7 +262,14 @@ void main() {
         launched.add(uri);
         return true;
       },
-      autoSender: (contact, msg) async => autoMsgs.add(msg),
+      autoSender: (contact, msg) async {
+        autoMsgs.add(msg);
+        if (msg.contains('arrived safely')) {
+          if (!arrivalDelivered.isCompleted) arrivalDelivered.complete();
+        } else if (!armDelivered.isCompleted) {
+          armDelivered.complete();
+        }
+      },
     );
     await g.setContact(
       displayName: 'Mom',
@@ -250,12 +280,16 @@ void main() {
     g.registerPostAlarm();
 
     await g.onJourneyArmed(destLabel: 'Indiranagar');
-    await _pump();
+    await armDelivered.future.timeout(const Duration(seconds: 5));
+    await _waitForSharingFlag(share, true);
     launched.clear();
     autoMsgs.clear(); // drop the arm-time auto-send; isolate the arrival one
 
     PostAlarmMulticast.instance.dispatch();
-    await _pump();
+    // Delivery and the advisory sharing flag both await disk I/O. A fixed
+    // number of event-loop turns cannot establish completion on a busy runner.
+    await arrivalDelivered.future.timeout(const Duration(seconds: 5));
+    await _waitForSharingFlag(share, false);
 
     // NEVER pop the user's SMS/WhatsApp composer at wake time (it would surface
     // over the just-fired alarm). The follower already sees "arrived safely"
