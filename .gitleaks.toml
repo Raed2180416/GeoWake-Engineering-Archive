@@ -1,7 +1,7 @@
 [extend]
 useDefault = true
 
-[[allowlists]]
+[allowlist]
 description = "Exact non-secret test value and SharedPreferences storage key"
 regexTarget = "secret"
 regexes = [
