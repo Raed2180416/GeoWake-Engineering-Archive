@@ -23,9 +23,9 @@ export commits are additional and are not historical development work.
 | Friend-phone sensor files and captured route logs | Outside the code corpus; separate optional candidate only |
 | OneUI audio | Removed; three current oscillator-generated tones replace it |
 | College presentations, external PDFs, document templates | Withheld; project involvement is not a grant to those documents |
-| Mixed OSM/YoMetro catalog and derived station sequences | Generated payloads withheld; public Dart interfaces remain as empty, labeled schema stubs |
+| Mixed OSM/YoMetro catalog, derived station sequences and complete copied catalog in `docs/research/raw/flagged_lines.md` | Generated payloads withheld; public Dart interfaces remain as empty, labeled schema stubs |
 | Fifteen scale-fixture pairs using the mixed catalog | Withheld despite synthetic motion; geographic input shares the catalog's boundary |
-| Recorded-ride route asset and aligned historical analysis data | Withheld; summarized engineering findings retained |
+| Recorded-ride route asset, identifying `DATA_CONTRACT.md` and aligned historical analysis data | Withheld; summarized engineering findings retained |
 | Identified credentials and local home-directory strings | Redacted in text and commit messages; scan receipt supplied |
 | Installed dependencies, build/cache output, duplicate indexes and annotated code copies | Omitted as redundant artifacts; lockfiles and source tools retained |
 | Stash/internal tool refs | Outside selected delivery refs |
@@ -65,3 +65,7 @@ at the withheld catalog/route boundaries. The code profile excludes those five
 files and three additional data gates that can otherwise skip or pass on empty
 inputs. Every exclusion and its observed reason is listed in
 `tools/sale/dataset-dependent-tests.json`; no original assertion was weakened.
+
+The final curation pass also replaces exact external recording basenames with
+opaque fixture identifiers in code, notes and commit messages. Relative-time
+research findings remain dated historical analysis, not a transferred raw dataset.

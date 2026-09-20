@@ -24,8 +24,11 @@ EKF, ZUPT, station association, reachability and the experimental stop-anchoring
 pivot to dated commits and negative findings. [Founder clarifications](FOUNDER_CLARIFICATIONS.jsonl)
 record the 40% pre-boarding threshold as experimental, friend-phone recording
 provenance and the experimental-only stopping point.
-[Engineering retrospectives](ENGINEERING_RETROSPECTIVES.md) distinguish a
+[Engineering retrospectives](ENGINEERING_RETROSPECTIVES.md) explain
 two verified historical regressions.
+
+[Code preparation review](CODE_PREPARATION_REVIEW.md) explains the bounded repairs
+and three remaining runtime findings with proposed verification plans.
 
 ## What can be checked
 
@@ -33,9 +36,10 @@ two verified historical regressions.
 [Reproduction notes](TECHNICAL_HANDOVER.md) explain the toolchain and local
 checks. [Claims](CLAIMS.csv) separates code, measured results, founder reports
 and unresolved claims. [The source navigation index](navigation/README.md) supplies exact file, symbol,
-import and test lookup. The separately supplied evidence bundle contains the
-exact-revision file/symbol/import/test index, verification receipts, dependency
-notices, history mapping and the runnable ZUPT evaluation example. Lexical
+import and test lookup. This repository includes the
+file/symbol/import/test index, verification receipts, dependency notices, history
+mapping and both runnable historical exercises. The external delivery manifest
+pins the final files and Git revision. Lexical
 source-to-test matches are navigation hints, not measured coverage.
 
 ## Which version
@@ -59,3 +63,22 @@ mapping rather than pretending those bytes were never present.
 [Rights and exclusions](RIGHTS_AND_EXCLUSIONS.md) is the wider provenance inventory.
 The transaction concerns existing material, without a further-development
 commitment. The optional recording candidate has its own provenance and scope.
+
+## Resolve historical commit references
+
+Original commit IDs in research and retrospectives describe the original
+engineering sequence. Sanitization changed their hashes. From the repository
+root, translate a full ID or unique prefix before using Git:
+
+```bash
+python3 tools/sale/resolve_original_commit.py f956929
+# Inspect an original development revision:
+git show "$(python3 tools/sale/resolve_original_commit.py 440e900):lib/services/trackingservice.dart"
+```
+
+The original-to-export mapping covers selected development history. A separate
+pre-export-to-delivery mapping covers the final removal pass and receipt refs.
+The two self-contained exercises are delivered in [evaluation/](../../evaluation/README.md):
+[ZUPT](../../evaluation/zupt-degraded-gating/README.md) and
+[purchase restore](../../evaluation/purchase-restore/README.md). They require no
+historical Git checkout or withheld recordings.

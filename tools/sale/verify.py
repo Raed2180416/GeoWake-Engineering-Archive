@@ -18,6 +18,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def git_metadata(root):
+    """Source-only ZIPs have no Git metadata; never borrow a parent repo identity."""
+    result = {'revision': None, 'working_tree_status': None, 'source_mode': 'source-archive'}
+    if not shutil.which('git'):
+        return result
+    top = subprocess.run(['git', 'rev-parse', '--show-toplevel'], cwd=root,
+                         text=True, capture_output=True)
+    if top.returncode or Path(top.stdout.strip()).resolve() != root.resolve():
+        return result
+    result.update(revision=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
+                  working_tree_status=subprocess.check_output(['git', 'status', '--porcelain=v1'], cwd=root, text=True),
+                  source_mode='git-checkout')
+    return result
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--out', required=True, type=Path)
@@ -50,8 +65,8 @@ def main():
                                   '--outputFile=' + str(out / 'backend-tests.json')], ROOT / 'geowake-server'),
                ('share-tests', ['npm', 'test'], ROOT / 'backend/share')]
     report = {'started_at': datetime.now(timezone.utc).isoformat(),
-              'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-              'working_tree_status': subprocess.check_output(['git', 'status', '--porcelain=v1'], cwd=ROOT, text=True),
+              **git_metadata(ROOT),
+              'verification_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               'profile': args.profile, 'excluded_test_files': exclusions,
               'checks': [], 'scope': 'Headless/local checks; no field, OEM, real-store, or live-service validation.'}
     for name, command, cwd in checks:

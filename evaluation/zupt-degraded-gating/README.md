@@ -5,9 +5,9 @@ test. A GPS-denied train cruise could be misclassified as stationary when the
 filter velocity remained near zero. The fix strengthens the corroboration needed
 for a zero-velocity update.
 
-**Observed again on 20 September 2026:** the task has 3 passing tests and the
+**Observed again on 21 September 2026 (India time):** the task has 3 passing tests and the
 2 intended failures; the reference has all 5 tests passing. The minimal harness
-uses Flutter 3.44.6 / Dart 3.12.2. It needs no Maps key, phone recording, app art,
+uses Flutter 3.44.6 / Dart 3.12.2 with paired dependency lockfiles. It needs no Maps key, phone recording, app art,
 OneUI audio, full app dependency tree or original Git checkout.
 
 ## Run
@@ -18,7 +18,8 @@ FLUTTER_BIN=/path/to/flutter ./run_example.sh --both --log-dir /tmp/zupt-results
 
 Use `--offline` when the SDK's test dependencies are cached. `--task` or
 `--reference` runs only that side. The script copies inputs into a temporary
-directory, checks the expected outcomes and leaves logs at the requested path.
+directory, enforces the lockfile, requires exactly 3 passes and 2 intended failures
+for the task (or all 5 passes for the reference), and leaves logs at the requested path.
 An expected task failure is a successful reproduction, not a repaired solution.
 
 ## Keep task inputs separate from answers

@@ -1,6 +1,6 @@
 {
   "case_id": "zupt-degraded-gating-f956929",
-  "packaged_at_utc": "2026-09-20T18:01:00.290033+00:00",
+  "packaged_at_utc": "2026-09-20T18:47:08.498137+00:00",
   "repository_commits": {
     "post_fix": "f95692932f8d6051f3b56e742de91e49c9144e3e",
     "post_fix_parent_is_pre_fix": true,
@@ -72,25 +72,32 @@
   "runner_exit": 0,
   "limits": "Deterministic test values are attributed by historical comments to a ride probe; raw measurements were not replayed or independently checked in this example.",
   "artifact_sha256": {
-    "README.md": "6324a17283d9a11badefb1e247643e90d0cc58ebe178e06ec16334a12443c6e9",
+    "README.md": "b30043264a62bf43d711165a175b02ab06ae4b3abc7b80d5f00939db50e14ebb",
     "fixed-regression-test.dart": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
-    "minimal-reference-pub-get.log": "5d935c84ec529ba7abf3364938f0b9d70de812f162ce1598ffd254a5d03ab804",
-    "minimal-reference-test.log": "3a7c73431900081f528c49c70214df256f1b70801274b8afa14c81061e498d7e",
-    "minimal-task-pub-get.log": "5d935c84ec529ba7abf3364938f0b9d70de812f162ce1598ffd254a5d03ab804",
-    "minimal-task-test.log": "113b8449601c0f5b1be01c5680b95703c5ea746c8577b6ed46488d66aec226ca",
+    "minimal-reference-pub-get.log": "d4cb7a3c68b4133b4f6e58c67ff5bfd13725d8021e930388cdc98da8a575919d",
+    "minimal-reference-test.log": "613b7bc67cb2e1037812bde77de34d8e82d59b0623fd0bcde1504248a152cfdc",
+    "minimal-task-pub-get.log": "d4cb7a3c68b4133b4f6e58c67ff5bfd13725d8021e930388cdc98da8a575919d",
+    "minimal-task-test.log": "2250c8d711262d6f82462550822ab0482731ff5f7444a9ba5c0acc6fa383b187",
     "post-fix-test.log": "c3a4b97429ad2275dedbdf3ba93fe0c649f29d36fc7fbb366a60c287b4e1f3e9",
     "pre-fix-test.log": "cff2f1a31519d3a231028f1b409baf7c14343f17508afd2e39f7b17989e2d3fd",
     "reference/lib/core/ekf/ekf_types.dart": "788b638d9b19c6d18bf794e3da14092af6f69f54efd2b64a98a3ffeb2b335d80",
     "reference/lib/core/ekf/zupt_detector.dart": "564817b46767160f30c003a87df71547eb79cd4b98b8d23819fd5d1ac6ea5339",
     "reference/pubspec.yaml": "448fdf6e3afd52f2f821edfb1e84e4936b386e6c80c22da2262487cc0dae75e1",
     "reference/test/core/ekf/zupt_degraded_gating_test.dart": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
-    "run_example.sh": "98ac0b5244ffdea40a76c156f9993c23f619e7e245cf392cb442d65b31f3aadc",
+    "run_example.sh": "c99e448e533a3f292a78d47f0c973d998f4af111d5ae6b94e53ef19398938baa",
     "solution.patch": "52812420d4e6b0fbb4c2321ca035a890ecaaa813ce6f1f314f21586c500b1f40",
     "task/lib/core/ekf/ekf_types.dart": "788b638d9b19c6d18bf794e3da14092af6f69f54efd2b64a98a3ffeb2b335d80",
     "task/lib/core/ekf/zupt_detector.dart": "36527a18216942d2ca498543dc17a7aa7b699253a99fdc0bd6e8b361e35fedc3",
     "task/pubspec.yaml": "448fdf6e3afd52f2f821edfb1e84e4936b386e6c80c22da2262487cc0dae75e1",
     "task/test/core/ekf/zupt_degraded_gating_test.dart": "5c1a10ddfc6e0a953638ff9b0b39bc625d4bce01616f878e0a8e78db5d3059c9",
-    "task.md": "e9d5e4234b2a2a912999980802d81b8b102b5d1397e5688eca91ab456aba1c03",
-    "test.patch": "9f2f792c3ff6a5ff0c1c6abafe88738ea9696a4125189703d26f9e7a685f53a9"
+    "task.md": "50d2c590ddccd72f8391850870af6c811a9107d79b9d12b0e129587a937d9f43",
+    "test.patch": "9f2f792c3ff6a5ff0c1c6abafe88738ea9696a4125189703d26f9e7a685f53a9",
+    "task/pubspec.lock": "572304219d887462335cf48d617f2bf7508e8ba726fbe8c073e42da54332a0ec",
+    "reference/pubspec.lock": "572304219d887462335cf48d617f2bf7508e8ba726fbe8c073e42da54332a0ec"
+  },
+  "packaging_recheck": {
+    "description": "Paired dependency locks and strict 3-pass/2-failure task gate; original source and regression tests unchanged.",
+    "command": "FLUTTER_BIN=/path/to/flutter bash run_example.sh --both --offline --log-dir /tmp/zupt-results",
+    "exit_code": 0
   }
 }

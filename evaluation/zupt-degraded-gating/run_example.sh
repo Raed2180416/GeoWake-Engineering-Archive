@@ -42,9 +42,9 @@ run_case() {
   cp -R -- "$script_dir/$which" "$scratch/$which"
   cd -- "$scratch/$which"
   if [[ "$offline" == true ]]; then
-    "$flutter_bin" pub get --offline > "$log_dir/minimal-$which-pub-get.log" 2>&1
+    "$flutter_bin" pub get --enforce-lockfile --offline > "$log_dir/minimal-$which-pub-get.log" 2>&1
   else
-    "$flutter_bin" pub get > "$log_dir/minimal-$which-pub-get.log" 2>&1
+    "$flutter_bin" pub get --enforce-lockfile > "$log_dir/minimal-$which-pub-get.log" 2>&1
   fi
   set +e
   "$flutter_bin" test --no-pub --reporter expanded test/core/ekf/zupt_degraded_gating_test.dart > "$log_dir/minimal-$which-test.log" 2>&1
@@ -52,7 +52,7 @@ run_case() {
   set -e
   if [[ "$which" == task ]]; then
     expected="$(grep -c 'Expected: false' "$log_dir/minimal-$which-test.log" || true)"
-    if ((status == 0)) || [[ "$expected" != 2 ]] || ! grep -Fq 'Some tests failed.' "$log_dir/minimal-$which-test.log" || ! grep -Fq 'smooth cruise + pinned-zero velocity must NOT confirm' "$log_dir/minimal-$which-test.log" || ! grep -Fq 'quiet-but-not-ultra-quiet + stationary hint does NOT' "$log_dir/minimal-$which-test.log"; then
+    if ((status != 1)) || ! grep -Fq '+3 -2: Some tests failed.' "$log_dir/minimal-$which-test.log" || [[ "$expected" != 2 ]] || ! grep -Fq 'Some tests failed.' "$log_dir/minimal-$which-test.log" || ! grep -Fq 'smooth cruise + pinned-zero velocity must NOT confirm' "$log_dir/minimal-$which-test.log" || ! grep -Fq 'quiet-but-not-ultra-quiet + stationary hint does NOT' "$log_dir/minimal-$which-test.log"; then
       printf 'Unexpected task result: exit=%s, assertion failures=%s; see %s\n' "$status" "$expected" "$log_dir/minimal-$which-test.log" >&2
       return 1
     fi

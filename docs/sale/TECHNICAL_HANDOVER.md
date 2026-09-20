@@ -25,15 +25,16 @@ python3 tools/sale/verify.py --profile code --out /tmp/geowake-verification
 
 The runner defaults to two Flutter test workers to keep resource use bounded.
 The runner captures commands, exit codes, timestamps and log hashes. Its API
-test keys are explicit dummy values. It runs static analysis, the full Flutter
+test keys are explicit dummy values. It runs static analysis, the selected Flutter
 suite with coverage, the Express suite and the share suite. In the cleaned export,
 `--profile code` excludes eight explicitly listed dataset-dependent files. The
 full original test source is retained; `--profile full` attempts all cases and
 needs the withheld datasets. See `tools/sale/dataset-dependent-tests.json`. It does not launch
 production services or exercise a buyer's billing credentials.
 
-The full Flutter suite includes the replay, reachability, route-scale,
-playground, monotonic-clock and metro-integrity tests named in CI. Some tests
+The historical full suite includes replay, reachability, route-scale,
+playground, monotonic-clock and metro-integrity tests. Current corpus CI runs
+the explicitly bounded code profile; it excludes the data-dependent gates. Some tests
 cannot observe native plugins in a headless process. The externally stored
 real-ride replay branch returns early when its recordings are absent; a green
 suite must not be described as fresh field validation.
@@ -105,3 +106,8 @@ Dataset collection and further product development stopped for economic
 reasons, according to the founder. The transaction concerns the existing
 engineering material; no additional field collection or launch work is
 required to understand that material.
+
+Source-only ZIPs can run the same verification helper. Their receipt records
+`source_mode: source-archive` and no Git revision, rather than borrowing a
+parent directory's repository identity. Use the external file manifest to match
+such an extracted archive to its offered revision.

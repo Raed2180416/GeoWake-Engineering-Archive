@@ -1,8 +1,10 @@
 # GeoWake branch and Git-history audit
 
-**Read-only snapshot:** 2026-09-20 17:27:10 UTC. The machine-readable [branch-audit.json](branch-audit.json) pins every local ref and commit bucket; [optional-data-inventory.csv](optional-data-inventory.csv) pins historical recording paths, blob hashes, and byte sizes. The sale worktree was advancing during this audit, so its hash below is a snapshot, not a publication claim. No refs were fetched, pushed, merged, deleted, or rewritten.
+> Historical pre-export audit. Hosted branches and proposed actions below describe the original repository at the timestamp shown, not the delivered corpus. Current delivery uses `main`, three `history/*` branches and five archive tags; see EXPORT_SCOPE.md and the external final delivery manifest. Original private inventories are retained seller-side.
 
-## What GitHub currently lists
+**Read-only snapshot:** 2026-09-20 17:27:10 UTC. The machine-readable `branch-audit.json` (seller-side) pins every local ref and commit bucket; `optional-data-inventory.csv` (seller-side) pins historical recording paths, blob hashes, and byte sizes. The sale worktree was advancing during this audit, so its hash below is a snapshot, not a publication claim. No refs were fetched, pushed, merged, deleted, or rewritten.
+
+## What the original GitHub repository listed at the audit timestamp
 
 `origin` is the **private** `Raed2180416/WakePoint` GitHub repository. A live `git ls-remote --symref origin HEAD 'refs/heads/*'` and `gh repo view ... --json isPrivate,defaultBranchRef,pushedAt` returned only three hosted branches:
 
@@ -39,7 +41,7 @@ The private CSV inventories **114 path appearances / 99 unique blobs / 1,417,916
 
 `git rev-list --objects --all` found **no additional raw blob hashes** under these three prefixes beyond the CSV. The 21 baseline CSVs under `test/fixtures/` were excluded from this optional *real-recording* inventory; research documentation labels replay examples synthetic, and those test fixtures need their own classification. Paths themselves can carry names; `Location.csv`, `Metadata.csv`, and route logs can carry location/device identifiers. The founder says some recordings came from friends' phones, so the optional-data package remains withheld pending per-recording consent, privacy and AI-training-transfer rights. A raw Git mirror or `git bundle --all` would include the historical blobs despite working-tree exclusions.
 
-## Recommended branch presentation
+## Earlier recommendation, superseded by the delivered archive
 
 Create one **reviewed canonical archive line**, proposed `archive/2026-09-20`, from the final sale-worktree commit after integration and verification. Its README/manifest should state the exact commit SHA, archived date, intended AI-training use, known failure boundaries, and whether Git history is included. Retain `production-ready-audit-v2`, `stable-release-1`, `ios_branch`, tags and stash in the private provenance store; expose historical refs to a buyer only after the raw-data/asset/secret rights review. Carry the optional recordings in a separate rights-gated package keyed by the CSV blob hashes. If full Git history cannot be transferred, describe a curated source export honestly as an export rather than claiming it is the intact 201-commit repository.
 
