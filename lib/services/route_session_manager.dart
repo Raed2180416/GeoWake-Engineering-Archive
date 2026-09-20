@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/route_registry.dart';
@@ -66,6 +67,10 @@ class RouteSessionManager {
   bool activeRouteInitialized = false;
   bool rerouteInFlight = false;
   bool transitMode = false;
+  int _routeRegistrationGeneration = 0;
+
+  @visibleForTesting
+  Future<void> Function()? testRegistrationBarrier;
 
   // Per-Route State Maps (Route Key -> Data)
   final Map<String, List<RouteEventBoundary>> routeEventsByKey = {};
@@ -77,7 +82,21 @@ class RouteSessionManager {
   final Map<String, List<TransitLegStops>> transitLegStopsByKey = {};
 
   final Map<String, Map<String, dynamic>> _routePayloadsByKey = {};
-  Map<String, dynamic>? cachedRoutePayload;
+  Map<String, dynamic>? _cachedRoutePayloadOverride;
+
+  /// The payload for the active route, never merely the most recently fetched
+  /// route.  A route registration can finish in the background after another
+  /// leg has become active; returning the active-key bundle prevents the map,
+  /// stop list and notification from being labelled with the wrong geometry.
+  Map<String, dynamic>? get cachedRoutePayload {
+    final activeKey = activeManager?.activeKey;
+    return (activeKey == null ? null : _routePayloadsByKey[activeKey]) ??
+        _cachedRoutePayloadOverride;
+  }
+
+  set cachedRoutePayload(Map<String, dynamic>? value) {
+    _cachedRoutePayloadOverride = value;
+  }
   DateTime? _lastRouteBroadcastAt;
 
   // Persistence / Restore
@@ -107,9 +126,11 @@ class RouteSessionManager {
   }
 
   void clearSession() {
+    cancelPendingRouteRegistrations();
     registry.clear();
     activeRouteInitialized = false;
     lastActiveState = null;
+    lastIngestedPosition = null;
     routeEventsByKey.clear();
     stepBoundsMetersByKey.clear();
     stepStopsCumulativeByKey.clear();
@@ -118,9 +139,17 @@ class RouteSessionManager {
     transitModeByKey.clear();
     transitLegStopsByKey.clear();
     _routePayloadsByKey.clear();
-    cachedRoutePayload = null;
+    routePayloadsByKey.clear();
+    _cachedRoutePayloadOverride = null;
     _lastRouteBroadcastAt = null;
     currentDirections = null;
+  }
+
+  /// Invalidates every route parser currently suspended in storage/network
+  /// work. The parser checks this token immediately after each await, so a
+  /// delayed result cannot repopulate route state after Stop.
+  void cancelPendingRouteRegistrations() {
+    _routeRegistrationGeneration++;
   }
 
   /// Evict per-route-key auxiliary map entries that no longer have a
@@ -142,6 +171,7 @@ class RouteSessionManager {
     transitModeByKey.removeWhere((k, _) => !liveKeys.contains(k));
     transitLegStopsByKey.removeWhere((k, _) => !liveKeys.contains(k));
     _routePayloadsByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    routePayloadsByKey.removeWhere((k, _) => !liveKeys.contains(k));
   }
 
   // --- Route Registration Interface ---
@@ -155,7 +185,17 @@ class RouteSessionManager {
     required bool transitMode,
     String? destinationName,
     bool activateRoute = false,
+    bool Function()? isRegistrationCurrent,
   }) async {
+    final registrationGeneration = ++_routeRegistrationGeneration;
+    bool isCurrent() =>
+        registrationGeneration == _routeRegistrationGeneration &&
+        (isRegistrationCurrent == null || isRegistrationCurrent());
+    if (!isCurrent()) return;
+
+    await testRegistrationBarrier?.call();
+    if (!isCurrent()) return;
+
     final mode = transitMode ? 'transit' : 'driving';
     currentDirections = directions;
 
@@ -414,7 +454,9 @@ class RouteSessionManager {
       List<TransitLegStops>? loadedLegs;
       try {
         loadedLegs = await TrackingStateStore.loadTransitLegStops(key);
+        if (!isCurrent()) return;
       } catch (_) {}
+      if (!isCurrent()) return;
 
       if (loadedLegs != null && loadedLegs.isNotEmpty) {
         // FIX: Check for stale "Walk" names that cause unstable leg IDs (multiple preboarding alarms)
@@ -457,14 +499,17 @@ class RouteSessionManager {
               loadedLegs,
               directions,
             );
+            if (!isCurrent()) return;
             // Save re-enhanced legs
             if (transitLegStops.isNotEmpty) {
               await TrackingStateStore.saveTransitLegStops(
                 key,
                 transitLegStops,
               );
+              if (!isCurrent()) return;
             }
           } catch (e) {
+            if (!isCurrent()) return;
             // Fallback to loaded legs if re-enhancement fails
             transitLegStops = loadedLegs;
             print(
@@ -487,7 +532,9 @@ class RouteSessionManager {
               rawTransitLegs,
               directions,
             );
+            if (!isCurrent()) return;
           } catch (e) {
+            if (!isCurrent()) return;
             // ignore enhancement errors, use raw legs
           }
         }
@@ -528,6 +575,7 @@ class RouteSessionManager {
 
         if (transitLegStops.isNotEmpty) {
           await TrackingStateStore.saveTransitLegStops(key, transitLegStops);
+          if (!isCurrent()) return;
         }
       }
 
@@ -543,6 +591,7 @@ class RouteSessionManager {
 
       transitLegStopsByKey[key] = List<TransitLegStops>.from(transitLegStops);
     } catch (_) {
+      if (!isCurrent()) return;
       // Fallback empty
       stepBoundsMetersByKey[key] = const [];
       stepStopsCumulativeByKey[key] = const [];
@@ -789,6 +838,7 @@ class RouteSessionManager {
     _log.info('Route debug [$key]: $routeDebug');
 
     // Delegate to registerRoute to finish setup
+    if (!isCurrent()) return;
     registerRoute(
       key: key,
       mode: mode,
@@ -826,7 +876,7 @@ class RouteSessionManager {
       transitLegStopsByKey[key] = legs;
     }
 
-    cachedRoutePayload = {
+    final payload = <String, dynamic>{
       'destinationName': destinationName,
       'points':
           points.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList(),
@@ -836,7 +886,11 @@ class RouteSessionManager {
       'transit_mode': isTransitMode,
       if (routeDebug != null) 'route_debug': routeDebug,
     };
-    _routePayloadsByKey[key] = Map<String, dynamic>.from(cachedRoutePayload!);
+    _routePayloadsByKey[key] = Map<String, dynamic>.from(payload);
+    // Keep a fallback for the short interval before the first active key is
+    // selected.  Once an active key exists, the getter above wins.
+    _cachedRoutePayloadOverride = payload;
+    routePayloadsByKey[key] = Map<String, dynamic>.from(payload);
 
     final entry = RouteEntry(
       key: key,
@@ -844,6 +898,9 @@ class RouteSessionManager {
       destinationName: destinationName,
       points: points,
     );
+    final previousEntry = registry.getByKey(key);
+    final geometryChanged = previousEntry != null &&
+        !_sameGeometry(previousEntry.points, points);
     registry.upsert(entry);
     _pruneEvictedAuxMaps();
 
@@ -854,8 +911,9 @@ class RouteSessionManager {
       final destLng = points.isNotEmpty ? points.last.longitude : 0.0;
 
       for (var sp in switchPoints) {
-        final lat = sp['lat'] as double;
-        final lng = sp['lng'] as double;
+        final lat = (sp['lat'] as num?)?.toDouble();
+        final lng = (sp['lng'] as num?)?.toDouble();
+        if (lat == null || lng == null) continue;
         bool keep = true;
         for (var existing in filteredSwitchPoints) {
           final dist = Geolocator.distanceBetween(
@@ -880,10 +938,18 @@ class RouteSessionManager {
         }
         if (keep) filteredSwitchPoints.add(sp);
       }
+      // The filtered list is the one that belongs in the per-key bundle.  The
+      // previous code computed it but continued broadcasting the unfiltered
+      // provider list, making duplicate/near-destination switch points appear
+      // again after every refresh.
+      payload['switch_points'] = filteredSwitchPoints;
+      _routePayloadsByKey[key] = Map<String, dynamic>.from(payload);
+      routePayloadsByKey[key] = Map<String, dynamic>.from(payload);
+      _cachedRoutePayloadOverride = payload;
     }
 
     // Parse Events if not already done via FromDirections
-    if (!routeEventsByKey.containsKey(key) && events != null) {
+    if (events != null) {
       final parsedEvents = <RouteEventBoundary>[];
       for (var evMap in events) {
         try {
@@ -894,8 +960,8 @@ class RouteSessionManager {
               meters: meters,
               type: type,
               label: evMap['label'] as String?,
-              lat: evMap['lat'] as double?,
-              lng: evMap['lng'] as double?,
+              lat: (evMap['lat'] as num?)?.toDouble(),
+              lng: (evMap['lng'] as num?)?.toDouble(),
               associatedLegIndex: evMap['associatedLegIndex'] as int?,
             ),
           );
@@ -949,11 +1015,23 @@ class RouteSessionManager {
     }
 
     if (activate) {
-      final fromKey = lastActiveState?.activeKey;
+      final fromKey =
+          lastActiveState?.activeKey ?? activeManager?.activeKey;
       activeManager!.setActive(key);
       activeRouteInitialized = true;
 
-      if (fromKey != null && fromKey != key) {
+      if (points.isNotEmpty) {
+        // On refresh, the route origin may be kilometres behind the rider.
+        // Re-snap the last live position when available; only initial route
+        // activation should seed from the first polyline point.
+        activeManager!.ingestPosition(lastIngestedPosition ?? points.first);
+      }
+      // A forced reroute normally reuses the same origin/destination cache key.
+      // Emit the same stream event for a same-key geometry replacement so the
+      // EKF can swap route domains and seed from the progress just re-snapped
+      // above.  Emitting after ingest also makes this ordering safe if a caller
+      // ever uses a synchronous stream controller in a test harness.
+      if (fromKey != null && (fromKey != key || geometryChanged)) {
         final evt = RouteSwitchEvent(
           fromKey: fromKey,
           toKey: key,
@@ -961,10 +1039,19 @@ class RouteSessionManager {
         );
         _routeSwitchCtrl.add(evt);
       }
-      if (points.isNotEmpty) {
-        activeManager!.ingestPosition(points.first);
+    }
+  }
+
+  static bool _sameGeometry(List<LatLng> a, List<LatLng> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].latitude != b[i].latitude ||
+          a[i].longitude != b[i].longitude) {
+        return false;
       }
     }
+    return true;
   }
 
   /// Switches to a previously registered route by its key.
@@ -1027,7 +1114,7 @@ class RouteSessionManager {
 
     final inactive = _getInactiveRoutesPayload();
     final routeDebug =
-      (payload['route_debug'] as Map?)?.cast<String, dynamic>();
+        (payload['route_debug'] as Map?)?.cast<String, dynamic>();
     _lastRouteBroadcastAt = DateTime.now();
 
     // Use transitLegStops of ACTIVE key if available, or just first?

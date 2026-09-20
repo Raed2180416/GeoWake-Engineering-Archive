@@ -96,9 +96,12 @@ class AlarmEvaluator {
       final dest = destEvents.last;
       // P0 reachability: inflate progress by the larger of the sigma cushion and
       // the physics reachability bound so direct-fire / 60%-rule are never late.
-      final double fallbackSigmaCushion = fractileK *
-          ((positionSigmaMeters ?? 0.0)
-              .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters));
+      final double fallbackSigmaCushion =
+          fractileK *
+          ((positionSigmaMeters ?? 0.0).clamp(
+            0.0,
+            FireDecisionConfig.maxFractileSigmaMeters,
+          ));
       final double effProgressFallback = Reachability.effectiveProgress(
         deadReckonedProgressMeters: progressMeters,
         sigmaCushionMeters: fallbackSigmaCushion,
@@ -241,6 +244,13 @@ class AlarmEvaluator {
         if (nextMetroIndex != null) {
           final nextMetroLeg = transitLegs[nextMetroIndex];
           final targetMeters = nextMetroLeg.legStartMeters;
+          // Starting at/on a station, or within a short approach, must not
+          // generate an immediate pre-boarding wake. The route's first metro
+          // start is in the same arc-length domain, so this also covers the
+          // 0m and ~200m launch cases without trusting a nearby-station search.
+          if (evalLegIndex == 0 && targetMeters <= 300.0) {
+            return null;
+          }
           final preBoardingKey =
               'PreBoarding_toMetro_${nextMetroIndex}_${targetMeters.toStringAsFixed(0)}';
 
@@ -272,10 +282,12 @@ class AlarmEvaluator {
           );
           // P0 reachability: fire if the physics bound has reached the boarding
           // point, independent of the drift-prone ETA.
-          final bool reachFirePre = reachableProgressBoundMeters != null &&
+          final bool reachFirePre =
+              reachableProgressBoundMeters != null &&
               reachableProgressBoundMeters.isFinite &&
               reachableProgressBoundMeters >= targetMeters;
-          final shouldFire = reachFirePre ||
+          final shouldFire =
+              reachFirePre ||
               (etaSeconds - fractileK * etaSigma) <= thresholdSeconds;
           print(
             'TIME_ETA_DEBUG: legIdx=$evalLegIndex, isMetro=${leg.isMetro}, lineName=${leg.lineName}, '
@@ -392,10 +404,12 @@ class AlarmEvaluator {
       );
       // P0 reachability: if the physics worst-case position has already reached
       // the switch target, fire now regardless of the (drift-prone) ETA.
-      final bool reachFireMain = reachableProgressBoundMeters != null &&
+      final bool reachFireMain =
+          reachableProgressBoundMeters != null &&
           reachableProgressBoundMeters.isFinite &&
           reachableProgressBoundMeters >= switchTargetMeters;
-      final shouldFire = reachFireMain ||
+      final shouldFire =
+          reachFireMain ||
           (etaSeconds - fractileK * etaSigmaMain) <= thresholdSeconds;
 
       // DEBUG: Log ETA calculation details
@@ -723,10 +737,14 @@ class AlarmEvaluator {
         // dead-reckoned metersInLeg — otherwise an adjacent-station hop ridden
         // through a GPS blackout fires LATE here, bypassing the guarantee the
         // multi-stop path already has.
-        final double zeroStopSigmaCushion = fractileK *
-            ((positionSigmaMeters ?? 0.0)
-                .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters));
-        final double effectiveMetersInLeg = Reachability.effectiveProgress(
+        final double zeroStopSigmaCushion =
+            fractileK *
+            ((positionSigmaMeters ?? 0.0).clamp(
+              0.0,
+              FireDecisionConfig.maxFractileSigmaMeters,
+            ));
+        final double effectiveMetersInLeg =
+            Reachability.effectiveProgress(
               deadReckonedProgressMeters: progressMeters,
               sigmaCushionMeters: zeroStopSigmaCushion,
               reachableBoundMeters: reachableProgressBoundMeters,
@@ -842,10 +860,13 @@ class AlarmEvaluator {
       // a long fully-underground segment, which would inflate the cushion by
       // kilometres and fire many stops early. Bounding it keeps the alarm safe
       // (early, never late) AND tight (~1-2 stops early at most).
-      final double sigmaCushionMeters = (fractileK *
-              ((positionSigmaMeters ?? 0.0)
-                  .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)))
-          .toDouble();
+      final double sigmaCushionMeters =
+          (fractileK *
+                  ((positionSigmaMeters ?? 0.0).clamp(
+                    0.0,
+                    FireDecisionConfig.maxFractileSigmaMeters,
+                  )))
+              .toDouble();
       // P0: take the larger (more-progressed) of the statistical upper bound and
       // the physics reachability bound. The sigma cushion is clamped (tight but
       // can fire late on a long blackout); the reachability bound is unclamped
@@ -1150,6 +1171,11 @@ ${stopNamesDebug.map((s) => '║   $s').join('\n')}
 
       if (isInDrivenPortionBeforeFirstMetro) {
         final drivenPortionEnd = firstMetroLeg.legStartMeters;
+
+        // Suppress near-station start spam. At <=300m the rider is already at
+        // the boarding context; a percentage alarm would otherwise fire after
+        // only a few dozen metres.
+        if (drivenPortionEnd <= 300.0) return null;
 
         // Fire at 40% of the TOTAL driven portion (not just current leg)
         thresholdMeters = drivenPortionEnd * 0.4;
@@ -1546,16 +1572,18 @@ ${stopNamesDebug.map((s) => '║   $s').join('\n')}
     // this return 0 — ZERO ETA cushion, degrading the fire test to the median
     // (late-risk). Floor the effective velocity to a realistic transit speed so
     // position uncertainty (sigmaS) still yields a positive time cushion.
-    final v = (speedMps != null && speedMps.isFinite && speedMps > 0.5)
-        ? speedMps
-        : FireDecisionConfig.etaSigmaSpeedFloorMps;
+    final v =
+        (speedMps != null && speedMps.isFinite && speedMps > 0.5)
+            ? speedMps
+            : FireDecisionConfig.etaSigmaSpeedFloorMps;
     final sS =
         (sigmaSMeters != null && sigmaSMeters.isFinite && sigmaSMeters > 0)
             ? sigmaSMeters.clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)
             : 0.0;
-    final sV = (sigmaVMps != null && sigmaVMps.isFinite && sigmaVMps > 0)
-        ? sigmaVMps
-        : 0.0;
+    final sV =
+        (sigmaVMps != null && sigmaVMps.isFinite && sigmaVMps > 0)
+            ? sigmaVMps
+            : 0.0;
     final termS = sS / v;
     final termV = etaSeconds * sV / v;
     final varc = termS * termS + termV * termV;

@@ -59,5 +59,45 @@ void main() {
       expect(t[0], greaterThan(0.2));
       expect(t[1], greaterThan(0.2));
     });
+
+    test('history-aware projection stays on the prior loop arc', () {
+      final geom = RouteGeometry.fromPoints(const [
+        LatLng(0, 0),
+        LatLng(0, 0.001),
+        LatLng(0.01, 0.001),
+        LatLng(0.01, 0.002),
+        LatLng(0, 0.002),
+        LatLng(0, 0.001),
+      ]);
+
+      final firstArc = geom.projectLatLng(0, 0.0005);
+      final crossing = geom.projectLatLng(
+        0,
+        0.001,
+        previousProgressMeters: firstArc,
+        enforceForward: true,
+      );
+
+      expect(firstArc, lessThan(200));
+      expect(crossing, lessThan(200));
+    });
+
+    test('history-aware projection still recovers a far reacquisition', () {
+      final geom = RouteGeometry.fromPoints(const [
+        LatLng(0, 0),
+        LatLng(0, 0.001),
+        LatLng(0, 0.002),
+      ]);
+      final prior = geom.projectLatLng(0, 0.0005);
+      final reacquired = geom.projectLatLng(
+        0,
+        0.0019,
+        previousProgressMeters: prior,
+        enforceForward: true,
+      );
+
+      expect(reacquired, greaterThan(prior));
+      expect(reacquired, closeTo(geom.totalLengthMeters * 0.95, 20));
+    });
   });
 }

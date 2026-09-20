@@ -7,19 +7,22 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/permission_service.dart';
 import 'package:geowake2/services/reliability/reliability_preflight_runner.dart';
 import 'package:geowake2/services/monetization/ad_policy.dart';
+import 'package:geowake2/services/monetization/ad_service.dart';
+import 'package:geowake2/services/monetization/monetization_service.dart';
 import 'package:geowake2/widgets/gated_banner_ad.dart';
+import 'package:geowake2/widgets/monetization/pro_gate.dart';
 import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
-import 'package:geowake2/services/saved_routes_service.dart';
-import 'package:geowake2/services/saved_route.dart';
 import 'package:geowake2/services/places_service.dart';
 import 'package:geowake2/services/metro_stop_service.dart';
 import 'package:geowake2/services/stop_logic_engine.dart';
+import 'package:geowake2/services/alarm_threshold_validator.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 import 'settingsdrawer.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/share/guardian_service.dart';
 import 'package:geowake2/services/anti_theft_service.dart';
 import 'package:geowake2/services/widget/widget_arm_handler.dart';
+import 'package:geowake2/services/widget/home_widget_bridge.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -83,6 +86,9 @@ class HomeScreenState extends State<HomeScreen> {
     _loadRecentLocations();
     _initBatteryMonitoring();
     _consumeWidgetArm();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_maybeShowFirstUserTrialWelcome());
+    });
     // OfflineCoordinator.instance is now used via getter, no need to initialize here
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
@@ -129,6 +135,47 @@ class HomeScreenState extends State<HomeScreen> {
         setState(() => _autocompleteResults = []);
       }
     });
+  }
+
+  Future<void> _maybeShowFirstUserTrialWelcome() async {
+    // Monetization initialization is deliberately non-blocking at app launch.
+    // Wait briefly for it without delaying first paint or core-alarm access.
+    for (var i = 0; i < 30; i++) {
+      if (!mounted) return;
+      if (MonetizationService.instance.isReady) break;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (!mounted || !MonetizationService.instance.isFirstUserTrialActive) {
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(MonetizationService.firstUserTrialWelcomeSeenKey) ==
+        true) {
+      return;
+    }
+    // Persist before presenting so a lifecycle interruption cannot create a
+    // nag loop on every launch.
+    await prefs.setBool(MonetizationService.firstUserTrialWelcomeSeenKey, true);
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            icon: const Icon(Icons.workspace_premium_rounded),
+            title: const Text('7 days of Pro — free'),
+            content: const Text(
+              'Every Pro feature is active for 7 days. ₹0, no card and no '
+              'automatic renewal. When it ends, you return to Free—and the '
+              'core wake alarm stays free.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('GOT IT'),
+              ),
+            ],
+          ),
+    );
   }
 
   Future<void> _setDestinationFromLatLng(LatLng position) async {
@@ -316,6 +363,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadRecentLocations() async {
+    await RecentLocationsService.purgeLegacyRouteMemory();
     final loaded = await RecentLocationsService.getRecentLocations();
     if (mounted) {
       setState(
@@ -463,6 +511,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     // 4. Save the updated list to device storage.
     await RecentLocationsService.saveRecentLocations(_recentLocations);
+    unawaited(HomeWidgetBridge.instance.refresh());
   }
 
   Future<void> _removeRecentLocation(Map<String, dynamic> suggestion) async {
@@ -475,102 +524,41 @@ class HomeScreenState extends State<HomeScreen> {
       );
     });
     await RecentLocationsService.saveRecentLocations(_recentLocations);
+    unawaited(HomeWidgetBridge.instance.refresh());
   }
 
   // =======================================================================
-  // ROUTE MEMORY — automatic recents + frequent trips (no manual saving).
-  // GeoWake is position-dependent, so we LEARN routes from behaviour instead of
-  // pinning fixed Home/Work destinations. The on-screen "Recent trips" row was
-  // removed (the search autocomplete already surfaces recent destinations); the
-  // store is still recorded here because the home-screen WIDGET reads it.
+  // DESTINATION MEMORY — the app and widget remember only recent endpoints.
+  // Route geometry, origins, modes, and thresholds are resolved afresh.
   // =======================================================================
 
-  /// Drain a pending widget "arm" tap. The home-screen widget stashes a
-  /// RouteMemory id then LAUNCHes the app; on init we consume that id and re-arm
-  /// the remembered trip through the normal one-tap flow. Runs on init only —
-  /// never on the arm→track→alarm fire path. Fail-safe: a no-op while tracking
-  /// or on any error, so a stale tap can never half-arm.
+  /// Drain a widget destination shortcut. It selects the endpoint but never
+  /// reuses an old route/alarm setting and never auto-arms the rider.
   Future<void> _consumeWidgetArm() async {
     try {
-      final routeId = await WidgetArmHandler.instance.consumePendingArm();
-      if (routeId == null || !mounted || _isTracking) return;
-      final routes = await RouteMemoryService.list();
-      RouteMemory? match;
-      for (final r in routes) {
-        if (r.id == routeId) {
-          match = r;
+      final destinationId = await WidgetArmHandler.instance.consumePendingArm();
+      if (destinationId == null || !mounted || _isTracking) return;
+      final destinations = await RecentLocationsService.getRecentLocations();
+      Map<String, dynamic>? match;
+      for (final destination in destinations) {
+        if (RecentLocationsService.destinationId(destination) ==
+            destinationId) {
+          match = destination;
           break;
         }
       }
       if (match == null || !mounted) return;
-      await _armFromRoute(match);
-    } catch (e) {
-      dev.log('widget arm consume ignored: $e', name: 'HomeScreen');
-    }
-  }
-
-  /// Pre-fill destination + alarm mode/value from a remembered route, then run
-  /// the normal Wake-Me flow. Guarded off the fire path; no-op while tracking.
-  Future<void> _armFromRoute(RouteMemory r) async {
-    if (_isTracking) return;
-    setState(() {
-      _metroMode = r.metroMode;
-      switch (r.alarmMode) {
-        case 'stops':
-          _useDistanceMode = true;
-          _metroMode = true;
-          _stopsSliderValue = r.alarmValue.clamp(1.0, 10.0);
-          break;
-        case 'distance':
-          _useDistanceMode = true;
-          _metroMode = false;
-          _distanceSliderValue = r.alarmValue.clamp(0.5, 10.0);
-          break;
-        case 'time':
-        default:
-          _useDistanceMode = false;
-          _timeSliderValue = r.alarmValue.clamp(1.0, 60.0);
-          break;
-      }
-    });
-    await _setSelectedLocation(r.destinationName, r.lat, r.lng);
-    if (r.placeId != null && r.placeId!.isNotEmpty) {
-      _selectedLocation!['place_id'] = r.placeId;
-    }
-    await _onWakeMePressed();
-  }
-
-  /// Silently record the just-armed trip into route memory (upsert by coarse
-  /// signature; bumps the frequency counter). Origin is captured so a future
-  /// re-arm from the same spot can reuse a cached route instead of calling the
-  /// Directions API. Never throws into the arming path.
-  Future<void> _recordRouteMemory({
-    required String destinationName,
-    required double destLat,
-    required double destLng,
-    required String alarmMode,
-    required double alarmValue,
-    required bool metroMode,
-    String? metroLine,
-    double? originLat,
-    double? originLng,
-    String? placeId,
-  }) async {
-    try {
-      await RouteMemoryService.record(
-        destinationName: destinationName,
-        lat: destLat,
-        lng: destLng,
-        placeId: placeId,
-        alarmMode: alarmMode,
-        alarmValue: alarmValue,
-        metroMode: metroMode,
-        metroLine: metroLine,
-        originLat: originLat,
-        originLng: originLng,
+      await _setSelectedLocation(
+        (match['description'] ?? 'Your Destination').toString(),
+        (match['lat'] as num).toDouble(),
+        (match['lng'] as num).toDouble(),
       );
+      final placeId = match['place_id']?.toString();
+      if (placeId != null && placeId.isNotEmpty) {
+        _selectedLocation!['place_id'] = placeId;
+      }
     } catch (e) {
-      dev.log('Failed to record route memory: $e', name: 'HomeScreen');
+      dev.log('widget destination consume ignored: $e', name: 'HomeScreen');
     }
   }
 
@@ -715,30 +703,14 @@ class HomeScreenState extends State<HomeScreen> {
       );
 
       if (_metroMode) {
-        final validationResult = await MetroStopService.validateMetroRoute(
-          startLocation: LatLng(userLat, userLng),
-          destination: LatLng(destLat, destLng),
+        // Never replace the rider's pin with a nearby station before routing.
+        // The transit provider must return the complete first/last-mile
+        // itinerary; trusted station anchors are derived only from that route.
+        final routingDestination = MetroStopService.routingDestination(
+          requestedDestination: LatLng(destLat, destLng),
         );
-        dev.log(
-          '[StartupPerf] Metro Validation: ${stopwatch.elapsedMilliseconds}ms',
-          name: 'Performance',
-        );
-
-        if (!mounted) return;
-        if (!validationResult.isValid || validationResult.closestStop == null) {
-          _showErrorDialog(
-            "Metro Route Unavailable",
-            validationResult.errorMessage ?? "No valid metro route found.",
-          );
-          setState(() {
-            _isTracking = false;
-            _isLoading = false;
-          });
-          return;
-        } else {
-          destLat = validationResult.closestStop!.location.latitude;
-          destLng = validationResult.closestStop!.location.longitude;
-        }
+        destLat = routingDestination.latitude;
+        destLng = routingDestination.longitude;
       }
 
       // Start fetching directions while same-state validation completes
@@ -777,9 +749,6 @@ class HomeScreenState extends State<HomeScreen> {
         name: 'Performance',
       );
 
-      final initialETA =
-          directions['routes'][0]['legs'][0]['duration']['value'] as int;
-
       // G18: The flagship use case is a 6-10h single-stop sleeper journey, so
       // long journeys are intentionally NOT capped. We only refuse plainly
       // invalid (>24h) total durations, which indicate corrupt/looping route
@@ -788,6 +757,9 @@ class HomeScreenState extends State<HomeScreen> {
       final totalPlannedSeconds = TransferUtils.totalPlannedDurationSeconds(
         directions,
       );
+      // The background ETA model and Guardian arrival estimate both need the
+      // whole journey. Using leg 0 wakes multi-leg riders much too early.
+      final initialETA = totalPlannedSeconds;
       const int maxSaneJourneySeconds =
           24 * 3600; // 86400s ceiling, ~2.4x max sleeper
       if (totalPlannedSeconds > maxSaneJourneySeconds) {
@@ -813,6 +785,30 @@ class HomeScreenState extends State<HomeScreen> {
         alarmValue = _stopsSliderValue;
       } else {
         alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
+      }
+
+      // Validate the actual promise before arming. This covers non-metro
+      // time/distance routes and every metro segment in a multi-leg route; the
+      // older stops-only checks below remain as additional topology guards.
+      final thresholdValidation = AlarmThresholdValidator.validate(
+        directions: directions,
+        alarmMode: alarmMode,
+        alarmValue: alarmValue,
+        transitMode: _metroMode,
+      );
+      if (!thresholdValidation.isValid) {
+        _showErrorDialog(
+          'Alarm Setting Does Not Fit This Route',
+          thresholdValidation.userMessage ??
+              'Choose a smaller alarm value for this route.',
+        );
+        if (mounted) {
+          setState(() {
+            _isTracking = false;
+            _isLoading = false;
+          });
+        }
+        return;
       }
 
       // Stops-mode validation
@@ -963,6 +959,67 @@ class HomeScreenState extends State<HomeScreen> {
         });
         return;
       }
+
+      // Free tier: after three fully-completed trips in this local calendar
+      // day, announce a policy-compliant sponsor checkpoint before trip four.
+      // Ad no-fill/error is fail-open and the core alarm is never paywalled.
+      final monetization = MonetizationService.instance;
+      if (monetization.shouldShowPreTripSponsor()) {
+        final continueWithSponsor = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (dialogContext) => AlertDialog(
+                icon: const Icon(Icons.volunteer_activism_outlined),
+                title: const Text('One short sponsor message'),
+                content: const Text(
+                  'You have completed 3 free trips today. A short sponsor message '
+                  'helps keep GeoWake’s wake alarm free for everyone. You can close '
+                  'the ad when its close button appears; if no ad is available, '
+                  'your trip starts normally.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('GO AD-FREE'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: const Text('CONTINUE'),
+                  ),
+                ],
+              ),
+        );
+        if (!mounted) return;
+        if (continueWithSponsor != true) {
+          await Navigator.of(context).pushNamed(
+            ProGate.paywallRoute,
+            arguments: PaywallSource.sponsorGate,
+          );
+          if (!mounted) return;
+          // Buying a pass resumes the already-confirmed trip. Returning without
+          // a pass cleanly aborts; the user can arm again and take the sponsor
+          // path without any tracking state having been persisted.
+          if (!(monetization.premiumOrNull?.isPro ?? false)) {
+            setState(() {
+              _isTracking = false;
+              _isLoading = false;
+            });
+            return;
+          }
+        } else {
+          final premium = monetization.premiumOrNull;
+          if (premium != null) {
+            final shown = await AdService.instance.maybeShowInterstitial(
+              placement: AdPlacement.preTripSponsor,
+              premium: premium,
+              ridesSinceLastAd: monetization.completedRidesToday,
+            );
+            if (shown) await monetization.markPreTripSponsorShown();
+          }
+          if (!mounted) return;
+        }
+      }
       setState(() {
         _isLoading = true; // Re-show spinner while tracking spins up.
       });
@@ -1021,6 +1078,10 @@ class HomeScreenState extends State<HomeScreen> {
             preflight,
           );
           if (!proceed) {
+            // State was persisted before the reliability check. Transactionally
+            // unwind it so declining a blocked notification setup cannot leave
+            // an apparently active trip that auto-resumes after reboot.
+            await trackingService.abortUnconfirmedArm();
             if (mounted) {
               setState(() {
                 _isTracking = false;
@@ -1047,6 +1108,24 @@ class HomeScreenState extends State<HomeScreen> {
         name: 'Performance',
       );
 
+      // Route geometry is part of the alarm's correctness state, not optional
+      // map decoration. Wait for the background-isolate ACK before navigating
+      // so the first location tick cannot run with an active trip but no route,
+      // stop topology, or multi-leg boundaries.
+      await trackingService.registerRouteFromDirections(
+        directions: directions,
+        origin: LatLng(userLat, userLng),
+        destination: LatLng(destLat, destLng),
+        transitMode: _metroMode,
+        destinationName:
+            _selectedLocation?['description'] ?? 'Your Destination',
+        activateRoute: true,
+      );
+      dev.log(
+        '[StartupPerf] Route Registered: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
+      );
+
       // Guardian mode (Pro): auto-share this commute with the saved contact so
       // they can follow the live ride. Fire-and-forget and self-gating — it
       // no-ops unless the user is Pro + enabled Guardian + set a contact, and it
@@ -1066,46 +1145,6 @@ class HomeScreenState extends State<HomeScreen> {
       // enabled anti-theft. Runs AFTER startTracking() so it can never delay
       // or fail the arm→track→alarm spine. Never throws.
       unawaited(AntiTheftService.instance.startMonitoring());
-
-      // Remember this trip (recents + frequency). Fire-and-forget — must never
-      // block or fail the arming flow. Origin lets a later re-arm reuse cache.
-      unawaited(
-        _recordRouteMemory(
-          destinationName:
-              _selectedLocation?['description'] ?? 'Your Destination',
-          destLat: destLat,
-          destLng: destLng,
-          alarmMode: alarmMode,
-          alarmValue: alarmValue,
-          metroMode: _metroMode,
-          originLat: userLat,
-          originLng: userLng,
-          placeId: _selectedLocation?['place_id'] as String?,
-        ),
-      );
-
-      // 2. Register Route (fire-and-forget for faster navigation)
-      // The background service will receive route events asynchronously.
-      // MapTrackingScreen will still display correctly as directions are passed via args.
-      unawaited(
-        trackingService
-            .registerRouteFromDirections(
-              directions: directions,
-              origin: LatLng(userLat, userLng),
-              destination: LatLng(destLat, destLng),
-              transitMode: _metroMode,
-              destinationName:
-                  _selectedLocation?['description'] ?? 'Your Destination',
-              activateRoute:
-                  true, // Ensure RouteSessionManager updates active key & triggers migration
-            )
-            .catchError((e) {
-              dev.log(
-                'Failed to register route with TrackingService: $e',
-                name: 'HomeScreen',
-              );
-            }),
-      );
 
       FlutterBackgroundService().invoke("updateRouteData", {
         "initialETA": initialETA,
@@ -1147,10 +1186,16 @@ class HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       dev.log("Error in _proceedWithDirections: $e", name: "HomeScreen");
+      // Snapshot/active flags are persisted before the service handshake. Any
+      // failure after that point must leave no apparently armed zombie trip.
+      await TrackingService().abortUnconfirmedArm();
       if (mounted) {
+        final handshakeFailed = e is TrackingHandshakeException;
         _showErrorDialog(
-          "Route Error",
-          "Could not calculate the route. Please try again.",
+          handshakeFailed ? "Tracking Not Started" : "Route Error",
+          handshakeFailed
+              ? "GeoWake could not confirm background tracking. Nothing was armed. Please try again."
+              : "Could not calculate the route. Nothing was armed. Please try again.",
         );
         setState(() {
           _isTracking = false;
@@ -1388,7 +1433,9 @@ class HomeScreenState extends State<HomeScreen> {
     final Color searchBarFillColor =
         isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     final Color clearSearchIconColor =
-        isDarkMode ? colorScheme.onSurface.withValues(alpha: 0.75) : Colors.black54;
+        isDarkMode
+            ? colorScheme.onSurface.withValues(alpha: 0.75)
+            : Colors.black54;
     final Color clearChipBg =
         isDarkMode
             ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.45)
@@ -1690,39 +1737,40 @@ class HomeScreenState extends State<HomeScreen> {
                         label: 'Alarm threshold slider',
                         identifier: 'home_threshold_slider',
                         child: Slider(
-                        value:
-                            _useDistanceMode
-                                ? (_metroMode
-                                    ? _stopsSliderValue
-                                    : _distanceSliderValue)
-                                : _timeSliderValue,
-                        min: _useDistanceMode ? (_metroMode ? 1.0 : 0.5) : 1.0,
-                        max:
-                            _useDistanceMode
-                                ? (_metroMode ? 10.0 : 10.0)
-                                : 60.0,
-                        divisions:
-                            _useDistanceMode ? (_metroMode ? 9 : 19) : 59,
-                        label:
-                            _useDistanceMode
-                                ? (_metroMode
-                                    ? _stopsSliderValue.toStringAsFixed(0)
-                                    : _distanceSliderValue.toStringAsFixed(1))
-                                : _timeSliderValue.toStringAsFixed(0),
-                        onChanged: (val) {
-                          setState(() {
-                            if (_useDistanceMode) {
-                              if (_metroMode) {
-                                // Stops slider should be integer-like in feel
-                                _stopsSliderValue = val.round().toDouble();
+                          value:
+                              _useDistanceMode
+                                  ? (_metroMode
+                                      ? _stopsSliderValue
+                                      : _distanceSliderValue)
+                                  : _timeSliderValue,
+                          min:
+                              _useDistanceMode ? (_metroMode ? 1.0 : 0.5) : 1.0,
+                          max:
+                              _useDistanceMode
+                                  ? (_metroMode ? 10.0 : 10.0)
+                                  : 60.0,
+                          divisions:
+                              _useDistanceMode ? (_metroMode ? 9 : 19) : 59,
+                          label:
+                              _useDistanceMode
+                                  ? (_metroMode
+                                      ? _stopsSliderValue.toStringAsFixed(0)
+                                      : _distanceSliderValue.toStringAsFixed(1))
+                                  : _timeSliderValue.toStringAsFixed(0),
+                          onChanged: (val) {
+                            setState(() {
+                              if (_useDistanceMode) {
+                                if (_metroMode) {
+                                  // Stops slider should be integer-like in feel
+                                  _stopsSliderValue = val.round().toDouble();
+                                } else {
+                                  _distanceSliderValue = val;
+                                }
                               } else {
-                                _distanceSliderValue = val;
+                                _timeSliderValue = val;
                               }
-                            } else {
-                              _timeSliderValue = val;
-                            }
-                          });
-                        },
+                            });
+                          },
                         ),
                       ),
                       if (_lowBattery)
@@ -1793,33 +1841,33 @@ class HomeScreenState extends State<HomeScreen> {
             button: true,
             child: ElevatedButton(
               onPressed: enabled ? _onWakeMePressed : null,
-            child:
-                _isLoading
-                    ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+              child:
+                  _isLoading
+                      ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Loading route...',
-                          style: TextStyle(fontSize: screenWidth * 0.05),
-                        ),
-                      ],
-                    )
-                    : Text(
-                      'Wake Me!',
-                      style: TextStyle(fontSize: screenWidth * 0.05),
-                    ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Loading route...',
+                            style: TextStyle(fontSize: screenWidth * 0.05),
+                          ),
+                        ],
+                      )
+                      : Text(
+                        'Wake Me!',
+                        style: TextStyle(fontSize: screenWidth * 0.05),
+                      ),
             ),
           ),
         ),

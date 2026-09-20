@@ -99,6 +99,11 @@ class ActiveRouteManager {
 
   String? _activeKey;
   String? _candidateKey;
+  // In-memory continuity for each route.  RouteEntry only persists a segment
+  // hint/progress, while SnapToRouteEngine also needs the previous snapped arc
+  // and offset to score crossings and parallel corridors correctly.
+  final Map<String, SnapResult> _lastSnapResults = {};
+  final Map<String, List<LatLng>> _knownGeometries = {};
 
   // Use monotonic timers to avoid wall-clock jumps affecting countdowns
   Stopwatch? _candidateTimer;
@@ -165,6 +170,11 @@ class ActiveRouteManager {
     _dirNetRegression = 0.0;
     _wrongDirTimer = null;
     _wrongDirActive = false;
+    // Keep the last snap for this key across an A→B→A leg handoff.  `_snapTo`
+    // invalidates it when the geometry list changes, and the snap engine's
+    // lateral-distance escape hatch performs a full search after a genuine
+    // jump.  Dropping it on every activation reintroduced global-nearest
+    // behaviour exactly at the handoff where continuity matters most.
   }
 
   void ingestPosition(LatLng rawPosition, {bool isFinalAlarm = false}) {
@@ -276,6 +286,12 @@ class ActiveRouteManager {
     }
 
     final progress = snapForState.progressMeters;
+    _lastSnapResults[currentActiveKey] = snapForState;
+    registry.updateSessionState(
+      currentActiveKey,
+      lastSnapIndex: snapForState.segmentIndex,
+      lastProgressMeters: progress,
+    );
     final remaining = (activeEntry.lengthMeters - progress).clamp(
       0.0,
       double.infinity,
@@ -325,11 +341,20 @@ class ActiveRouteManager {
   }
 
   SnapResult _snapTo(RouteEntry entry, LatLng p) {
+    final knownGeometry = _knownGeometries[entry.key];
+    if (knownGeometry != null && !identical(knownGeometry, entry.points)) {
+      // A cache key may be refreshed with a new polyline.  An old segment index
+      // is not a valid continuity hint in the new geometry domain.
+      _lastSnapResults.remove(entry.key);
+    }
+    _knownGeometries[entry.key] = entry.points;
+    final previous = _lastSnapResults[entry.key];
     return SnapToRouteEngine.snap(
       point: p,
       polyline: entry.points,
       precomputedCumMeters: entry.cumMeters,
       hintIndex: entry.lastSnapIndex,
+      previousResult: previous,
       searchWindow: 30,
     );
   }

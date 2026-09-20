@@ -444,7 +444,7 @@ void main() {
       };
       expected.forEach((rides, show) {
         expect(
-          policy.canShow(AdPlacement.postArrival,
+          policy.canShow(AdPlacement.preTripSponsor,
               isPro: false, ridesSinceLastAd: rides),
           show,
           reason: 'cap=3, rides=$rides should be ${show ? "shown" : "suppressed"}',
@@ -456,7 +456,7 @@ void main() {
       const policy = AdPolicy();
       for (final rides in const [-1, -3, -1000]) {
         expect(
-          policy.canShow(AdPlacement.postArrival,
+          policy.canShow(AdPlacement.preTripSponsor,
               isPro: false, ridesSinceLastAd: rides),
           isFalse,
           reason: 'a negative counter is below any cap',

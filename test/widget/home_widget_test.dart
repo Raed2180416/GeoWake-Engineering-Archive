@@ -7,8 +7,7 @@
 //   * a non-Pro / not-yet-loaded user resolves to the LOCKED render state
 //     (never a working arm);
 //   * an active session ALWAYS wins over an arm candidate (no double-arm);
-//   * headless one-tap arm is permitted ONLY when perms + cached route +
-//     clean preflight all hold; every other combination opens the app;
+//   * every destination shortcut opens the app and never auto-arms;
 //   * the widget URI parser is scheme-agnostic and null-safe;
 //   * the background interactivity callback queues an arm ONLY when idle and
 //     never while a journey is active (shared guard).
@@ -32,12 +31,18 @@ void main() {
     test('not Pro ⇒ locked, regardless of active/candidate', () {
       expect(
         resolveRenderState(
-            canUseWidget: false, isActive: true, hasCandidate: true),
+          canUseWidget: false,
+          isActive: true,
+          hasCandidate: true,
+        ),
         WidgetRenderState.locked,
       );
       expect(
         resolveRenderState(
-            canUseWidget: false, isActive: false, hasCandidate: false),
+          canUseWidget: false,
+          isActive: false,
+          hasCandidate: false,
+        ),
         WidgetRenderState.locked,
       );
     });
@@ -45,7 +50,10 @@ void main() {
     test('active session wins over an arm candidate (no double-arm)', () {
       expect(
         resolveRenderState(
-            canUseWidget: true, isActive: true, hasCandidate: true),
+          canUseWidget: true,
+          isActive: true,
+          hasCandidate: true,
+        ),
         WidgetRenderState.active,
       );
     });
@@ -53,7 +61,10 @@ void main() {
     test('Pro + idle + candidate ⇒ idle (arm card)', () {
       expect(
         resolveRenderState(
-            canUseWidget: true, isActive: false, hasCandidate: true),
+          canUseWidget: true,
+          isActive: false,
+          hasCandidate: true,
+        ),
         WidgetRenderState.idle,
       );
     });
@@ -61,21 +72,24 @@ void main() {
     test('Pro + idle + no candidate ⇒ empty', () {
       expect(
         resolveRenderState(
-            canUseWidget: true, isActive: false, hasCandidate: false),
+          canUseWidget: true,
+          isActive: false,
+          hasCandidate: false,
+        ),
         WidgetRenderState.empty,
       );
     });
   });
 
   group('WidgetArmDecision.evaluate (one-tap safety truth table)', () {
-    test('all clear ⇒ headless', () {
+    test('even all-clear state opens app for explicit alarm choice', () {
       expect(
         WidgetArmDecision.evaluate(
           permsGranted: true,
           hasCachedRouteForOrigin: true,
           preflight: WidgetPreflightState.ok,
         ),
-        WidgetArmMode.headless,
+        WidgetArmMode.launchApp,
       );
     });
 
@@ -132,8 +146,9 @@ void main() {
     });
 
     test('verb in path segment: geowake://widget/arm?routeId=xy', () {
-      final r =
-          WidgetArmRequest.parse(Uri.parse('geowake://widget/arm?routeId=xy'));
+      final r = WidgetArmRequest.parse(
+        Uri.parse('geowake://widget/arm?routeId=xy'),
+      );
       expect(r.action, WidgetAction.arm);
       expect(r.routeId, 'xy');
     });
@@ -157,13 +172,17 @@ void main() {
     });
 
     test('stop', () {
-      expect(WidgetArmRequest.parse(Uri.parse('geowake://stop')).action,
-          WidgetAction.stop);
+      expect(
+        WidgetArmRequest.parse(Uri.parse('geowake://stop')).action,
+        WidgetAction.stop,
+      );
     });
 
     test('unrecognised verb ⇒ unknown', () {
-      expect(WidgetArmRequest.parse(Uri.parse('geowake://frobnicate')).action,
-          WidgetAction.unknown);
+      expect(
+        WidgetArmRequest.parse(Uri.parse('geowake://frobnicate')).action,
+        WidgetAction.unknown,
+      );
     });
 
     test('builders round-trip through the parser', () {
@@ -172,7 +191,8 @@ void main() {
       expect(arm.routeId, 'r1');
 
       final open = WidgetArmRequest.parse(
-          WidgetArmHandler.buildOpenUri(paywall: true));
+        WidgetArmHandler.buildOpenUri(paywall: true),
+      );
       expect(open.action, WidgetAction.open);
       expect(open.paywall, isTrue);
 
@@ -183,8 +203,9 @@ void main() {
 
   group('pending-arm handoff', () {
     test('consumePendingArm reads once then clears', () async {
-      SharedPreferences.setMockInitialValues(
-          {WidgetArmHandler.pendingArmKey: 'route-42'});
+      SharedPreferences.setMockInitialValues({
+        WidgetArmHandler.pendingArmKey: 'route-42',
+      });
       final first = await WidgetArmHandler.instance.consumePendingArm();
       expect(first, 'route-42');
       final second = await WidgetArmHandler.instance.consumePendingArm();

@@ -1,11 +1,8 @@
 // lib/services/monetization/premium_service.dart
 //
 // Holds the user's entitlement (free vs Pro) and exposes the feature gates as
-// pure getters. Two ways to become "Pro":
-//   1. A permanent ONE-TIME "Pro" unlock (India prefers one-time over subs —
-//      MONETIZATION §B, HANDOFF §5), purchased via the injected PurchaseBackend.
-//   2. A temporary REWARDED "premium for a day" pass (opt-in rewarded video),
-//      for price-sensitive users who trade attention not money.
+// pure getters. Launch access comes from Google Play prepaid subscriptions;
+// rewarded access and a legacy one-time SKU are also honoured.
 //
 // Design (mirrors telemetry_service.dart): the core is pure and dependency-
 // injected — a PurchaseBackend for billing and a simple (key)->get /
@@ -24,9 +21,9 @@ import 'package:geowake2/services/monetization/purchase_backend.dart';
 /// Store product ids. Kept here (not in the SDK layer) so tests and policy code
 /// can reference them without importing `in_app_purchase`.
 class PremiumProducts {
-  /// Prepaid pass ladder (consumable products). Each grants full Pro for its
-  /// duration, then lapses; the user re-buys to renew (no auto-renew, so no RBI
-  /// e-mandate friction — every purchase is a plain one-time UPI charge). See
+  /// Prepaid subscription ladder. Each grants full Pro until the expiry Google
+  /// Play returns to the backend, then lapses; the user tops up or re-buys with
+  /// no auto-renew/RBI e-mandate. See
   /// PASS_PRICING_ANALYSIS.md and docs/business_os/03_monetization.md.
   static const String proDaily = 'geowake_pro_daily'; // ₹7, 24h
   static const String proWeekly = 'geowake_pro_weekly'; // ₹35, 7d
@@ -87,8 +84,8 @@ class PremiumService {
     Future<String?> Function(String key)? load,
     Future<void> Function(String key, String value)? save,
     int Function()? nowMs,
-  })  : _backend = backend,
-        _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch) {
+  }) : _backend = backend,
+       _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch) {
     if (load != null && save != null) {
       _load = load;
       _save = save;
@@ -96,7 +93,8 @@ class PremiumService {
       // Default: ephemeral in-memory store scoped to this instance.
       final mem = <String, String>{};
       _load = load ?? ((String k) async => mem[k]);
-      _save = save ??
+      _save =
+          save ??
           ((String k, String v) async {
             mem[k] = v;
           });
@@ -173,16 +171,16 @@ class PremiumService {
     }
   }
 
-  /// Buy a prepaid pass (daily/weekly/monthly/yearly). The product is CONSUMABLE
-  /// so it can be re-bought each period. On a confirmed purchase, extends the
-  /// time-based Pro entitlement by the pass duration (extends, never shortens —
-  /// same field the rewarded day-pass uses, so `isPro` needs no change). Only
-  /// [PremiumProducts.passLadder] ids are accepted. Returns true iff granted.
+  /// Buy a prepaid pass (daily/weekly/monthly/yearly). The store adapter reports
+  /// success only after backend verification and exposes Google's authoritative
+  /// expiry in [PurchaseBackend.verifiedPassExpiries]. Local clock arithmetic is
+  /// never used to mint paid time. Only known pass ids are accepted.
   Future<bool> buyPass(String productId) async {
     if (!PremiumProducts.passLadder.contains(productId)) return false;
-    final ok = await _backend.buyConsumable(productId);
+    final ok = await _backend.buyPrepaidSubscription(productId);
     if (ok) {
-      final expiry = _nowMs() + passDurationFor(productId).inMilliseconds;
+      final expiry = _backend.verifiedPassExpiries[productId];
+      if (expiry == null || expiry <= _nowMs()) return false;
       if (expiry > _dayPassExpiryMs) _dayPassExpiryMs = expiry;
       await _persist();
     }
@@ -194,20 +192,27 @@ class PremiumService {
   /// background restore). Idempotent: grants + persists Pro only when newly
   /// owned, so a late-arriving purchase never leaves a paying user on Free.
   Future<void> applyOwnedProducts(Set<String> owned) async {
+    var changed = false;
     if (!_proOwned && owned.contains(proProductId)) {
       _proOwned = true;
-      await _persist();
+      changed = true;
     }
+    for (final entry in _backend.verifiedPassExpiries.entries) {
+      if (owned.contains(entry.key) &&
+          PremiumProducts.passLadder.contains(entry.key) &&
+          entry.value > _dayPassExpiryMs) {
+        _dayPassExpiryMs = entry.value;
+        changed = true;
+      }
+    }
+    if (changed) await _persist();
   }
 
   /// Restore prior purchases (reinstall / new device). Re-grants permanent Pro
   /// if the store account owns [proProductId]. Returns the owned product ids.
   Future<Set<String>> restorePurchases() async {
     final owned = await _backend.restore();
-    if (owned.contains(proProductId)) {
-      _proOwned = true;
-      await _persist();
-    }
+    await applyOwnedProducts(owned);
     return owned;
   }
 
@@ -218,6 +223,15 @@ class PremiumService {
   }) async {
     final expiry = _nowMs() + duration.inMilliseconds;
     if (expiry > _dayPassExpiryMs) _dayPassExpiryMs = expiry;
+    await _persist();
+  }
+
+  /// Grants a non-paid promotional entitlement until an absolute expiry.
+  /// Used for the first-install trial; it can extend but never shorten a paid
+  /// pass and does not change the compact persisted entitlement format.
+  Future<void> grantPromotionalAccessUntil(int expiryMs) async {
+    if (expiryMs <= _nowMs() || expiryMs <= _dayPassExpiryMs) return;
+    _dayPassExpiryMs = expiryMs;
     await _persist();
   }
 
@@ -239,7 +253,8 @@ class PremiumService {
   bool get isPro => _proOwned || hasActiveDayPass;
 
   /// Coarse tier for UI / analytics.
-  EntitlementTier get tier => isPro ? EntitlementTier.pro : EntitlementTier.free;
+  EntitlementTier get tier =>
+      isPro ? EntitlementTier.pro : EntitlementTier.free;
 
   // ---------------------------------------------------------------------------
   // ALWAYS-FREE gates — reliability & safety. NEVER return false.

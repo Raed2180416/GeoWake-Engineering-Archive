@@ -16,7 +16,7 @@
 //     spine. A widget write failing is a no-op, not an app failure.
 //   • The core never-late alarm is never gated, slowed, or touched. This file
 //     only READS already-computed tracking state (the progress payload and the
-//     active flag) and route memory; it computes nothing the alarm depends on.
+//     active flag) and recent destinations; it computes nothing the alarm depends on.
 //   • Entitlement is read null-safely via MonetizationService.premiumOrNull —
 //     null (before init) resolves to "not Pro" ⇒ locked state, never a broken
 //     unlocked tap.
@@ -31,9 +31,8 @@ import 'dart:developer' as dev;
 
 import 'package:home_widget/home_widget.dart';
 
+import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
 import 'package:geowake2/services/monetization/monetization_service.dart';
-import 'package:geowake2/services/saved_route.dart';
-import 'package:geowake2/services/saved_routes_service.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/widget/widget_arm_handler.dart';
 import 'package:geowake2/services/widget/widget_render_state.dart';
@@ -68,28 +67,28 @@ class WidgetStateData {
   /// URI the primary button fires (a [WidgetArmHandler] deep link).
   final String deepLink;
 
-  /// Route-memory id backing an idle arm candidate (null otherwise).
+  /// Destination id backing an idle shortcut (wire name kept for migration).
   final String? routeId;
 
   Map<String, String> toWidgetFields() => <String, String>{
-        HomeWidgetBridge.fState: state.name,
-        HomeWidgetBridge.fTitle: title,
-        HomeWidgetBridge.fSubtitle: subtitle,
-        HomeWidgetBridge.fProgress: progressPercent.toString(),
-        HomeWidgetBridge.fCta: ctaLabel,
-        HomeWidgetBridge.fDeepLink: deepLink,
-        HomeWidgetBridge.fRouteId: routeId ?? '',
-      };
+    HomeWidgetBridge.fState: state.name,
+    HomeWidgetBridge.fTitle: title,
+    HomeWidgetBridge.fSubtitle: subtitle,
+    HomeWidgetBridge.fProgress: progressPercent.toString(),
+    HomeWidgetBridge.fCta: ctaLabel,
+    HomeWidgetBridge.fDeepLink: deepLink,
+    HomeWidgetBridge.fRouteId: routeId ?? '',
+  };
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'state': state.name,
-        'title': title,
-        'subtitle': subtitle,
-        'progress': progressPercent,
-        'cta': ctaLabel,
-        'deepLink': deepLink,
-        'routeId': routeId,
-      };
+    'state': state.name,
+    'title': title,
+    'subtitle': subtitle,
+    'progress': progressPercent,
+    'cta': ctaLabel,
+    'deepLink': deepLink,
+    'routeId': routeId,
+  };
 }
 
 /// Singleton that owns the one-way push of app state → home widget.
@@ -139,8 +138,10 @@ class HomeWidgetBridge {
       );
     } catch (e) {
       _pluginUsable = false;
-      dev.log('home_widget interactivity unavailable: $e',
-          name: 'HomeWidgetBridge');
+      dev.log(
+        'home_widget interactivity unavailable: $e',
+        name: 'HomeWidgetBridge',
+      );
     }
     try {
       // App already running: a widget LAUNCH tap arrives here.
@@ -149,8 +150,10 @@ class HomeWidgetBridge {
         onError: (_) {},
       );
     } catch (e) {
-      dev.log('home_widget click stream unavailable: $e',
-          name: 'HomeWidgetBridge');
+      dev.log(
+        'home_widget click stream unavailable: $e',
+        name: 'HomeWidgetBridge',
+      );
     }
     try {
       // Cold start FROM a widget tap: replay the launch URI once.
@@ -158,7 +161,9 @@ class HomeWidgetBridge {
       if (launch != null) {
         await WidgetArmHandler.instance.handleLaunchUri(launch);
       }
-    } catch (_) {/* best effort */}
+    } catch (_) {
+      /* best effort */
+    }
     // Paint an initial state so the widget isn't blank on first add.
     unawaited(refresh());
   }
@@ -209,9 +214,11 @@ class HomeWidgetBridge {
     bool active = false;
     try {
       active = await TrackingStateStore.isActive();
-    } catch (_) {/* treat as inactive */}
+    } catch (_) {
+      /* treat as inactive */
+    }
 
-    RouteMemory? candidate;
+    Map<String, dynamic>? candidate;
     if (canUse && !active) {
       candidate = await _topCandidate();
     }
@@ -234,23 +241,23 @@ class HomeWidgetBridge {
     }
   }
 
-  Future<RouteMemory?> _topCandidate() async {
+  Future<Map<String, dynamic>?> _topCandidate() async {
     try {
-      final routes = await RouteMemoryService.list();
-      return routes.isEmpty ? null : routes.first;
+      final destinations = await RecentLocationsService.getRecentLocations();
+      return destinations.isEmpty ? null : destinations.first;
     } catch (_) {
       return null;
     }
   }
 
   WidgetStateData _lockedCard() => WidgetStateData(
-        state: WidgetRenderState.locked,
-        title: 'GeoWake Pro',
-        subtitle: 'Add your commute to the home screen and arm in one tap.',
-        progressPercent: 0,
-        ctaLabel: 'Unlock',
-        deepLink: WidgetArmHandler.buildOpenUri(paywall: true).toString(),
-      );
+    state: WidgetRenderState.locked,
+    title: 'GeoWake Pro',
+    subtitle: 'Pick a recent destination from your home screen.',
+    progressPercent: 0,
+    ctaLabel: 'Unlock',
+    deepLink: WidgetArmHandler.buildOpenUri(paywall: true).toString(),
+  );
 
   Future<WidgetStateData> _activeCard() async {
     String title = 'GeoWake';
@@ -260,12 +267,15 @@ class HomeWidgetBridge {
       final payload = await TrackingStateStore.loadProgressPayload();
       if (payload != null) {
         title = payload.title.isEmpty ? 'GeoWake' : payload.title;
-        subtitle = payload.subtitle.isEmpty
-            ? 'Tracking your journey'
-            : payload.subtitle;
+        subtitle =
+            payload.subtitle.isEmpty
+                ? 'Tracking your journey'
+                : payload.subtitle;
         pct = (payload.progress.clamp(0.0, 1.0) * 100).round();
       }
-    } catch (_) {/* neutral active card */}
+    } catch (_) {
+      /* neutral active card */
+    }
     return WidgetStateData(
       state: WidgetRenderState.active,
       title: title,
@@ -276,31 +286,29 @@ class HomeWidgetBridge {
     );
   }
 
-  WidgetStateData _idleCard(RouteMemory r) {
-    final name = r.destinationName.trim().isEmpty
-        ? 'your recent trip'
-        : r.destinationName.trim();
+  WidgetStateData _idleCard(Map<String, dynamic> destination) {
+    final description = (destination['description'] ?? '').toString().trim();
+    final name = description.isEmpty ? 'Your recent destination' : description;
+    final destinationId = RecentLocationsService.destinationId(destination);
     return WidgetStateData(
       state: WidgetRenderState.idle,
       title: name,
-      subtitle: r.isFrequent
-          ? 'Frequent trip · tap to arm'
-          : 'Recent trip · tap to arm',
+      subtitle: 'Recent destination · choose your alarm',
       progressPercent: 0,
-      ctaLabel: 'Arm',
-      deepLink: WidgetArmHandler.buildArmUri(r.id).toString(),
-      routeId: r.id,
+      ctaLabel: 'Set alarm',
+      deepLink: WidgetArmHandler.buildArmUri(destinationId).toString(),
+      routeId: destinationId,
     );
   }
 
   WidgetStateData _emptyCard() => WidgetStateData(
-        state: WidgetRenderState.empty,
-        title: 'GeoWake',
-        subtitle: 'Open GeoWake to set up your next commute.',
-        progressPercent: 0,
-        ctaLabel: 'Open',
-        deepLink: WidgetArmHandler.buildOpenUri().toString(),
-      );
+    state: WidgetRenderState.empty,
+    title: 'GeoWake',
+    subtitle: 'Open GeoWake to set up your next commute.',
+    progressPercent: 0,
+    ctaLabel: 'Open',
+    deepLink: WidgetArmHandler.buildOpenUri().toString(),
+  );
 
   // --- native push ----------------------------------------------------------
 
@@ -325,8 +333,10 @@ class HomeWidgetBridge {
       // A failed write must never propagate — mark unusable so we stop trying
       // this session and silently no-op.
       _pluginUsable = false;
-      dev.log('home_widget push failed (disabling for session): $e',
-          name: 'HomeWidgetBridge');
+      dev.log(
+        'home_widget push failed (disabling for session): $e',
+        name: 'HomeWidgetBridge',
+      );
     }
   }
 

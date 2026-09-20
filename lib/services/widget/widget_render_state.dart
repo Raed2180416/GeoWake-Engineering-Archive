@@ -14,7 +14,7 @@ enum WidgetRenderState {
   /// A journey is currently armed/tracking — show live progress + "Open".
   active,
 
-  /// Idle but we have a remembered commute to offer as a one-tap arm candidate.
+  /// Idle with a recent destination shortcut.
   idle,
 
   /// Idle with nothing to offer yet — show a neutral "open GeoWake" prompt.
@@ -26,7 +26,7 @@ enum WidgetRenderState {
 /// Precedence: entitlement first (a non-Pro user never sees a working arm),
 /// then an in-flight journey (the active session ALWAYS wins so the widget can
 /// never present an "Arm" button that would double-arm — it shows "Open"
-/// instead), then a remembered commute, else a neutral prompt.
+/// instead), then a recent destination, else a neutral prompt.
 WidgetRenderState resolveRenderState({
   required bool canUseWidget,
   required bool isActive,

@@ -11,8 +11,10 @@
 //   3. NEVER INTO A DATA PIPELINE. Share coordinates are transient delivery state.
 //      They are never logged, never emitted to analytics, never aggregated. The
 //      "arrived" hook below is the ONLY side channel and it carries no coordinates.
-//   4. COARSE ONLY. Coordinates are rounded to 5 dp on ingest AND on read.
-//   5. AUTH. Every /v1 route requires the founder's bearer token.
+//   4. APPROXIMATE ONLY. Coordinates are rounded to 3 dp (about 100 m) on
+//      ingest AND on read.
+//   5. AUTH. Each share has separate unguessable read/write capabilities; only
+//      hashes are stored. A founder bearer remains as an operational fallback.
 //
 // Deploy: `railway up` (see README.md). In-memory store is fine for v1; swap the
 // Store class for Redis at scale (README "Scale path").
@@ -30,7 +32,8 @@ function createConfigFromEnv(env = process.env) {
   return {
     port: parseInt(env.PORT, 10) || 8080,
 
-    // Bearer token the app sends (HttpShareBackend.authToken). REQUIRED in prod.
+    // Optional founder/operations bearer. Mobile clients use per-share
+    // capabilities instead, so this secret must not be embedded in the APK.
     authToken: env.SHARE_AUTH_TOKEN || '',
 
     // HMAC secret for `?t=` link verification. When empty, `?t=` is treated as
@@ -71,11 +74,12 @@ function createConfigFromEnv(env = process.env) {
 }
 
 // ---------------------------------------------------------------------------
-// Coarse-coordinate rounding (5 dp ≈ 1.1 m). Mirrors ShareSnapshot._round5.
+// Approximate-coordinate rounding (3 dp ≈ 111 m latitude at the equator).
+// Mirrors ShareSnapshot._round3.
 // ---------------------------------------------------------------------------
 
 function roundCoord(v) {
-  return Math.round(v * 1e5) / 1e5;
+  return Math.round(v * 1e3) / 1e3;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +105,30 @@ function constantTimeEquals(a, b) {
   return crypto.timingSafeEqual(ba, bb);
 }
 
+function hashCapability(token) {
+  return crypto.createHash('sha256').update(String(token), 'utf8').digest('hex');
+}
+
+function validCapability(token) {
+  return (
+    typeof token === 'string' &&
+    token.length >= 32 &&
+    token.length <= 256 &&
+    /^[A-Za-z0-9_-]+={0,2}$/.test(token)
+  );
+}
+
+function capabilityMatches(token, expectedHash) {
+  if (!validCapability(token) || typeof expectedHash !== 'string') return false;
+  return constantTimeEquals(hashCapability(token), expectedHash);
+}
+
+function bearerToken(req) {
+  const h = req.headers['authorization'] || '';
+  const m = /^Bearer\s+(.+)$/i.exec(h);
+  return m ? m[1] : '';
+}
+
 // ---------------------------------------------------------------------------
 // Store — LATEST-ONLY in-memory map with hard TTL delete.
 //
@@ -114,7 +142,15 @@ class Store {
     this._now = now;
   }
 
-  create({ id, mode, destLabel, etaEpochMs, expiresAtMs }) {
+  create({
+    id,
+    mode,
+    destLabel,
+    etaEpochMs,
+    expiresAtMs,
+    readTokenHash = null,
+    writeTokenHash = null,
+  }) {
     const now = this._now();
     const rec = {
       id,
@@ -124,6 +160,9 @@ class Store {
       etaEpochMs: etaEpochMs != null ? etaEpochMs : null,
       expiresAtMs,
       createdAtMs: now,
+      // Raw capabilities never enter server state.
+      readTokenHash,
+      writeTokenHash,
       // --- the single latest coarse point (no history) ---
       lat: null,
       lng: null,
@@ -356,7 +395,7 @@ function renderJourneyPage(cfg, rec, now) {
       const lng = roundCoord(rec.lng);
       const q = encodeURIComponent(lat + ',' + lng);
       point =
-        `<div class="point">Approx. location: ${lat.toFixed(5)}, ${lng.toFixed(5)}` +
+        `<div class="point">Approx. location: ${lat.toFixed(3)}, ${lng.toFixed(3)}` +
         ` <a href="https://www.google.com/maps?q=${q}" rel="noreferrer noopener">Open in Maps</a></div>`;
     } else {
       point = `<div class="point muted">Waiting for the first location update…</div>`;
@@ -444,10 +483,10 @@ function createServer(configOverride = {}) {
   const limiter = new RateLimiter(cfg.rateLimitPerMin, cfg.now);
 
   if (!cfg.authToken) {
-    console.warn('[warn] SHARE_AUTH_TOKEN is empty — /v1 write routes are OPEN. Set it before deploy.');
+    console.warn('[info] SHARE_AUTH_TOKEN is empty — founder override is disabled; per-share capabilities remain required.');
   }
   if (!cfg.hmacSecret) {
-    console.warn('[warn] HMAC_SECRET is empty — `?t=` link tokens are not verified (share id is the gate).');
+    console.warn('[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.');
   }
 
   // CORS: only ever echo a single configured origin. Never '*'.
@@ -464,7 +503,7 @@ function createServer(configOverride = {}) {
   }
 
   function authOk(req) {
-    if (!cfg.authToken) return true; // dev/local: warned at startup
+    if (!cfg.authToken) return false;
     const h = req.headers['authorization'] || '';
     const m = /^Bearer\s+(.+)$/i.exec(h);
     if (!m) return false;
@@ -511,8 +550,18 @@ function createServer(configOverride = {}) {
         const id = decodeURIComponent(path.slice('/j/'.length));
         if (!id) return sendHtml(res, 410, renderGonePage());
 
-        // `?t=` HMAC verification (only when a server secret is configured).
-        if (cfg.hmacSecret) {
+        const rec = store.getLive(id);
+        if (!rec) return sendHtml(res, 410, renderGonePage());
+
+        // New protocol: the link itself carries a per-share read capability.
+        // The server stores only its SHA-256 hash. Legacy HMAC links remain
+        // supported for founder-authenticated records created before migration.
+        if (rec.readTokenHash) {
+          const t = url.searchParams.get('t') || '';
+          if (!capabilityMatches(t, rec.readTokenHash)) {
+            return sendStatus(res, 403);
+          }
+        } else if (cfg.hmacSecret) {
           const t = url.searchParams.get('t');
           if (t) {
             if (!verifyToken(id, t, cfg.hmacSecret)) {
@@ -523,18 +572,19 @@ function createServer(configOverride = {}) {
           }
         }
 
-        const rec = store.getLive(id);
-        if (!rec) return sendHtml(res, 410, renderGonePage()); // missing or expired
         return sendHtml(res, 200, renderJourneyPage(cfg, rec, cfg.now()));
       }
 
       // --- /v1 API (bearer-auth) ---
       if (path === '/v1/share' || path.startsWith('/v1/share/')) {
-        if (!authOk(req)) {
-          return sendJson(res, 401, { error: 'unauthorized' }, {
-            'www-authenticate': 'Bearer',
-          });
-        }
+        const founderAuthorized = authOk(req);
+        const unauthorized = () =>
+          sendJson(
+            res,
+            401,
+            { error: 'unauthorized' },
+            { 'www-authenticate': 'Bearer' }
+          );
 
         // POST /v1/share  -> {serverId}
         if (path === '/v1/share') {
@@ -548,6 +598,13 @@ function createServer(configOverride = {}) {
           }
           const v = validateCreate(body, cfg);
           if (v.error) return sendJson(res, 400, { error: v.error });
+          // Mobile clients authenticate a new share by supplying two strong,
+          // independent capabilities. Legacy/ops callers may instead use the
+          // founder bearer. Never accept an unauthenticated tokenless create.
+          if (!founderAuthorized &&
+              (!v.value.readTokenHash || !v.value.writeTokenHash)) {
+            return unauthorized();
+          }
           const rec = store.create(v.value);
           return sendJson(res, 200, { serverId: rec.serverId });
         }
@@ -563,6 +620,11 @@ function createServer(configOverride = {}) {
         // POST /v1/share/{id}/ping -> 204
         if (action === 'ping') {
           if (method !== 'POST') return sendStatus(res, 405, { allow: 'POST' });
+          const current = store.getLive(id);
+          if (!founderAuthorized &&
+              !capabilityMatches(bearerToken(req), current?.writeTokenHash)) {
+            return unauthorized();
+          }
           let body;
           try {
             body = await parseJsonBody(req, cfg.maxBodyBytes);
@@ -580,6 +642,11 @@ function createServer(configOverride = {}) {
         // POST /v1/share/{id}/arrived -> 204
         if (action === 'arrived') {
           if (method !== 'POST') return sendStatus(res, 405, { allow: 'POST' });
+          const current = store.getLive(id);
+          if (!founderAuthorized &&
+              !capabilityMatches(bearerToken(req), current?.writeTokenHash)) {
+            return unauthorized();
+          }
           const rec = store.markArrived(id);
           if (!rec) return sendStatus(res, 404);
           try {
@@ -598,6 +665,11 @@ function createServer(configOverride = {}) {
           if (method !== 'GET') return sendStatus(res, 405, { allow: 'GET' });
           const rec = store.getLive(id); // null if unknown or expired
           if (!rec) return sendJson(res, 410, { id, status: 'expired', gone: true });
+          const readToken = url.searchParams.get('t') || '';
+          if (!founderAuthorized &&
+              !capabilityMatches(readToken, rec.readTokenHash)) {
+            return unauthorized();
+          }
           return sendJson(res, 200, {
             id: rec.serverId,
             status: rec.arrived ? 'arrived' : 'enRoute',
@@ -615,6 +687,11 @@ function createServer(configOverride = {}) {
         // DELETE /v1/share/{id} -> 204 (hard delete / revoke)
         if (action === '') {
           if (method !== 'DELETE') return sendStatus(res, 405, { allow: 'DELETE' });
+          const rec = store.getLive(id);
+          if (!founderAuthorized &&
+              !capabilityMatches(bearerToken(req), rec?.writeTokenHash)) {
+            return unauthorized();
+          }
           store.delete(id); // idempotent: 204 whether or not it existed
           return sendStatus(res, 204);
         }
@@ -697,7 +774,28 @@ function validateCreate(body, cfg) {
     etaEpochMs = Math.floor(body.etaEpochMs);
   }
 
-  return { value: { id, mode, destLabel, etaEpochMs, expiresAtMs } };
+  const hasCapabilityField = body.readToken != null || body.writeToken != null;
+  let readTokenHash = null;
+  let writeTokenHash = null;
+  if (hasCapabilityField) {
+    if (!validCapability(body.readToken) || !validCapability(body.writeToken)) {
+      return { error: 'bad_capabilities' };
+    }
+    readTokenHash = hashCapability(body.readToken);
+    writeTokenHash = hashCapability(body.writeToken);
+  }
+
+  return {
+    value: {
+      id,
+      mode,
+      destLabel,
+      etaEpochMs,
+      expiresAtMs,
+      readTokenHash,
+      writeTokenHash,
+    },
+  };
 }
 
 function validatePing(body) {
@@ -730,6 +828,8 @@ module.exports = {
   roundCoord,
   mintToken,
   verifyToken,
+  hashCapability,
+  capabilityMatches,
   assetlinksJson,
 };
 

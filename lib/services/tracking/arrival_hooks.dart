@@ -36,15 +36,14 @@
 //                                           multicast already runs each listener
 //                                           on its own microtask inside its own
 //                                           guard.
-//   3. MonetizationService.recordRide    — increments the ad-frequency cap
-//                                           counter for a completed ride.
+// Ride counting deliberately has one owner outside this multicast:
+// PostArrivalScreen.routeAfterDismiss, after the destination handoff.
 library;
 
 import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:geowake2/services/data_asset/data_asset_pipeline.dart';
-import 'package:geowake2/services/monetization/monetization_service.dart';
 import 'package:geowake2/services/tracking/post_alarm_multicast.dart';
 
 /// Post-arrival fan-out. Pure static entry point — no state, no lifecycle.
@@ -97,7 +96,9 @@ class ArrivalHooks {
             ),
           );
         }
-      } catch (_) {/* never matters */}
+      } catch (_) {
+        /* never matters */
+      }
 
       // (3) Post-alarm observers (Guardian "arrived safely", etc.). The
       // multicast dispatches each listener on its own microtask inside its own
@@ -105,12 +106,13 @@ class ArrivalHooks {
       // the others.
       try {
         PostAlarmMulticast.instance.dispatch();
-      } catch (_) {/* never matters */}
+      } catch (_) {
+        /* never matters */
+      }
 
-      // (4) Ad-frequency cap — count this completed ride.
-      try {
-        unawaited(MonetizationService.instance.recordRide());
-      } catch (_) {/* never matters */}
+      // Ride counting is intentionally owned by
+      // PostArrivalScreen.routeAfterDismiss. Keeping it out of this multicast
+      // prevents the normal arrival handoff from counting one ride twice.
     } catch (e) {
       // Belt-and-suspenders: nothing above can throw synchronously, but if it
       // ever did, swallow it — the wake is long since delivered.

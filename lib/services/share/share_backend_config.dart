@@ -5,10 +5,9 @@
 // configuration the app stays on the fully-offline NoopShareBackend and basic
 // share still works end-to-end.
 //
-// Set these at build time (no code edit needed):
+// Optionally override these at build time (no code edit needed):
 //   flutter build apk \
 //     --dart-define=GEOWAKE_SHARE_BASE_URL=https://your-app.up.railway.app \
-//     --dart-define=GEOWAKE_SHARE_TOKEN=<bearer-token> \
 //     --dart-define=GEOWAKE_SHARE_DOMAIN=https://your-app-links-domain
 //
 // …or just replace the defaultValue strings below.
@@ -22,16 +21,16 @@ class ShareBackendConfig {
   const ShareBackendConfig._();
 
   /// Railway base URL. Defaults to the deployed geowake-share service (a public
-  /// URL, safe to commit). Live tracking additionally needs [authToken] injected
-  /// at build via --dart-define=GEOWAKE_SHARE_TOKEN=... ; without it, BASIC share
-  /// (the message + /j link via the OS share sheet) still works — only the live
-  /// ping/follow path is inert (fail-safe). Empty ⇒ fully offline Noop backend.
+  /// URL, safe to commit). Per-share capabilities authenticate mobile reads and
+  /// writes, so no universal secret needs to be embedded in the APK. Empty ⇒
+  /// fully offline Noop backend.
   static const String baseUrl = String.fromEnvironment(
     'GEOWAKE_SHARE_BASE_URL',
     defaultValue: 'https://geowake-share-production.up.railway.app',
   );
 
-  /// Founder-provisioned bearer token the server checks on every write/read.
+  /// Legacy/operational founder bearer. Mobile builds should leave this empty;
+  /// per-share read/write capabilities are generated on-device instead.
   static const String authToken = String.fromEnvironment(
     'GEOWAKE_SHARE_TOKEN',
     defaultValue: '',

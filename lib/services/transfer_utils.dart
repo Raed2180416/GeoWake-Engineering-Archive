@@ -31,9 +31,12 @@ class TransitLegStops {
   /// Line name/ID for this transit leg.
   final String? lineName;
 
-  /// Whether stop positions are from actual data (stop asset match) vs estimated (uniform).
-  /// True = stop positions snapped from stop assets (OSM) to the transit-step polyline.
-  /// False = uniformly distributed estimates (legacy behavior).
+  /// Whether stop positions are verified route-specific station positions vs
+  /// estimated (uniform). `true` is reserved for a contiguous slice of a
+  /// trusted, ordered line sequence matched to this transit-step polyline.
+  /// Nearby corridor matches alone are never sufficient: a parallel/crossing
+  /// line, or a different segment of the same line, must not become an EKF
+  /// station anchor.
   final bool isActualPositions;
 
   /// Whether this leg is a Metro/Rapid transit leg (vs Bus/Other).
@@ -50,18 +53,11 @@ class TransitLegStops {
   /// "N stops before" as low-confidence (prefer firing early).
   final double stopCountConfidence;
 
-  /// #28: Optional geocoded city key for this leg (e.g. "delhi", "mumbai").
-  /// When present it is the AUTHORITATIVE city for line-sequence + line-filter
-  /// resolution in [TransferUtils.enhanceTransitLegStopsWithOsm]; the
-  /// majority-vote over matched OSM stops is demoted to a fallback used only
-  /// when this is null/empty. On a border corridor / malformed polyline the
-  /// vote can select the wrong city (→ wrong sequence + wrong V_LINE); carrying
-  /// an explicit city removes that failure mode.
-  ///
-  /// Scope note: no production caller threads a geocoded city onto the leg yet,
-  /// so today this defaults to null and the vote still decides. The plumbing is
-  /// in place for a geocoding pipeline to set it without touching the
-  /// resolution logic.
+  /// Trusted city key for this leg (e.g. "bengaluru", "mumbai"). Exact bundled
+  /// station anchors are permitted only when both provider endpoint stops match
+  /// active bundled stations on the reported line and independently agree on
+  /// this city. Null means the route remains on provider/interpolated geometry;
+  /// nearby-stop voting is intentionally not allowed to manufacture trust.
   final String? cityKey;
 
   /// GAP #9: Google Directions `transit_details.line.vehicle.type` (SUBWAY,
@@ -167,7 +163,7 @@ class TransitLegStops {
             )
             .toList();
     final isActual = m['isActualPositions'] == true;
-    final rawNum = m['numStops'] as int;
+    final rawNum = (m['numStops'] as num?)?.toInt() ?? stopPos.length;
 
     // HEALING: Ensure consistency between declared stops and actual data points.
     final effectiveNum =
@@ -209,7 +205,7 @@ class TransitLegStops {
 
   /// Remaining stops until arrival (total intermediate stops - stops passed).
   int stopsRemaining(double currentMeters) {
-    return numStops - stopsPassed(currentMeters);
+    return (numStops - stopsPassed(currentMeters)).clamp(0, numStops).toInt();
   }
 
   /// Create a copy with updated fields.
@@ -333,73 +329,78 @@ class TransferUtils {
       if (routes.isEmpty) return result;
       final route = routes.first as Map<String, dynamic>;
       final legs = (route['legs'] as List?) ?? const [];
-      double cum = 0.0;
+
+      // Google may split one journey into several route legs (especially when
+      // waypoints or mixed modes are present).  Looking ahead only inside the
+      // current leg loses the alight/board boundary at that seam.  Flatten the
+      // steps first, while retaining one cumulative-distance domain for the
+      // same polyline used by MapTrackingScreen.
+      final allSteps = <Map<String, dynamic>>[];
       for (final leg in legs) {
         final steps = (leg['steps'] as List?) ?? const [];
-        for (int i = 0; i < steps.length; i++) {
-          final step = steps[i] as Map<String, dynamic>;
-          final stepStartMeters = cum;
-          final dist =
-              ((step['distance'] as Map<String, dynamic>?)?['value']) as num?;
-          if (dist != null) cum += dist.toDouble();
-          final stepEndMeters = cum;
-
-          final mode = step['travel_mode'] as String?;
-          final isMetroStep =
-              mode?.toUpperCase() == 'TRANSIT' && _isMetroTransitStep(step);
-          if (!isMetroStep) continue;
-
-          // Identify current line id (best-effort; can be null)
-          final curLine =
-              ((step['transit_details'] as Map<String, dynamic>?)?['line'])
-                  as Map<String, dynamic>?;
-          final curId =
-              (curLine?['short_name'] ?? curLine?['name'] ?? curLine?['id'])
-                  ?.toString();
-
-          // 1) Boarding boundary: start of this metro segment.
-          final prevIsMetro =
-              i > 0 &&
-              ((steps[i - 1] as Map<String, dynamic>)['travel_mode'] as String?)
-                      ?.toUpperCase() ==
-                  'TRANSIT' &&
-              _isMetroTransitStep(steps[i - 1] as Map<String, dynamic>);
-          if (!prevIsMetro) {
-            result.add(stepStartMeters);
-          }
-
-          // 2) Alight/switch boundary: end of this metro segment.
-          // Add when the next metro segment is a different line OR there is no
-          // upcoming metro segment (exit transit).
-          String? nextTransitId;
-          bool foundNextMetro = false;
-          for (int j = i + 1; j < steps.length; j++) {
-            final nextStep = steps[j] as Map<String, dynamic>;
-            final nextMode = nextStep['travel_mode'] as String?;
-            if (nextMode?.toUpperCase() == 'TRANSIT' &&
-                _isMetroTransitStep(nextStep)) {
-              final nxtLine =
-                  ((nextStep['transit_details']
-                          as Map<String, dynamic>?)?['line'])
-                      as Map<String, dynamic>?;
-              nextTransitId =
-                  (nxtLine?['short_name'] ?? nxtLine?['name'] ?? nxtLine?['id'])
-                      ?.toString();
-              foundNextMetro = true;
-              break;
-            }
-          }
-
-          final shouldAddEndBoundary =
-              !foundNextMetro ||
-              (curId != null &&
-                  nextTransitId != null &&
-                  nextTransitId != curId) ||
-              (curId == null && foundNextMetro && nextTransitId != null);
-          if (shouldAddEndBoundary) {
-            result.add(stepEndMeters);
+        for (final raw in steps) {
+          if (raw is Map) {
+            allSteps.add(raw.cast<String, dynamic>());
           }
         }
+      }
+      if (allSteps.isEmpty) return result;
+
+      final starts = <double>[];
+      final ends = <double>[];
+      final metro = <bool>[];
+      double cum = 0.0;
+      for (final step in allSteps) {
+        starts.add(cum);
+        final distance =
+            ((step['distance'] as Map?)?['value'] as num?)?.toDouble() ?? 0.0;
+        cum += distance.isFinite && distance >= 0 ? distance : 0.0;
+        ends.add(cum);
+        final mode = step['travel_mode']?.toString().toUpperCase();
+        metro.add(mode == 'TRANSIT' && _isMetroTransitStep(step));
+      }
+
+      String? lineId(Map<String, dynamic> step) {
+        final line = (step['transit_details'] as Map?)?['line'];
+        if (line is! Map) return null;
+        return (line['id'] ?? line['short_name'] ?? line['name'])?.toString();
+      }
+
+      for (int i = 0; i < allSteps.length; i++) {
+        if (!metro[i]) continue;
+        final currentId = lineId(allSteps[i]);
+
+        // A metro step after walking/driving (including at a leg seam) is a
+        // boarding boundary.
+        final previousIsMetro = i > 0 && metro[i - 1];
+        if (!previousIsMetro) result.add(starts[i]);
+
+        // Find the next metro step, but distinguish an immediate continuation
+        // from an intervening non-metro segment.  Even the same line needs an
+        // alight boundary when the rider leaves the train between segments.
+        int? nextMetroIndex;
+        for (int j = i + 1; j < allSteps.length; j++) {
+          if (metro[j]) {
+            nextMetroIndex = j;
+            break;
+          }
+        }
+        final immediateNextIsMetro = i + 1 < metro.length && metro[i + 1];
+        final nextId = nextMetroIndex == null
+            ? null
+            : lineId(allSteps[nextMetroIndex]);
+        final differentKnownLines = currentId != null &&
+            nextId != null &&
+            currentId != nextId;
+        final oneLineIdMissing = currentId == null &&
+            nextMetroIndex != null &&
+            nextId != null;
+        final shouldAddEndBoundary =
+            !immediateNextIsMetro ||
+            nextMetroIndex == null ||
+            differentKnownLines ||
+            oneLineIdMissing;
+        if (shouldAddEndBoundary) result.add(ends[i]);
       }
     } catch (e) {
       dev.log(
@@ -921,12 +922,15 @@ class TransferUtils {
   /// whole-journey duration (e.g. the creation-time sanity guard) use this.
   static int totalPlannedDurationSeconds(Map<String, dynamic> directions) {
     try {
-      final legs = ((directions['routes'] as List).first
-          as Map<String, dynamic>)['legs'] as List;
+      final legs =
+          ((directions['routes'] as List).first as Map<String, dynamic>)['legs']
+              as List;
       int total = 0;
       for (final leg in legs) {
-        final v = ((leg as Map<String, dynamic>)['duration']
-            as Map<String, dynamic>?)?['value'] as num?;
+        final v =
+            ((leg as Map<String, dynamic>)['duration']
+                    as Map<String, dynamic>?)?['value']
+                as num?;
         total += (v ?? 0).toInt();
       }
       return total;
@@ -1009,7 +1013,9 @@ class TransferUtils {
           // onto the leg so VLineTable.forLine can never-late-lift a fast service
           // reported with a slow/generic name during a blackout.
           final vehicleType =
-              ((line?['vehicle'] as Map<String, dynamic>?)?['type'])?.toString();
+              ((line?['vehicle'] as Map<String, dynamic>?)?['type'])
+                  ?.toString();
+          final cityKey = trustedTransitStepCityKey(step);
 
           // Calculate stop positions along the polyline
           final stopPositions = estimateStopPositions(polylinePoints, numStops);
@@ -1029,6 +1035,7 @@ class TransferUtils {
             }
           }
 
+          final isMetro = _isMetroTransitStep(step);
           result.add(
             TransitLegStops(
               legStartMeters: legStartMeters,
@@ -1037,7 +1044,11 @@ class TransferUtils {
               stopPositions: stopPositions,
               stopMeters: stopMeters,
               lineName: lineName,
-              isMetro: _isMetroTransitStep(step),
+              isMetro: isMetro,
+              // API `num_stops` gives a useful conservative count, but the
+              // uniformly interpolated positions are not real stations.
+              stopCountConfidence: isMetro ? 0.5 : 1.0,
+              cityKey: cityKey,
               vehicleType: vehicleType,
             ),
           );
@@ -1284,8 +1295,7 @@ class TransferUtils {
     t = t.replaceAll(_htmlEntity, ' '); // strip &#x25D9; &amp; etc.
     t = t.replaceAll(RegExp(r'[^a-z0-9]+'), ' '); // punctuation → space
     t = t.replaceAll(_lineGenericWords, ' '); // drop "line"/"metro"/...
-    final tokens =
-        t.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final tokens = t.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     if (tokens.isEmpty) return '';
     // A color word is the strongest, most stable anchor for a line.
     for (final tok in tokens) {
@@ -1300,6 +1310,125 @@ class TransferUtils {
   static String _canonCity(String? s) {
     if (s == null) return '';
     return s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  }
+
+  /// Establish city provenance from the route provider's departure and arrival
+  /// stops. Both endpoints must independently match active bundled stops by
+  /// line and geography, then agree on exactly one city. Provider/bundle names
+  /// are deliberately not compared: harmless aliases and suffixes must not
+  /// disable underground station help. Any geographic cross-city ambiguity
+  /// still returns null, which disables exact station anchoring.
+  static String? trustedTransitStepCityKey(
+    Map<String, dynamic> step, {
+    List<Map<String, dynamic>>? stopsOverride,
+  }) {
+    try {
+      final td = step['transit_details'] as Map<String, dynamic>?;
+      final line = td?['line'] as Map<String, dynamic>?;
+      final lineName = (line?['short_name'] ?? line?['name'])?.toString();
+      final lineKey = _canonLine(lineName);
+      if (lineKey.isEmpty) return null;
+
+      String? endpointCity(dynamic rawStop) {
+        if (rawStop is! Map) return null;
+        final location = rawStop['location'];
+        if (location is! Map) return null;
+        final lat = location['lat'];
+        final lng = location['lng'];
+        if (lat is! num || lng is! num) return null;
+
+        final cities = <String>{};
+        for (final candidate in stopsOverride ?? allIndiaStops) {
+          if (!_isActiveStop(candidate) ||
+              _canonLine(candidate['line']?.toString()) != lineKey) {
+            continue;
+          }
+          final candidateLat = candidate['lat'];
+          final candidateLng = candidate['lng'];
+          if (candidateLat is! num || candidateLng is! num) continue;
+          final distance = Geolocator.distanceBetween(
+            lat.toDouble(),
+            lng.toDouble(),
+            candidateLat.toDouble(),
+            candidateLng.toDouble(),
+          );
+          if (distance <= 500.0) {
+            final city = _canonCity(candidate['city']?.toString());
+            if (city.isNotEmpty) cities.add(city);
+          }
+        }
+        return cities.length == 1 ? cities.single : null;
+      }
+
+      final departureCity = endpointCity(td?['departure_stop']);
+      final arrivalCity = endpointCity(td?['arrival_stop']);
+      if (departureCity == null || departureCity != arrivalCity) return null;
+      return departureCity;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// True only when indexes form one strictly adjacent run in either travel
+  /// direction. This rejects a same-line station from a nearby but inactive
+  /// segment, including loop-backs and spatially close branches.
+  static bool _isStrictContiguousRun(List<int> indexes) {
+    if (indexes.length < 2) return false;
+    final direction = indexes[1] - indexes[0];
+    if (direction != 1 && direction != -1) return false;
+    for (var i = 1; i < indexes.length; i++) {
+      if (indexes[i] - indexes[i - 1] != direction) return false;
+    }
+    return true;
+  }
+
+  /// Infer city provenance from the route geometry when Google omits endpoint
+  /// station coordinates or uses a line label that cannot be matched to the
+  /// bundled stop catalog.  A city is accepted only when the active line's
+  /// ordered sequence contributes at least two strictly adjacent stations to
+  /// this exact transit polyline, and exactly one city satisfies that test.
+  /// This recovers legitimate underground station anchors without falling back
+  /// to a nearest-stop guess.
+  static String? _inferCityFromOrderedGeometry(
+    String lineKey,
+    List<LatLng> polylinePoints,
+  ) {
+    if (lineKey.isEmpty || polylinePoints.length < 2) return null;
+    final candidates = <String>{};
+    for (final cityEntry in kMetroLineSequences.entries) {
+      final sequence = cityEntry.value[lineKey];
+      if (sequence == null || sequence.length < 2) continue;
+      final stops = <Stop>[];
+      final indexById = <String, int>{};
+      for (var i = 0; i < sequence.length; i++) {
+        final stop = sequence[i];
+        final id = 'inferred_${cityEntry.key}_${lineKey}_$i';
+        indexById[id] = i;
+        stops.add(
+          Stop(
+            id: id,
+            name: stop.name,
+            location: LatLng(stop.lat, stop.lng),
+            line: lineKey,
+            city: cityEntry.key,
+          ),
+        );
+      }
+      final matched = StopMatcher.matchStopsToPolyline(
+        polyline: polylinePoints,
+        stops: stops,
+        radiusMeters: 500.0,
+        dedupeMeters: 80.0,
+      );
+      final indexes = matched
+          .map((m) => indexById[m.stop.id])
+          .whereType<int>()
+          .toList();
+      if (indexes.length >= 2 && _isStrictContiguousRun(indexes)) {
+        candidates.add(cityEntry.key);
+      }
+    }
+    return candidates.length == 1 ? candidates.single : null;
   }
 
   /// **OSM-ONLY MODE**: Completely ignores Google API's `num_stops`.
@@ -1375,6 +1504,37 @@ class TransferUtils {
           continue;
         }
 
+        var trustedCityKey = _canonCity(leg.cityKey);
+        if (trustedCityKey.isEmpty && stopsOverride == null) {
+          trustedCityKey =
+              _inferCityFromOrderedGeometry(
+                _canonLine(leg.lineName),
+                polylinePoints,
+              ) ??
+              '';
+          if (trustedCityKey.isNotEmpty) {
+            dev.log(
+              'TransferUtils: Inferred trusted city from contiguous ordered '
+              'geometry: $trustedCityKey/${leg.lineName}',
+              name: 'TransferUtils',
+            );
+          }
+        }
+        if (trustedCityKey.isEmpty) {
+          dev.log(
+            '⚠️ TransferUtils: Metro leg ${leg.lineName} has no independently '
+            'verified city context. Keeping provider/interpolated positions; '
+            'exact station anchoring is disabled.',
+            name: 'TransferUtils',
+          );
+          enhanced.add(
+            leg.copyWith(
+              stopCountConfidence: math.min(leg.stopCountConfidence, 0.5),
+            ),
+          );
+          continue;
+        }
+
         try {
           // Match OSM stops within 500m of the polyline
           final matchedAll = StopMatcher.matchStopsToPolyline(
@@ -1411,28 +1571,7 @@ class TransferUtils {
           // therefore leaks into this leg's stop list. Keep only stops whose
           // canonical line matches this leg's line, in the same city.
           final legLineKey = _canonLine(leg.lineName);
-          // #28: Prefer an explicit geocoded city carried on the leg. Only when
-          // the leg has no city do we derive it from the majority city of the
-          // matched stops (they are all on/near this polyline, so the majority
-          // is USUALLY this leg's city — but on a border corridor / malformed
-          // polyline the vote can pick the wrong city, which an explicit
-          // geocoded city overrides).
-          String legCityKey = _canonCity(leg.cityKey);
-          if (legCityKey.isEmpty) {
-            final cityVotes = <String, int>{};
-            for (final m in matchedAll) {
-              final c = _canonCity(m.stop.city);
-              if (c.isEmpty) continue;
-              cityVotes[c] = (cityVotes[c] ?? 0) + 1;
-            }
-            int bestVotes = 0;
-            cityVotes.forEach((c, v) {
-              if (v > bestVotes) {
-                bestVotes = v;
-                legCityKey = c;
-              }
-            });
-          }
+          final legCityKey = trustedCityKey;
 
           // LINE-FIRST (ordered): if this line has a CONFIDENT hardcoded ordered
           // sequence, match THAT against the leg polyline. The 500m radius match
@@ -1443,111 +1582,73 @@ class TransferUtils {
           List<MatchedStop>? orderedMatches;
           final orderedSeq = kMetroLineSequences[legCityKey]?[legLineKey];
           if (orderedSeq != null && orderedSeq.length >= 2) {
-            final seqStops =
-                orderedSeq
-                    .map(
-                      (s) => Stop(
-                        id: 'seq_${legCityKey}_${legLineKey}_${s.name}',
-                        name: s.name,
-                        location: LatLng(s.lat, s.lng),
-                        line: legLineKey,
-                        city: legCityKey,
-                      ),
-                    )
-                    .toList();
+            final sequenceIndexById = <String, int>{};
+            final seqStops = <Stop>[];
+            for (var seqIndex = 0; seqIndex < orderedSeq.length; seqIndex++) {
+              final s = orderedSeq[seqIndex];
+              final id = 'seq_${legCityKey}_${legLineKey}_$seqIndex';
+              sequenceIndexById[id] = seqIndex;
+              seqStops.add(
+                Stop(
+                  id: id,
+                  name: s.name,
+                  location: LatLng(s.lat, s.lng),
+                  line: legLineKey,
+                  city: legCityKey,
+                ),
+              );
+            }
             final matchedSeq = StopMatcher.matchStopsToPolyline(
               polyline: polylinePoints,
               stops: seqStops,
               radiusMeters: 500.0,
               dedupeMeters: 80.0,
             );
-            if (matchedSeq.length >= 2) {
+            final sequenceIndexes =
+                matchedSeq
+                    .map((m) => sequenceIndexById[m.stop.id])
+                    .whereType<int>()
+                    .toList();
+            if (matchedSeq.length >= 2 &&
+                sequenceIndexes.length == matchedSeq.length &&
+                _isStrictContiguousRun(sequenceIndexes)) {
               orderedMatches = matchedSeq;
               dev.log(
                 'TransferUtils: Leg $i (${leg.lineName}) — using hardcoded ordered '
                 'sequence ($legCityKey/$legLineKey): ${matchedSeq.length} stops.',
                 name: 'TransferUtils',
               );
+            } else if (matchedSeq.isNotEmpty) {
+              dev.log(
+                '⚠️ TransferUtils: Rejected non-contiguous ordered sequence '
+                'for $legCityKey/$legLineKey: $sequenceIndexes. Keeping the '
+                'API-uniform leg so no off-segment station can become an anchor.',
+                name: 'TransferUtils',
+              );
             }
           }
 
-          final lineFiltered =
-              matchedAll.where((m) {
-                if (legLineKey.isEmpty) return false; // no line label to match
-                if (_canonLine(m.stop.line) != legLineKey) return false;
-                // City guard: only enforce when both sides carry a city label.
-                if (legCityKey.isNotEmpty) {
-                  final stopCity = _canonCity(m.stop.city);
-                  if (stopCity.isNotEmpty && stopCity != legCityKey) {
-                    return false;
-                  }
-                }
-                return true;
-              }).toList();
-
-          // SAFETY NET: never produce ZERO stops. Prefer the line-filtered set,
-          // but fall back to the unfiltered `matchedAll` when line filtering
-          // wipes everything out (unknown/dirty line label) or drops FAR below
-          // Google's num_stops while the unfiltered set is closer to it.
-          final apiNumStopsForFilter = leg.numStops;
-          List<MatchedStop> effectiveMatches;
-          if (orderedMatches != null) {
-            // Hardcoded ordered sequence wins: exact, own-line, in order.
-            effectiveMatches = orderedMatches;
-          } else if (lineFiltered.isEmpty) {
-            // CORRECTNESS (off-route stops): do NOT scoop the unfiltered corridor
-            // — `matchedAll`/`loadedStops` spans EVERY line and city, so an
-            // unknown/dirty line label would inject parallel/crossing-line
-            // stations at wrong positions. Keep the API-derived leg instead
-            // (uniform num_stops, on-route by construction). Never count a stop
-            // that isn't on this route's line.
+          // A matching line label and a plausible count still do not prove that
+          // a nearby station belongs to this route segment. Only a verified
+          // contiguous run of the ordered sequence is eligible for exact stop
+          // positions. Otherwise preserve the API count/route geometry at low
+          // confidence; it remains useful for early-safe alarms but can never
+          // become a station snap candidate.
+          if (orderedMatches == null) {
             dev.log(
-              '⚠️ TransferUtils: Line filter empty for "${leg.lineName}" '
-              '(key="$legLineKey"); keeping API-uniform leg instead of the '
-              'cross-line corridor (off-route safety).',
+              '⚠️ TransferUtils: No verified contiguous ordered slice for '
+              '"${leg.lineName}" (city="$legCityKey"). Keeping API-uniform '
+              'positions at low confidence (off-route snap safety).',
               name: 'TransferUtils',
             );
-            enhanced.add(leg);
+            enhanced.add(
+              leg.copyWith(
+                stopCountConfidence: math.min(leg.stopCountConfidence, 0.5),
+              ),
+            );
             continue;
-          } else if (apiNumStopsForFilter > 0) {
-            final farFewer =
-                lineFiltered.length < (apiNumStopsForFilter * 0.5);
-            final filteredDiff =
-                (lineFiltered.length - apiNumStopsForFilter).abs();
-            final allDiff = (matchedAll.length - apiNumStopsForFilter).abs();
-            if (farFewer && allDiff < filteredDiff) {
-              // CORRECTNESS (off-route stops): own-line OSM is incomplete here,
-              // but the unfiltered corridor is cross-line contaminated —
-              // preferring it because its COUNT is closer just substitutes
-              // phantom stations of OTHER lines at wrong positions (the
-              // divergence gate only checks count, not that stops are on-line).
-              // Keep the API-uniform leg instead of scooping off-route stations.
-              dev.log(
-                '⚠️ TransferUtils: Line filter kept only ${lineFiltered.length} '
-                'own-line stops vs API num_stops=$apiNumStopsForFilter for '
-                '"${leg.lineName}"; keeping API-uniform leg (off-route safety).',
-                name: 'TransferUtils',
-              );
-              enhanced.add(leg);
-              continue;
-            } else {
-              effectiveMatches = lineFiltered;
-              dev.log(
-                'TransferUtils: Line filter kept ${lineFiltered.length}/'
-                '${matchedAll.length} stops for "${leg.lineName}" '
-                '(key="$legLineKey", city="$legCityKey").',
-                name: 'TransferUtils',
-              );
-            }
-          } else {
-            effectiveMatches = lineFiltered;
-            dev.log(
-              'TransferUtils: Line filter kept ${lineFiltered.length}/'
-              '${matchedAll.length} stops for "${leg.lineName}" '
-              '(key="$legLineKey", city="$legCityKey").',
-              name: 'TransferUtils',
-            );
           }
+          final effectiveMatches = orderedMatches;
 
           // Dedupe by stop ID (keep closest to polyline for each unique ID)
           final byId = <String, MatchedStop>{};
@@ -1602,38 +1703,41 @@ class TransferUtils {
           }
           final nextLegIsMetro = nextMetroIdx != -1;
           final nextLegStartMeters =
-              nextLegIsMetro ? legs[nextMetroIdx].legStartMeters : double.infinity;
+              nextLegIsMetro
+                  ? legs[nextMetroIdx].legStartMeters
+                  : double.infinity;
 
           final intermediateStops =
-              uniqueOrdered
-                  .where(
-                    (s) {
-                      // Basic endpoint filtering
-                      if (s.metersAlongPolyline <= endpointToleranceMeters ||
-                          s.metersAlongPolyline >= (polylineTotalMeters - endpointToleranceMeters)) {
-                        return false;
-                      }
+              uniqueOrdered.where((s) {
+                // Basic endpoint filtering
+                if (s.metersAlongPolyline <= endpointToleranceMeters ||
+                    s.metersAlongPolyline >=
+                        (polylineTotalMeters - endpointToleranceMeters)) {
+                  return false;
+                }
 
-                      // MUMBAI FIX: If next leg is metro and there's a gap (walk),
-                      // exclude stops that are closer to next leg start than current leg end
-                      if (nextLegIsMetro) {
-                        final progress = (s.metersAlongPolyline / polylineTotalMeters).clamp(0.0, 1.0);
-                        final absoluteMeters = leg.legStartMeters + (progress * legLength);
+                // MUMBAI FIX: If next leg is metro and there's a gap (walk),
+                // exclude stops that are closer to next leg start than current leg end
+                if (nextLegIsMetro) {
+                  final progress = (s.metersAlongPolyline / polylineTotalMeters)
+                      .clamp(0.0, 1.0);
+                  final absoluteMeters =
+                      leg.legStartMeters + (progress * legLength);
 
-                        // If this stop is beyond current leg end and close to next leg start,
-                        // it belongs to the next leg, not this one
-                        if (absoluteMeters > leg.legEndMeters) {
-                          final distToNextLeg = (nextLegStartMeters - absoluteMeters).abs();
-                          if (distToNextLeg < 300.0) { // Within 300m of next leg start
-                            return false;
-                          }
-                        }
-                      }
+                  // If this stop is beyond current leg end and close to next leg start,
+                  // it belongs to the next leg, not this one
+                  if (absoluteMeters > leg.legEndMeters) {
+                    final distToNextLeg =
+                        (nextLegStartMeters - absoluteMeters).abs();
+                    if (distToNextLeg < 300.0) {
+                      // Within 300m of next leg start
+                      return false;
+                    }
+                  }
+                }
 
-                      return true;
-                    },
-                  )
-                  .toList();
+                return true;
+              }).toList();
 
           dev.log(
             '   After endpoint filter: ${intermediateStops.length} intermediate stops '
@@ -1710,7 +1814,8 @@ class TransferUtils {
                 // Preserve the never-late V_LINE signals through OSM enhancement
                 // (this rebuilt leg is the one tracking uses); dropping them would
                 // silently reopen the GAP #9 under-bound on the shipping path.
-                cityKey: leg.cityKey,
+                cityKey:
+                    trustedCityKey.isNotEmpty ? trustedCityKey : leg.cityKey,
                 vehicleType: leg.vehicleType,
               ),
             );

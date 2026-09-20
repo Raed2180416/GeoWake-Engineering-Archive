@@ -55,6 +55,11 @@ class LocationManager {
   // G28: OS location-service status watchdog.
   StreamSubscription<ServiceStatus>? _serviceStatusSub;
 
+  // Latest-wins lifecycle token. Android/OEM stream cancellation can take an
+  // unbounded amount of time. A start that resumes after Stop (or after a
+  // newer start) must never attach GPS/simulation subscriptions again.
+  int _lifecycleGeneration = 0;
+
   /// G28: invoked when the OS location service is enabled/disabled mid-journey.
   void Function(bool enabled)? onServiceStatusChanged;
 
@@ -67,11 +72,19 @@ class LocationManager {
   /// Starts the location stream.
   /// Always starts Real GPS initially.
   /// Also connects SimulationClient to listen for overrides.
-  Future<void> start() async {
+  Future<void> start({bool Function()? isStartCurrent}) async {
     _log.info('Starting LocationManager');
 
+    final generation = ++_lifecycleGeneration;
+    bool isCurrent() =>
+        generation == _lifecycleGeneration &&
+        (isStartCurrent == null || isStartCurrent());
+
     // Stop and cleanup existing streams
-    await stop();
+    await _stopStreams();
+    if (!isCurrent()) {
+      throw StateError('LocationManager start was cancelled or superseded');
+    }
 
     // 1. Start Real GPS (Default)
     _startRealGps();
@@ -82,14 +95,16 @@ class LocationManager {
     if (!isTestMode) {
       try {
         _serviceStatusSub?.cancel();
-        _serviceStatusSub =
-            Geolocator.getServiceStatusStream().listen((status) {
-          final enabled = status == ServiceStatus.enabled;
-          _log.warning('Location service status changed: $status');
-          onServiceStatusChanged?.call(enabled);
-        }, onError: (e) {
-          _log.warning('ServiceStatus stream error', e);
-        });
+        _serviceStatusSub = Geolocator.getServiceStatusStream().listen(
+          (status) {
+            final enabled = status == ServiceStatus.enabled;
+            _log.warning('Location service status changed: $status');
+            onServiceStatusChanged?.call(enabled);
+          },
+          onError: (e) {
+            _log.warning('ServiceStatus stream error', e);
+          },
+        );
       } catch (e) {
         _log.warning('getServiceStatusStream unavailable', e);
       }
@@ -100,7 +115,15 @@ class LocationManager {
   }
 
   Future<void> stop() async {
+    // Invalidate synchronously, before the first platform await. Any older
+    // start continuation will observe this token and refuse to resurrect GPS.
+    _lifecycleGeneration++;
+    await _stopStreams();
+  }
+
+  Future<void> _stopStreams() async {
     _log.info('Stopping LocationManager');
+    await testStopBarrier?.call();
     await _realGpsSubscription?.cancel();
     _realGpsSubscription = null;
 
@@ -122,6 +145,9 @@ class LocationManager {
 
   // Test Support
   Stream<Position>? testModeStream;
+
+  @visibleForTesting
+  Future<void> Function()? testStopBarrier;
 
   void _startRealGps() {
     // In test mode without testModeStream, skip Geolocator platform calls
@@ -311,9 +337,12 @@ class LocationManager {
     if (!isSimulated) {
       final acc = pos.accuracy;
       final bool approximate =
-          acc.isFinite && acc > FireDecisionConfig.approximateLocationAccuracyMeters;
+          acc.isFinite &&
+          acc > FireDecisionConfig.approximateLocationAccuracyMeters;
       final double gate =
-          (accuracyGateMeters != null && accuracyGateMeters!.isFinite && accuracyGateMeters! > 0)
+          (accuracyGateMeters != null &&
+                  accuracyGateMeters!.isFinite &&
+                  accuracyGateMeters! > 0)
               ? accuracyGateMeters!
               : FireDecisionConfig.defaultAccuracyGateMeters;
       if (!acc.isFinite || acc > gate) {

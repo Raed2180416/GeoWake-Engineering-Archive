@@ -32,10 +32,19 @@ class EtaEngine {
   double? smoothedSpeed;
   Position? lastGps;
   DateTime? stoppedSince;
+  bool _dwellChargedForStop = false;
   List<double> speedWindow = [];
   LatLng? lastSnappedPoint;
   int? lastSegmentIndex; // Optimization: limiting search window
   double? lastSigma;
+  String? _lastRouteKey;
+
+  // A rider who has armed a trip but has not started moving yet should see the
+  // provider's planned ETA, not `remaining / vMin` (which can turn a normal
+  // one-hour drive into a fictitious 12-hour journey). Once credible movement
+  // has been observed, the live speed model may legitimately inflate the
+  // current step for traffic or a mid-journey stop.
+  bool _hasObservedCredibleMovement = false;
 
   EtaEngine();
 
@@ -85,10 +94,13 @@ class EtaEngine {
   LatLng _projectPointOnSegment(LatLng point, LatLng segStart, LatLng segEnd) {
     final dx = segEnd.longitude - segStart.longitude;
     final dy = segEnd.latitude - segStart.latitude;
+    final denom = dx * dx + dy * dy;
     final t =
-        ((point.longitude - segStart.longitude) * dx +
-            (point.latitude - segStart.latitude) * dy) /
-        (dx * dx + dy * dy);
+        denom == 0
+            ? 0.0
+            : ((point.longitude - segStart.longitude) * dx +
+                    (point.latitude - segStart.latitude) * dy) /
+                denom;
 
     final tClamped = t.clamp(0.0, 1.0);
     return LatLng(
@@ -101,6 +113,7 @@ class EtaEngine {
   ({double remainingMeters, LatLng snapped}) matchToRoute(
     List<LatLng> routeCoords,
     LatLng currentPoint,
+    {int? routeHintSegmentIndex}
   ) {
     if (routeCoords.isEmpty) {
       return (remainingMeters: 0.0, snapped: currentPoint);
@@ -116,7 +129,13 @@ class EtaEngine {
     int endIndex = routeCoords.length - 1;
     bool usingWindow = false;
 
-    if (lastSegmentIndex != null && lastSnappedPoint != null) {
+    if (routeCoords.length >= 2 &&
+        lastSegmentIndex == null &&
+        routeHintSegmentIndex != null) {
+      lastSegmentIndex =
+          routeHintSegmentIndex.clamp(0, routeCoords.length - 2).toInt();
+    }
+    if (lastSegmentIndex != null) {
       // Search +/- 50 segments around last known position (approx 1-2km window depending on density)
       // This makes the search O(1) for long routes.
       const int windowSize = 50;
@@ -124,12 +143,14 @@ class EtaEngine {
       endIndex = min(routeCoords.length - 1, lastSegmentIndex! + windowSize);
 
       // Safety check: if we are too far from last snap, force full search
-      final distToLast = Geolocator.distanceBetween(
-        currentPoint.latitude,
-        currentPoint.longitude,
-        lastSnappedPoint!.latitude,
-        lastSnappedPoint!.longitude,
-      );
+      final distToLast = lastSnappedPoint == null
+          ? 0.0
+          : Geolocator.distanceBetween(
+              currentPoint.latitude,
+              currentPoint.longitude,
+              lastSnappedPoint!.latitude,
+              lastSnappedPoint!.longitude,
+            );
       if (distToLast > 2000) {
         // If jumped > 2km, assume context loss
         startIndex = 0;
@@ -352,22 +373,39 @@ class EtaEngine {
   computeEta({
     required List<LatLng> routeCoords,
     required Position gps,
+    String? routeKey,
+    int? routeHintSegmentIndex,
     bool isMetroMode = false,
     List<double>? stepBoundsMeters,
     List<int>? stepDurationsSeconds,
     double? totalRouteMeters,
     int? remainingStopsOnMetro, // NEW: for metro scheduled model
   }) {
+    // A refreshed leg can reuse a cache key or replace the active route while
+    // this ETA engine instance remains alive. Never carry a segment hint or
+    // snapped point from the previous geometry into the new leg.
+    if (routeKey != null && routeKey != _lastRouteKey) {
+      lastSegmentIndex = null;
+      lastSnappedPoint = null;
+      _lastRouteKey = routeKey;
+    }
     final currentPoint = LatLng(gps.latitude, gps.longitude);
 
     // 1) Map-match and compute distance remaining
-    final match = matchToRoute(routeCoords, currentPoint);
+    final match = matchToRoute(
+      routeCoords,
+      currentPoint,
+      routeHintSegmentIndex: routeHintSegmentIndex,
+    );
     final remainingMeters = match.remainingMeters;
     final snapped = match.snapped;
 
     // 2) Compute raw speed
     final rawSpeed = gps.speed > 0 ? gps.speed : _estimateSpeedFromLast(gps);
     final vEst = max(_updateSmoothedSpeed(rawSpeed), 0.0);
+    if (rawSpeed.isFinite && rawSpeed >= stopSpeedThreshold) {
+      _hasObservedCredibleMovement = true;
+    }
 
     // 3) Stop/dwell detection
     double dwellAdd = 0.0;
@@ -377,13 +415,19 @@ class EtaEngine {
         stoppedSince ??= gps.timestamp;
       } else {
         stoppedSince = null;
+        _dwellChargedForStop = false;
       }
 
       if (stoppedSince != null &&
           gps.timestamp.difference(stoppedSince!).inMilliseconds >=
-              stopTimeThresholdMs) {
+              stopTimeThresholdMs &&
+          !_dwellChargedForStop) {
         dwellAdd = defaultDwellSeconds;
+        _dwellChargedForStop = true;
       }
+    } else {
+      stoppedSince = null;
+      _dwellChargedForStop = false;
     }
 
     // 4) Physics ETA (Base calculation)
@@ -467,7 +511,10 @@ class EtaEngine {
 
         // Time to finish current step at CURRENT effective speed
         final double speedBasedSeconds = distRemainingInStep / effectiveSpeed;
-        double timeForCurrentStep = speedBasedSeconds;
+        double timeForCurrentStep =
+            _hasObservedCredibleMovement
+                ? speedBasedSeconds
+                : plannedRemainingSeconds;
 
         // Allow ETA to be better than the plan when we're credibly moving faster,
         // but never by an unbounded amount (guards against GPS speed spikes).
@@ -513,7 +560,9 @@ class EtaEngine {
           name: 'EtaEngine',
         );
 
-        if (timeForCurrentStep.isFinite && floorSeconds.isFinite) {
+        if (_hasObservedCredibleMovement &&
+            timeForCurrentStep.isFinite &&
+            floorSeconds.isFinite) {
           timeForCurrentStep = max(timeForCurrentStep, floorSeconds);
         }
 
@@ -569,7 +618,11 @@ class EtaEngine {
     smoothedSpeed = null;
     lastGps = null;
     stoppedSince = null;
+    _dwellChargedForStop = false;
     speedWindow.clear();
     lastSnappedPoint = null;
+    lastSegmentIndex = null;
+    _lastRouteKey = null;
+    _hasObservedCredibleMovement = false;
   }
 }

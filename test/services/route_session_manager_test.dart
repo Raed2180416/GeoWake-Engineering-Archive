@@ -7,6 +7,8 @@
 // entries in every auxiliary map for keys the registry itself has already
 // dropped.
 
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -41,14 +43,16 @@ void main() {
     );
   }
 
-  test(
-      'registering more routes than RouteRegistry.capacity evicts the '
-      'oldest key from every auxiliary map, not just the registry',
-      () {
+  test('registering more routes than RouteRegistry.capacity evicts the '
+      'oldest key from every auxiliary map, not just the registry', () {
     final m = mgr();
-    expect(m.registry.capacity, 8,
-        reason: 'this test assumes the default capacity; update the loop '
-            'bound below if RouteRegistry\'s default ever changes');
+    expect(
+      m.registry.capacity,
+      8,
+      reason:
+          'this test assumes the default capacity; update the loop '
+          'bound below if RouteRegistry\'s default ever changes',
+    );
 
     // Register capacity+1 distinct routes, one at a time, each strictly
     // more recently used than the last.
@@ -58,32 +62,44 @@ void main() {
 
     final liveKeys = m.registry.entries.map((e) => e.key).toSet();
     expect(liveKeys.length, m.registry.capacity);
-    expect(liveKeys.contains('route_0'), isFalse,
-        reason: 'route_0 is the least-recently-used and must be evicted '
-            'from the registry');
+    expect(
+      liveKeys.contains('route_0'),
+      isFalse,
+      reason:
+          'route_0 is the least-recently-used and must be evicted '
+          'from the registry',
+    );
 
     // Every auxiliary map must mirror the registry's live key set exactly —
     // no orphaned entry for the evicted 'route_0', and nothing evicted that
     // is still live in the registry.
     void assertMirrorsRegistry(Map<String, dynamic> auxMap, String name) {
-      expect(auxMap.keys.toSet(), liveKeys,
-          reason: '$name must be evicted in lockstep with RouteRegistry');
+      expect(
+        auxMap.keys.toSet(),
+        liveKeys,
+        reason: '$name must be evicted in lockstep with RouteRegistry',
+      );
     }
 
     assertMirrorsRegistry(m.stepBoundsMetersByKey, 'stepBoundsMetersByKey');
     assertMirrorsRegistry(
-        m.stepStopsCumulativeByKey, 'stepStopsCumulativeByKey');
+      m.stepStopsCumulativeByKey,
+      'stepStopsCumulativeByKey',
+    );
     assertMirrorsRegistry(
-        m.stepDurationsSecondsByKey, 'stepDurationsSecondsByKey');
+      m.stepDurationsSecondsByKey,
+      'stepDurationsSecondsByKey',
+    );
     assertMirrorsRegistry(
-        m.firstTransitBoardingByKey, 'firstTransitBoardingByKey');
+      m.firstTransitBoardingByKey,
+      'firstTransitBoardingByKey',
+    );
     assertMirrorsRegistry(m.transitModeByKey, 'transitModeByKey');
     assertMirrorsRegistry(m.transitLegStopsByKey, 'transitLegStopsByKey');
     assertMirrorsRegistry(m.routeEventsByKey, 'routeEventsByKey');
   });
 
-  test(
-      'registering fewer routes than capacity never evicts anything (no '
+  test('registering fewer routes than capacity never evicts anything (no '
       'accidental over-pruning)', () {
     final m = mgr();
     for (var i = 0; i < 4; i++) {
@@ -97,20 +113,22 @@ void main() {
     expect(m.transitLegStopsByKey.keys.toSet(), liveKeys);
   });
 
-  test('re-registering an EXISTING key (no growth) never triggers eviction',
-      () {
-    final m = mgr();
-    for (var i = 0; i < m.registry.capacity; i++) {
-      registerFullyPopulated(m, 'route_$i');
-    }
-    // Re-register an already-known key — RouteRegistry.upsert() replaces in
-    // place rather than growing, so nothing should be evicted.
-    registerFullyPopulated(m, 'route_0');
+  test(
+    're-registering an EXISTING key (no growth) never triggers eviction',
+    () {
+      final m = mgr();
+      for (var i = 0; i < m.registry.capacity; i++) {
+        registerFullyPopulated(m, 'route_$i');
+      }
+      // Re-register an already-known key — RouteRegistry.upsert() replaces in
+      // place rather than growing, so nothing should be evicted.
+      registerFullyPopulated(m, 'route_0');
 
-    final liveKeys = m.registry.entries.map((e) => e.key).toSet();
-    expect(liveKeys.length, m.registry.capacity);
-    expect(m.stepBoundsMetersByKey.keys.toSet(), liveKeys);
-  });
+      final liveKeys = m.registry.entries.map((e) => e.key).toSet();
+      expect(liveKeys.length, m.registry.capacity);
+      expect(m.stepBoundsMetersByKey.keys.toSet(), liveKeys);
+    },
+  );
 
   test('clearSession() still wipes every auxiliary map completely', () {
     final m = mgr();
@@ -127,5 +145,94 @@ void main() {
     expect(m.transitModeByKey, isEmpty);
     expect(m.transitLegStopsByKey, isEmpty);
     expect(m.routeEventsByKey, isEmpty);
+  });
+
+  test(
+    'clearSession prevents an arbitrarily delayed route from resurrecting',
+    () async {
+      final m = mgr();
+      final release = Completer<void>();
+      m.testRegistrationBarrier = () => release.future;
+
+      final registration = m.registerRouteFromDirections(
+        directions: const <String, dynamic>{'routes': <dynamic>[]},
+        origin: const LatLng(12.97, 77.59),
+        destination: const LatLng(13.01, 77.63),
+        transitMode: true,
+        destinationName: 'Delayed route',
+        activateRoute: true,
+      );
+      await pumpEventQueue();
+
+      m.clearSession();
+      release.complete();
+      await registration;
+
+      expect(m.registry.entries, isEmpty);
+      expect(m.currentDirections, isNull);
+      expect(m.transitModeByKey, isEmpty);
+      expect(m.routeEventsByKey, isEmpty);
+    },
+  );
+
+  test('active payload stays aligned when an inactive route finishes loading', () {
+    final m = mgr();
+    const aPoints = [LatLng(12.90, 77.60), LatLng(12.91, 77.61)];
+    const bPoints = [LatLng(19.00, 72.80), LatLng(19.01, 72.81)];
+
+    m.registerRoute(
+      key: 'A',
+      mode: 'driving',
+      destinationName: 'A destination',
+      points: aPoints,
+      activate: true,
+    );
+    m.registerRoute(
+      key: 'B',
+      mode: 'driving',
+      destinationName: 'B destination',
+      points: bPoints,
+      activate: false,
+    );
+
+    expect(m.activeManager?.activeKey, 'A');
+    expect(m.cachedRoutePayload?['destinationName'], 'A destination');
+    expect((m.cachedRoutePayload?['points'] as List).first['lat'], 12.90);
+
+    expect(m.switchToRoute('B'), isTrue);
+    expect(m.cachedRoutePayload?['destinationName'], 'B destination');
+    expect((m.cachedRoutePayload?['points'] as List).first['lat'], 19.00);
+  });
+
+  test('same-key geometry refresh emits continuity event and keeps live point',
+      () async {
+    final m = mgr();
+    final events = <RouteSwitchEvent>[];
+    final sub = m.routeSwitchStream.listen(events.add);
+    m.registerRoute(
+      key: 'A',
+      mode: 'driving',
+      destinationName: 'A',
+      points: const [LatLng(12.90, 77.60), LatLng(12.91, 77.61)],
+      activate: true,
+    );
+    await pumpEventQueue();
+
+    // The forced refresh reuses the origin/destination key but changes the
+    // geometry.  The event is what lets the EKF replace its route domain.
+    m.lastIngestedPosition = const LatLng(12.905, 77.605);
+    m.registerRoute(
+      key: 'A',
+      mode: 'driving',
+      destinationName: 'A',
+      points: const [LatLng(12.90, 77.60), LatLng(12.90, 77.62)],
+      activate: true,
+    );
+    await pumpEventQueue();
+
+    expect(events, hasLength(1));
+    expect(events.single.fromKey, 'A');
+    expect(events.single.toKey, 'A');
+    await sub.cancel();
   });
 }

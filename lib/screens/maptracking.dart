@@ -24,6 +24,7 @@ import 'package:flutter_background_service/flutter_background_service.dart'; // 
 import 'package:geowake2/services/location_manager.dart'; // For broadcasting device position.
 import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallback for mode.
 import 'package:geowake2/services/tracking/arrival_hooks.dart'; // Fire-and-forget post-arrival fan-out.
+import 'package:geowake2/screens/monetization/post_arrival_screen.dart';
 import '../widgets/share/share_journey_action.dart'; // Free "Share ride status" AppBar action.
 
 class MapTrackingScreen extends StatefulWidget {
@@ -78,15 +79,16 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   double _routeLengthMeters = 0.0; // Total route length in meters.
   double?
   _speedEmaMps; // simple smoothed speed estimate // Exponential moving average of speed.
+  bool _hasObservedCredibleMovement = false;
   final List<double> _transferBoundariesMeters =
       []; // Cumulative meters at transfers.
   final List<double> _stepBoundariesMeters =
       []; // Cumulative meters at step ends.
   final List<double> _stepDurationsSeconds = []; // Step durations in seconds.
-    List<Map<String, dynamic>> _rawSegments = const []; // Raw route segments.
-    List<double> _segmentStartMeters = const []; // Segment start meters.
-    List<double> _segmentEndMeters = const []; // Segment end meters.
-    double? _lastProgressMeters; // Last progress used to trim polylines.
+  List<Map<String, dynamic>> _rawSegments = const []; // Raw route segments.
+  List<double> _segmentStartMeters = const []; // Segment start meters.
+  List<double> _segmentEndMeters = const []; // Segment end meters.
+  double? _lastProgressMeters; // Last progress used to trim polylines.
 
   // GPS-out / dead-reckoning indicator: when position updates stop arriving
   // (e.g. a tunnel), show a subtle "estimating from motion" state instead of a
@@ -164,8 +166,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       return;
     }
 
-    final allowContinue =
-        await TrackingStateStore.pendingAlarmAllowContinue();
+    final allowContinue = await TrackingStateStore.pendingAlarmAllowContinue();
     if (!mounted) return;
     final next = isPlaying && allowContinue == false;
     if (next != _finalAlarmActive) {
@@ -293,10 +294,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           simplify: false,
         );
         // 2. Build simplified polylines for UI rendering
-        final segmentedPolylines =
-            directionService.buildSegmentedPolylinesFromRawSegments(
-              rawSegments,
-            );
+        final segmentedPolylines = directionService
+            .buildSegmentedPolylinesFromRawSegments(rawSegments);
 
         setState(() {
           _polylines = segmentedPolylines.toSet(); // Assign set for Map.
@@ -324,8 +323,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
             directions!,
             false,
           );
-          final segmentedPolylines =
-              directionService.buildSegmentedPolylinesFromRawSegments(
+          final segmentedPolylines = directionService
+              .buildSegmentedPolylinesFromRawSegments(
                 rawSegments,
               ); // Driving/walking segmentation.
           if (segmentedPolylines.isNotEmpty) {
@@ -364,9 +363,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                   'mode': 'driving',
                   'points':
                       points
-                          .map(
-                            (p) => {'lat': p.latitude, 'lng': p.longitude},
-                          )
+                          .map((p) => {'lat': p.latitude, 'lng': p.longitude})
                           .toList(),
                 },
               ]);
@@ -535,6 +532,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     // Smooth speed estimate
     final rawSpeed = position.speed;
     if (rawSpeed.isFinite && rawSpeed >= 0) {
+      if (rawSpeed >= 0.7) {
+        _hasObservedCredibleMovement = true;
+      }
       final v =
           rawSpeed < 0.5 && _speedEmaMps != null ? _speedEmaMps! : rawSpeed;
       _speedEmaMps = _speedEmaMps == null ? v : (_speedEmaMps! * 0.8 + v * 0.2);
@@ -575,12 +575,16 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
 
       final double etaSec;
       if (stepEtaToDestSec != null) {
-        final speedBuffered = speedEtaToDestSec * speedSafetyFactor;
-        final stepCap = speedBuffered * maxStepInflationVsSpeed;
-        etaSec =
-            (stepEtaToDestSec <= speedBuffered)
-                ? speedBuffered
-                : (stepEtaToDestSec <= stepCap ? stepEtaToDestSec : stepCap);
+        if (!_hasObservedCredibleMovement) {
+          etaSec = stepEtaToDestSec;
+        } else {
+          final speedBuffered = speedEtaToDestSec * speedSafetyFactor;
+          final stepCap = speedBuffered * maxStepInflationVsSpeed;
+          etaSec =
+              (stepEtaToDestSec <= speedBuffered)
+                  ? speedBuffered
+                  : (stepEtaToDestSec <= stepCap ? stepEtaToDestSec : stepCap);
+        }
       } else {
         etaSec = speedEtaToDestSec * speedSafetyFactor;
       }
@@ -804,6 +808,58 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     }
   }
 
+  List<Widget> _buildRouteLegendItems() {
+    final items = <Widget>[];
+    final seen = <String>{};
+    for (var i = 0; i < _rawSegments.length; i++) {
+      final segment = _rawSegments[i];
+      final mode = (segment['mode'] as String? ?? 'driving').toLowerCase();
+      final line = (segment['transit_line'] as String?)?.trim();
+      final lineId = (segment['transit_line_id'] as String?)?.trim();
+      final key =
+          mode == 'transit'
+              ? 'transit:${lineId?.isNotEmpty == true ? lineId : line ?? ''}'
+              : mode;
+      if (!seen.add(key)) continue;
+
+      Color color = Colors.blue;
+      for (final polyline in _polylines) {
+        final segmentId = segment['segment_id'] ?? i;
+        if (polyline.polylineId.value == 'seg_$segmentId' ||
+            (_polylines.length == 1 && i == 0)) {
+          color = polyline.color;
+          break;
+        }
+      }
+
+      final label =
+          mode == 'transit'
+              ? (line?.isNotEmpty == true ? line! : 'Transit')
+              : switch (mode) {
+                'walking' => 'Walking',
+                'bicycling' => 'Cycling',
+                'driving' => 'Driving',
+                _ =>
+                  mode.isEmpty
+                      ? 'Route'
+                      : '${mode[0].toUpperCase()}${mode.substring(1)}',
+              };
+      items.add(
+        _LegendItem(color: color, dashed: mode == 'walking', label: label),
+      );
+    }
+    if (items.isEmpty) {
+      items.add(
+        _LegendItem(
+          color: Colors.blue,
+          dashed: false,
+          label: _metroMode ? 'Transit route' : 'Driving',
+        ),
+      );
+    }
+    return items;
+  }
+
   List<LatLng> _segmentPointsFromRaw(Map<String, dynamic> seg) {
     final pointsData = (seg['points'] as List?) ?? const [];
     return pointsData
@@ -830,10 +886,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     return sum;
   }
 
-  List<LatLng> _trimPolylineFromMeters(
-    List<LatLng> pts,
-    double offsetMeters,
-  ) {
+  List<LatLng> _trimPolylineFromMeters(List<LatLng> pts, double offsetMeters) {
     if (pts.length < 2 || offsetMeters <= 0) return pts;
     double traveled = 0.0;
     for (int i = 1; i < pts.length; i++) {
@@ -888,12 +941,16 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                 .map((p) => {'lat': p.latitude, 'lng': p.longitude})
                 .toList(),
         'transit_line': seg['transit_line'],
+        'transit_line_id': seg['transit_line_id'],
+        'transit_line_color': seg['transit_line_color'],
+        'segment_id': seg['segment_id'],
         'vehicle_type': seg['vehicle_type'],
       });
     }
     if (remaining.isEmpty) return {};
-    final polylines = DirectionService()
-        .buildSegmentedPolylinesFromRawSegments(remaining);
+    final polylines = DirectionService().buildSegmentedPolylinesFromRawSegments(
+      remaining,
+    );
     return polylines.toSet();
   }
 
@@ -1033,9 +1090,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           // FREE "Share ride status" — the viral growth loop. No entitlement
           // check; opens the OS share sheet (WhatsApp/SMS/anything). Read-only,
           // never touches the arm → track → alarm spine.
-          actions: [
-            ShareJourneyAction(destLabel: _destinationName),
-          ],
+          actions: [ShareJourneyAction(destLabel: _destinationName)],
         ),
         // Above-ground tracking banner (free users only; collapses to nothing
         // for Pro / no-fill). AdPolicy forbids ads on the alarm/wake surfaces,
@@ -1071,7 +1126,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       left: 12,
                       right: 12,
                       child: Material(
-                        color: Colors.black.withValues(alpha: 0.5), // Translucent bg.
+                        color: Colors.black.withValues(
+                          alpha: 0.5,
+                        ), // Translucent bg.
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -1085,28 +1142,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                 runSpacing: 6,
                                 alignment: WrapAlignment.start,
                                 crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  _LegendItem(
-                                    color: Colors.blue,
-                                    dashed: false,
-                                    label: 'Driving',
-                                  ),
-                                  _LegendItem(
-                                    color: Colors.blue,
-                                    dashed: true,
-                                    label: 'Walking',
-                                  ),
-                                  _LegendItem(
-                                    color: Colors.green,
-                                    dashed: false,
-                                    label: 'Metro Line A',
-                                  ),
-                                  _LegendItem(
-                                    color: Colors.purple,
-                                    dashed: false,
-                                    label: 'Metro Line B',
-                                  ),
-                                ],
+                                children: _buildRouteLegendItems(),
                               );
                             },
                           ),
@@ -1258,53 +1294,64 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                       label: 'End tracking',
                                       identifier: 'end_tracking_button_arrived',
                                       child: ElevatedButton.icon(
-                                      style: endTrackingStyle,
-                                      onPressed: () async {
-                                        // Prevent UI flicker during shutdown
-                                        setState(() {
-                                          _isEndingTracking = true;
-                                        });
+                                        style: endTrackingStyle,
+                                        onPressed:
+                                            _isEndingTracking
+                                                ? null
+                                                : () async {
+                                                  if (_isEndingTracking) return;
+                                                  // Prevent UI flicker during shutdown
+                                                  setState(() {
+                                                    _isEndingTracking = true;
+                                                  });
 
-                                        // Stop alarm sounds and vibration
-                                        await AlarmPlayer.stop();
+                                                  // Stop alarm sounds and vibration
+                                                  await AlarmPlayer.stop();
 
-                                        // End tracking completely - clears snapshot, stops service,
-                                        // cancels notifications, and resets all tracking state.
-                                        // Pass navigateHome: false since we handle navigation here.
-                                        await TrackingService()
-                                            .completeEndTracking(
-                                              navigateHome: false,
-                                            );
+                                                  // End tracking completely - clears snapshot, stops service,
+                                                  // cancels notifications, and resets all tracking state.
+                                                  // Pass navigateHome: false since we handle navigation here.
+                                                  await TrackingService()
+                                                      .completeEndTracking(
+                                                        navigateHome: false,
+                                                      );
 
-                                        // Post-arrival fan-out (trip stats, opt-in aggregate,
-                                        // Guardian "arrived", ad-cap). Synchronous, fire-and-forget,
-                                        // non-blocking — runs only AFTER the alarm fired + teardown,
-                                        // so it can never delay/reorder the never-late wake.
-                                        // Coordinates feed the consent-gated aggregate surface
-                                        // (DataAssetPipeline self-gates on consent, default OFF, as
-                                        // its first statement); a missing origin simply skips it.
-                                        ArrivalHooks.fireArrived(
-                                          destStation: _destinationName,
-                                          destLat: _destinationLat,
-                                          destLng: _destinationLng,
-                                          originLat: _originLat,
-                                          originLng: _originLng,
-                                          mode: _metroMode ? 'metro' : 'transit',
-                                        );
+                                                  // Post-arrival fan-out (trip stats, opt-in aggregate,
+                                                  // Guardian "arrived", ad-cap). Synchronous, fire-and-forget,
+                                                  // non-blocking — runs only AFTER the alarm fired + teardown,
+                                                  // so it can never delay/reorder the never-late wake.
+                                                  // Coordinates feed the consent-gated aggregate surface
+                                                  // (DataAssetPipeline self-gates on consent, default OFF, as
+                                                  // its first statement); a missing origin simply skips it.
+                                                  ArrivalHooks.fireArrived(
+                                                    destStation:
+                                                        _destinationName,
+                                                    destLat: _destinationLat,
+                                                    destLng: _destinationLng,
+                                                    originLat: _originLat,
+                                                    originLng: _originLng,
+                                                    mode:
+                                                        _metroMode
+                                                            ? 'metro'
+                                                            : 'transit',
+                                                  );
 
-                                        // Show the post-arrival screen (free share + last-mile +
-                                        // optional rewarded), which returns the rider home on Done.
-                                        Navigator.pushReplacementNamed(
-                                          context,
-                                          '/postArrival',
-                                        );
-                                      },
-                                      icon: const Icon(
-                                        Icons.stop_circle_outlined,
-                                        size: 24,
+                                                  // Canonical arrival handoff: records
+                                                  // exactly one completed ride and
+                                                  // carries the real destination into
+                                                  // share/last-mile UI.
+                                                  await PostArrivalScreen.routeAfterDismiss(
+                                                    context,
+                                                    stationName:
+                                                        _destinationName,
+                                                  );
+                                                },
+                                        icon: const Icon(
+                                          Icons.stop_circle_outlined,
+                                          size: 24,
+                                        ),
+                                        label: const Text('END TRACKING'),
                                       ),
-                                      label: const Text('END TRACKING'),
-                                    ),
                                     ),
                                   ),
                                 ],
@@ -1320,7 +1367,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                           Expanded(
                             child: ValueListenableBuilder<bool>(
                               valueListenable:
-                                  AlarmPlayer.isPlaying, // Listen to alarm state.
+                                  AlarmPlayer
+                                      .isPlaying, // Listen to alarm state.
                               builder: (context, playing, child) {
                                 final cs =
                                     Theme.of(
@@ -1330,48 +1378,47 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                   label: 'Stop alarm',
                                   identifier: 'stop_alarm_button',
                                   child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: cs.secondaryContainer,
-                                    foregroundColor: cs.onSecondaryContainer,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: cs.secondaryContainer,
+                                      foregroundColor: cs.onSecondaryContainer,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      disabledBackgroundColor:
+                                          Colors.grey.shade300,
+                                      disabledForegroundColor:
+                                          Colors.grey.shade600,
                                     ),
-                                    textStyle: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    disabledBackgroundColor:
-                                        Colors.grey.shade300,
-                                    disabledForegroundColor:
-                                        Colors.grey.shade600,
-                                  ),
-                                  onPressed:
-                                      playing
-                                          ? () async {
-                                            await AlarmPlayer
-                                                .stop(); // Stop sound.
-                                            try {
-                                              // Also notify the background service
-                                              final service =
-                                                  FlutterBackgroundService();
-                                              service.invoke(
-                                                'stopAlarm',
-                                              ); // Ask service to stop vibration etc.
-                                            } catch (e) {
-                                              dev.log(
-                                                'Failed to send stopAlarm to service: $e',
-                                                name: 'MapTracking',
-                                              );
+                                    onPressed:
+                                        playing
+                                            ? () async {
+                                              await AlarmPlayer.stop(); // Stop sound.
+                                              try {
+                                                // Also notify the background service
+                                                final service =
+                                                    FlutterBackgroundService();
+                                                service.invoke(
+                                                  'stopAlarm',
+                                                ); // Ask service to stop vibration etc.
+                                              } catch (e) {
+                                                dev.log(
+                                                  'Failed to send stopAlarm to service: $e',
+                                                  name: 'MapTracking',
+                                                );
+                                              }
                                             }
-                                          }
-                                          : null, // Button disabled when alarm not playing
-                                  icon: const Icon(
-                                    Icons.notifications_off,
-                                    size: 24,
+                                            : null, // Button disabled when alarm not playing
+                                    icon: const Icon(
+                                      Icons.notifications_off,
+                                      size: 24,
+                                    ),
+                                    label: const Text('STOP ALARM'),
                                   ),
-                                  label: const Text('STOP ALARM'),
-                                ),
                                 );
                               },
                             ),
@@ -1383,32 +1430,40 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                               label: 'End tracking',
                               identifier: 'end_tracking_button',
                               child: ElevatedButton.icon(
-                              style: endTrackingStyle,
-                              onPressed: () async {
-                                // Prevent UI flicker during shutdown
-                                setState(() {
-                                  _isEndingTracking = true;
-                                });
+                                style: endTrackingStyle,
+                                onPressed:
+                                    _isEndingTracking
+                                        ? null
+                                        : () async {
+                                          if (_isEndingTracking) return;
+                                          // Prevent UI flicker during shutdown
+                                          setState(() {
+                                            _isEndingTracking = true;
+                                          });
 
-                                // Stop alarm sounds and vibration
-                                await AlarmPlayer.stop();
+                                          // Stop alarm sounds and vibration
+                                          await AlarmPlayer.stop();
 
-                                // End tracking completely - clears snapshot, stops service,
-                                // cancels notifications, and resets all tracking state.
-                                // Pass navigateHome: false since we handle navigation here.
-                                await TrackingService().completeEndTracking(
-                                  navigateHome: false,
-                                );
+                                          // End tracking completely - clears snapshot, stops service,
+                                          // cancels notifications, and resets all tracking state.
+                                          // Pass navigateHome: false since we handle navigation here.
+                                          await TrackingService()
+                                              .completeEndTracking(
+                                                navigateHome: false,
+                                              );
 
-                                // Navigate back to home screen
-                                Navigator.pushReplacementNamed(context, '/');
-                              },
-                              icon: const Icon(
-                                Icons.stop_circle_outlined,
-                                size: 24,
+                                          // Navigate back to home screen
+                                          Navigator.pushReplacementNamed(
+                                            context,
+                                            '/',
+                                          );
+                                        },
+                                icon: const Icon(
+                                  Icons.stop_circle_outlined,
+                                  size: 24,
+                                ),
+                                label: const Text('END TRACKING'),
                               ),
-                              label: const Text('END TRACKING'),
-                            ),
                             ),
                           ),
                         ],

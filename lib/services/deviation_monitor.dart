@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:geowake2/core/clock/app_clock.dart';
 import 'package:geowake2/dashboard/constraint_logger.dart';
+import 'package:geowake2/config/deviation_config.dart';
 
 class DeviationState {
   final bool offroute;
@@ -46,7 +47,15 @@ class DeviationMonitor {
 
   DeviationMonitor({
     this.sustainDuration = const Duration(seconds: 5),
-    this.model = const SpeedThresholdModel(),
+    // Keep the live monitor on the same source of truth as the published
+    // deviation policy.  The old constructor silently used 15m while
+    // DeviationConfig/test documentation promised 30m, causing urban GPS
+    // multipath to trigger needless reroutes.
+    this.model = const SpeedThresholdModel(
+      base: DeviationConfig.baseThresholdMeters,
+      k: DeviationConfig.speedCoefficientK,
+      hysteresisRatio: DeviationConfig.hysteresisRatio,
+    ),
   });
 
   void ingest({

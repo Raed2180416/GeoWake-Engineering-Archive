@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:geowake2/services/direction_service.dart';
 
 void main() {
@@ -87,6 +88,42 @@ void main() {
       expect(segments[1]['vehicle_type'], 'SUBWAY');
       expect(segments[1]['transit_line'], 'L1');
       expect(segments[2]['mode'], 'walking');
+    });
+
+    test('provider line color and stable segment id win over generic name', () {
+      final service = DirectionService();
+      final polylines = service.buildSegmentedPolylinesFromRawSegments([
+        {
+          'segment_id': 7,
+          'mode': 'transit',
+          'transit_line': 'Blue Line',
+          'transit_line_color': 0xFF123456,
+          'points': [
+            {'lat': 12.0, 'lng': 77.0},
+            {'lat': 12.001, 'lng': 77.0},
+          ],
+        },
+      ]);
+
+      expect(polylines.single.polylineId.value, 'seg_7');
+      expect(polylines.single.color.value, 0xFF123456);
+    });
+
+    test('generic offline line names never borrow another city palette', () {
+      final service = DirectionService();
+      final polylines = service.buildSegmentedPolylinesFromRawSegments([
+        {
+          'segment_id': 8,
+          'mode': 'transit',
+          'transit_line': 'Blue Line',
+          'points': [
+            {'lat': 19.0, 'lng': 72.0},
+            {'lat': 19.001, 'lng': 72.0},
+          ],
+        },
+      ]);
+
+      expect(polylines.single.color, Colors.blueGrey);
     });
   });
 }

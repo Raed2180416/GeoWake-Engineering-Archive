@@ -61,10 +61,13 @@ class AlarmContext {
   // G11/G12/G13: dead-reckoned EKF signals for the fire decision.
   /// EKF velocity (m/s), used as the speed source when [preferEkfSpeed].
   final double? ekfSpeedMps;
+
   /// EKF position std-dev (m) for the critical-fractile stop cushion.
   final double? ekfSigmaS;
+
   /// EKF velocity std-dev (m/s) for ETA-variance inflation.
   final double? ekfSigmaV;
+
   /// True when the EKF is authoritative (metro / degraded / GPS blackout).
   final bool preferEkfSpeed;
 
@@ -155,8 +158,22 @@ class AlarmController {
     config: const ReachabilityConfig(
       dwellMinSeconds: 0.0,
       hardTMaxSeconds: 1800.0,
+      dynamicLeversEnabled: true,
+      // Route curvature has not yet been certified from measured geometry
+      // error, so keep that tightening lever deliberately inert. Acceleration
+      // and terminal braking remain physics-only upper ceilings.
+      curveTrusted: false,
     ),
   );
+
+  // RouteProfile.precompute is route-static but O(polyline * stops), so never
+  // rebuild it on every tracking tick. RouteRegistry replaces RouteEntry
+  // objects when geometry changes, making identity a safe cache invalidator.
+  RouteEntry? _reachProfileEntry;
+  List<double>? _reachProfileStopMeters;
+  double? _reachProfileLegEndMeters;
+  double? _reachProfileVLine;
+  RouteProfile? _reachProfile;
 
   /// The clock the reachability never-late math runs on. MUST be monotonic —
   /// `s_max = s0 + V_LINE*(t - t0)` is only never-late if `(t - t0)` is true
@@ -164,6 +181,95 @@ class AlarmController {
   /// cone and fire LATE (found by clock-jump simulation). See
   /// AppClock.monotonicSeconds.
   double _nowSeconds() => AppClock().monotonicSeconds();
+
+  /// Build the tighter fastest-feasible profile only where its prerequisites
+  /// are trustworthy. A phantom/estimated stop would force braking that the
+  /// real train need not perform and could make the alarm late, so estimated,
+  /// count-disputed, and multi-leg topology deliberately falls back to the
+  /// looser free-run bound.
+  RouteProfile? _trustedSingleLegProfile({
+    required RouteEntry? entry,
+    required TransitLegStops leg,
+    required double vLine,
+  }) {
+    if (entry == null ||
+        entry.points.length < 3 ||
+        entry.points.length != entry.cumMeters.length ||
+        !leg.isMetro ||
+        !leg.isActualPositions ||
+        leg.stopCountConfidence < 0.999 ||
+        leg.stopMeters.isEmpty ||
+        leg.stopMeters.length != leg.numStops ||
+        !leg.legEndMeters.isFinite ||
+        !vLine.isFinite ||
+        vLine <= 0) {
+      return null;
+    }
+
+    if (identical(entry, _reachProfileEntry) &&
+        identical(leg.stopMeters, _reachProfileStopMeters) &&
+        leg.legEndMeters == _reachProfileLegEndMeters &&
+        vLine == _reachProfileVLine) {
+      return _reachProfile;
+    }
+
+    // Drop duplicate/invalid geometry samples. RouteProfile expects strictly
+    // increasing arc positions; a zero-length Directions segment must not turn
+    // a production tick into an exception or an invalid braking envelope.
+    final lats = <double>[];
+    final lngs = <double>[];
+    final cumulative = <double>[];
+    for (var i = 0; i < entry.points.length; i++) {
+      final s = entry.cumMeters[i];
+      final p = entry.points[i];
+      if (!s.isFinite || !p.latitude.isFinite || !p.longitude.isFinite) {
+        continue;
+      }
+      if (cumulative.isNotEmpty && s <= cumulative.last) continue;
+      cumulative.add(s);
+      lats.add(p.latitude);
+      lngs.add(p.longitude);
+    }
+    if (cumulative.length < 3) return null;
+
+    final routeEnd = cumulative.last;
+    final served = <double>[];
+    for (final stop in [...leg.stopMeters, leg.legEndMeters]) {
+      if (!stop.isFinite ||
+          stop <= leg.legStartMeters ||
+          stop > leg.legEndMeters ||
+          stop > routeEnd) {
+        return null;
+      }
+      if (served.isEmpty || stop > served.last) {
+        served.add(stop);
+      } else {
+        // A non-increasing served-stop sequence is not trustworthy topology.
+        return null;
+      }
+    }
+
+    try {
+      final profile = RouteProfile.precompute(
+        lats: lats,
+        lngs: lngs,
+        cumulativeMeters: cumulative,
+        servedStations: served,
+        config: _reach.config,
+        vLine: vLine,
+      );
+      _reachProfileEntry = entry;
+      _reachProfileStopMeters = leg.stopMeters;
+      _reachProfileLegEndMeters = leg.legEndMeters;
+      _reachProfileVLine = vLine;
+      _reachProfile = profile;
+      return profile;
+    } catch (_) {
+      // Fail open to the proven free-run bound if malformed route data escapes
+      // the guards above. Waking earlier is preferable to losing the alarm.
+      return null;
+    }
+  }
 
   // Callback for when destination alarm fires (to block route switching)
   void Function(bool fired)? onDestinationAlarmFired;
@@ -322,7 +428,8 @@ class AlarmController {
   /// the clock late and shrink the bound below reality).
   void seedReachabilityAnchorAtArm({double sMeters = 0.0, double? tSeconds}) {
     _reach.seedColdStart(
-      tSeconds: (tSeconds != null && tSeconds.isFinite) ? tSeconds : _nowSeconds(),
+      tSeconds:
+          (tSeconds != null && tSeconds.isFinite) ? tSeconds : _nowSeconds(),
       sMeters: sMeters.isFinite ? sMeters : 0.0,
     );
   }
@@ -353,7 +460,9 @@ class AlarmController {
     for (final leg in legs) {
       if (leg.legEndMeters.isFinite) {
         totalMeters =
-            totalMeters.isNaN ? leg.legEndMeters : max(totalMeters, leg.legEndMeters);
+            totalMeters.isNaN
+                ? leg.legEndMeters
+                : max(totalMeters, leg.legEndMeters);
       }
     }
     if (totalMeters.isNaN) {
@@ -365,7 +474,11 @@ class AlarmController {
     // Fastest V_LINE across all legs => valid upper bound on any leg (safe).
     double vMax = VLineTable.defaultMps;
     for (final leg in legs) {
-      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName, vehicleType: leg.vehicleType);
+      final v = _reach.vLineTable.forLine(
+        city: leg.cityKey,
+        lineName: leg.lineName,
+        vehicleType: leg.vehicleType,
+      );
       if (v.isFinite && v > vMax) vMax = v;
     }
 
@@ -375,15 +488,20 @@ class AlarmController {
       vLineMps: vMax,
     );
     final double sMax = bound.sMaxMeters; // may be +inf (T_max watchdog)
-    final double target = coldStartFireTargetMeters(context, totalMeters, legs, vMax);
-    if (!(sMax >= target)) return false; // NaN-safe: false unless provably reached
+    final double target = coldStartFireTargetMeters(
+      context,
+      totalMeters,
+      legs,
+      vMax,
+    );
+    if (!(sMax >= target))
+      return false; // NaN-safe: false unless provably reached
 
     setDestinationAlarmFiredForKey(alarmKey, true);
     final key = context.activeKey;
-    final name = (key != null
-            ? context.registry.getByKey(key)?.destinationName
-            : null)
-        ?.trim();
+    final name =
+        (key != null ? context.registry.getByKey(key)?.destinationName : null)
+            ?.trim();
     onAlarmFired?.call();
     // FINDING 6: the fired-flag is already set; a throw here would leave a
     // permanent silent no-wake. Telemetry is fail-open by design, but wrap it
@@ -396,13 +514,16 @@ class AlarmController {
         deadReckonedMeters: double.nan,
         watchdog: bound.watchdogTripped,
       );
-    } catch (_) {/* never abort the wake */}
+    } catch (_) {
+      /* never abort the wake */
+    }
     await triggerAlarmNotification(
       service: service,
       title: 'Wake Up!',
-      body: (name != null && name.isNotEmpty)
-          ? 'Wake Up!: Arriving at $name'
-          : 'Wake Up!: Arriving at Destination',
+      body:
+          (name != null && name.isNotEmpty)
+              ? 'Wake Up!: Arriving at $name'
+              : 'Wake Up!: Arriving at Destination',
       allowContinueTracking: false,
       isBackgroundIsolate: context.isBackgroundIsolate,
       isTestMode: context.isTestMode,
@@ -442,7 +563,8 @@ class AlarmController {
     if (stops.isNotEmpty) {
       final idx = stops.length - value.round();
       if (idx >= 0 && idx < stops.length) return stops[idx];
-      return stops.first; // fewer intermediate stops than N => fire at the first
+      return stops
+          .first; // fewer intermediate stops than N => fire at the first
     }
     // No stop POSITIONS: when the stop COUNT is known, derive the per-stop
     // spacing from the final leg (legLen / numStops) so a sparse/regional line
@@ -453,9 +575,10 @@ class AlarmController {
     final int nStops = finalLeg.numStops;
     final double legLen =
         (finalLeg.legEndMeters - finalLeg.legStartMeters).abs();
-    final double perStop = (nStops > 0 && legLen > 0)
-        ? (legLen / nStops).clamp(800.0, 8000.0)
-        : 1200.0;
+    final double perStop =
+        (nStops > 0 && legLen > 0)
+            ? (legLen / nStops).clamp(800.0, 8000.0)
+            : 1200.0;
     return max(0.0, totalMeters - value * perStop);
   }
 
@@ -508,9 +631,10 @@ class AlarmController {
       double totalMeters = double.nan;
       for (final leg in legs) {
         if (leg.legEndMeters.isFinite) {
-          totalMeters = totalMeters.isNaN
-              ? leg.legEndMeters
-              : max(totalMeters, leg.legEndMeters);
+          totalMeters =
+              totalMeters.isNaN
+                  ? leg.legEndMeters
+                  : max(totalMeters, leg.legEndMeters);
         }
       }
       if (!totalMeters.isFinite || totalMeters <= 0) {
@@ -521,11 +645,19 @@ class AlarmController {
       // never-late). Honours the GW-0076 vehicle-type lift.
       double vMax = VLineTable.defaultMps;
       for (final leg in legs) {
-        final v = _reach.vLineTable
-            .forLine(city: leg.cityKey, lineName: leg.lineName, vehicleType: leg.vehicleType);
+        final v = _reach.vLineTable.forLine(
+          city: leg.cityKey,
+          lineName: leg.lineName,
+          vehicleType: leg.vehicleType,
+        );
         if (v.isFinite && v > vMax) vMax = v;
       }
-      final target = coldStartFireTargetMeters(context, totalMeters, legs, vMax);
+      final target = coldStartFireTargetMeters(
+        context,
+        totalMeters,
+        legs,
+        vMax,
+      );
       final fireInSeconds = backstopPhysicsFireInSeconds(
         anchorSHiMeters: anchor.sHi,
         anchorTSeconds: anchor.tSeconds,
@@ -567,9 +699,10 @@ class AlarmController {
     try {
       final r = (debugReason ?? '').toLowerCase();
       final viaReach = r.contains('reach') || r.contains('backstop');
-      final String? mode = r.contains('distance')
-          ? 'distance'
-          : r.contains('time')
+      final String? mode =
+          r.contains('distance')
+              ? 'distance'
+              : r.contains('time')
               ? 'time'
               : (r.contains('stops') || r.contains('metro') ? 'stops' : null);
       TelemetryService.instance.alarmOutcome(
@@ -577,7 +710,9 @@ class AlarmController {
         firedViaReachability: viaReach,
         mode: mode,
       );
-    } catch (_) {/* never break the wake */}
+    } catch (_) {
+      /* never break the wake */
+    }
 
     _lastAlarmFiredAt = AppClock().now();
 
@@ -687,22 +822,21 @@ class AlarmController {
       try {
         final double fixWall =
             currentPosition.timestamp.millisecondsSinceEpoch / 1000.0;
-        final double wallNow =
-            AppClock().now().millisecondsSinceEpoch / 1000.0;
+        final double wallNow = AppClock().now().millisecondsSinceEpoch / 1000.0;
         final double age = wallNow - fixWall;
         if (age.isFinite && age >= 0.0 && age < 3600.0) {
           fixTs = nowSec - age;
         }
-      } catch (_) {/* keep nowSec */}
-      _reach.seedColdStart(
-          tSeconds: nowSec, sMeters: progressMeters ?? 0.0);
+      } catch (_) {
+        /* keep nowSec */
+      }
+      _reach.seedColdStart(tSeconds: nowSec, sMeters: progressMeters ?? 0.0);
       final double acc = currentPosition.accuracy;
-      final bool isRealFix = acc.isFinite &&
+      final bool isRealFix =
+          acc.isFinite &&
           acc > 0 &&
           acc < FireDecisionConfig.deadReckonAccuracySentinel;
-      if (isRealFix &&
-          progressMeters != null &&
-          progressMeters.isFinite) {
+      if (isRealFix && progressMeters != null && progressMeters.isFinite) {
         _reach.onAcceptedFix(
           sMeters: progressMeters,
           accuracyMeters: acc,
@@ -1042,7 +1176,11 @@ class AlarmController {
     // is healthy (fresh anchor => bound ~= current progress).
     double vMaxModes = VLineTable.defaultMps;
     for (final leg in context.transitLegs) {
-      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName, vehicleType: leg.vehicleType);
+      final v = _reach.vLineTable.forLine(
+        city: leg.cityKey,
+        lineName: leg.lineName,
+        vehicleType: leg.vehicleType,
+      );
       if (v.isFinite && v > vMaxModes) vMaxModes = v;
     }
     double? reachBoundModes;
@@ -1128,14 +1266,15 @@ class AlarmController {
       }
 
       // G12: fire on the critical fractile (median - k*sigma), never the median.
-      final double etaSigma = (etaSeconds != null && etaSeconds.isFinite)
-          ? _etaSigmaSeconds(
-              etaSeconds: etaSeconds,
-              speedMps: currentSpeed,
-              sigmaSMeters: context.ekfSigmaS,
-              sigmaVMps: context.ekfSigmaV,
-            )
-          : 0.0;
+      final double etaSigma =
+          (etaSeconds != null && etaSeconds.isFinite)
+              ? _etaSigmaSeconds(
+                etaSeconds: etaSeconds,
+                speedMps: currentSpeed,
+                sigmaSMeters: context.ekfSigmaS,
+                sigmaVMps: context.ekfSigmaV,
+              )
+              : 0.0;
       // GAP #3: physics never-late lower bound for time mode. The earliest the
       // train could arrive is (remaining distance / fastest speed). If the
       // worst-case reachable position puts that within the threshold, fire —
@@ -1148,22 +1287,29 @@ class AlarmController {
         } else {
           double? totalForReach;
           try {
-            totalForReach = (alarmKey != null)
-                ? context.registry.getByKey(alarmKey)?.lengthMeters
-                : null;
+            totalForReach =
+                (alarmKey != null)
+                    ? context.registry.getByKey(alarmKey)?.lengthMeters
+                    : null;
           } catch (_) {}
           totalForReach ??=
               activeEvents.where((e) => e.type == 'destination').isNotEmpty
-                  ? activeEvents.where((e) => e.type == 'destination').last.meters
+                  ? activeEvents
+                      .where((e) => e.type == 'destination')
+                      .last
+                      .meters
                   : null;
-          if (totalForReach != null && totalForReach.isFinite && vMaxModes > 0) {
+          if (totalForReach != null &&
+              totalForReach.isFinite &&
+              vMaxModes > 0) {
             final remain = totalForReach - reachBoundModes;
             final etaReachLB = remain <= 0 ? 0.0 : remain / vMaxModes;
             if (etaReachLB <= thresholdSeconds) reachFireTime = true;
           }
         }
       }
-      final bool etaFire = etaSeconds != null &&
+      final bool etaFire =
+          etaSeconds != null &&
           etaSeconds.isFinite &&
           (etaSeconds - FireDecisionConfig.fractileK * etaSigma) <=
               thresholdSeconds;
@@ -1189,10 +1335,11 @@ class AlarmController {
           allowContinueTracking: false,
           isBackgroundIsolate: context.isBackgroundIsolate,
           isTestMode: context.isTestMode,
-          debugReason: etaFire
-              ? 'Time-mode (non-metro) destination (ETA ${etaSeconds.toStringAsFixed(0)}s <= ${thresholdSeconds.toStringAsFixed(0)}s)'
-              : 'Time-mode (non-metro) reachability backstop '
-                  '(worst-case ETA <= ${thresholdSeconds.toStringAsFixed(0)}s)',
+          debugReason:
+              etaFire
+                  ? 'Time-mode (non-metro) destination (ETA ${etaSeconds.toStringAsFixed(0)}s <= ${thresholdSeconds.toStringAsFixed(0)}s)'
+                  : 'Time-mode (non-metro) reachability backstop '
+                      '(worst-case ETA <= ${thresholdSeconds.toStringAsFixed(0)}s)',
         );
 
         startAlarmStopPollTimer(
@@ -1527,12 +1674,19 @@ class AlarmController {
           currentLegIndex < context.transitLegs.length) {
         for (var i = currentLegIndex; i < context.transitLegs.length; i++) {
           final l = context.transitLegs[i];
-          final v = _reach.vLineTable.forLine(city: l.cityKey, lineName: l.lineName, vehicleType: l.vehicleType);
+          final v = _reach.vLineTable.forLine(
+            city: l.cityKey,
+            lineName: l.lineName,
+            vehicleType: l.vehicleType,
+          );
           if (v.isFinite && v > vMaxFwd) vMaxFwd = v;
         }
         for (final l in context.transitLegs) {
-          final v =
-              _reach.vLineTable.forLine(city: l.cityKey, lineName: l.lineName, vehicleType: l.vehicleType);
+          final v = _reach.vLineTable.forLine(
+            city: l.cityKey,
+            lineName: l.lineName,
+            vehicleType: l.vehicleType,
+          );
           final vv = (v.isFinite && v > 0) ? v : VLineTable.defaultMps;
           if (l.legEndMeters.isFinite) {
             vSegments.add(VLineSegment(l.legEndMeters, vv));
@@ -1547,21 +1701,37 @@ class AlarmController {
           if (leg.legEndMeters.isFinite) leg.legEndMeters,
         ];
         if (stops.isNotEmpty) {
-          reachTopo =
-              RouteTopology(stationMeters: stops, dwellMinSeconds: 0.0);
+          RouteProfile? profile;
+          if (context.transitLegs.length == 1) {
+            final entry =
+                context.activeKey == null
+                    ? null
+                    : context.registry.getByKey(context.activeKey!);
+            profile = _trustedSingleLegProfile(
+              entry: entry,
+              leg: leg,
+              vLine: vMaxFwd,
+            );
+          }
+          reachTopo = RouteTopology(
+            stationMeters: stops,
+            dwellMinSeconds: 0.0,
+            profile: profile,
+          );
         }
       }
       final anchor = _reach.anchor;
-      final b = anchor == null
-          ? null
-          : Reachability.bound(
-              anchor: anchor,
-              nowSeconds: _nowSeconds(),
-              vLineMps: vMaxFwd,
-              topology: reachTopo,
-              config: _reach.config,
-              vLineSegments: vSegments.isEmpty ? null : vSegments,
-            );
+      final b =
+          anchor == null
+              ? null
+              : Reachability.bound(
+                anchor: anchor,
+                nowSeconds: _nowSeconds(),
+                vLineMps: vMaxFwd,
+                topology: reachTopo,
+                config: _reach.config,
+                vLineSegments: vSegments.isEmpty ? null : vSegments,
+              );
       // Pass the bound through unless it is NaN. A +infinity bound is the
       // fire-FORCING signal (T_max watchdog or a corrupt-input fail-safe) and
       // MUST reach the evaluator — filtering on isFinite here would silently drop
@@ -1669,30 +1839,20 @@ class AlarmController {
           }
         }
 
-        // Settings: allow users to disable preboarding without affecting
-        // other alarm types.
-        // NOTE: Must use async method because background isolate has separate
-        // SharedPreferences cache; reload() ensures fresh values.
-        // IMPORTANT: Preboarding toggle only applies to STOPS MODE.
-        // In TIME MODE, the "preBoarding" event type is used for walking legs
-        // but should NOT be suppressed by the preboarding toggle - that toggle
-        // is only relevant for stops-based preboarding alerts.
-        if (trigger.eventType == AlarmEventType.preBoarding &&
-            context.alarmMode == 'stops') {
+        // Settings: the user-facing preboarding toggle applies to every actual
+        // preBoarding event, independent of whether the metro alarm itself is
+        // stops- or time-based. The background isolate reloads preferences so
+        // a recent setting change is honored.
+        if (trigger.eventType == AlarmEventType.preBoarding) {
           final preboardingOn = await TrackingStateStore.preboardingEnabled();
           trackingLog.debug(
-            'SUPPRESS_CHECK_PREBOARDING_STOPS',
+            'SUPPRESS_CHECK_PREBOARDING',
             data: {'preboardingOn': preboardingOn},
           );
           if (!preboardingOn) {
             suppress = true;
-            suppressReason = 'preboarding disabled (stops mode)';
+            suppressReason = 'preboarding disabled';
           }
-        } else if (trigger.eventType == AlarmEventType.preBoarding) {
-          trackingLog.debug(
-            'SUPPRESS_CHECK_PREBOARDING_TIME',
-            data: {'note': 'preboarding toggle does not apply'},
-          );
         }
 
         // Destination protection
@@ -2033,16 +2193,18 @@ class AlarmController {
     // GAP #21: floor the effective velocity to a realistic transit speed when
     // the measured speed is unobservable (stale <= 0.5 m/s underground), so the
     // ETA cushion doesn't collapse to 0 and degrade the fire test to the median.
-    final v = (speedMps != null && speedMps.isFinite && speedMps > 0.5)
-        ? speedMps
-        : FireDecisionConfig.etaSigmaSpeedFloorMps;
+    final v =
+        (speedMps != null && speedMps.isFinite && speedMps > 0.5)
+            ? speedMps
+            : FireDecisionConfig.etaSigmaSpeedFloorMps;
     final sS =
         (sigmaSMeters != null && sigmaSMeters.isFinite && sigmaSMeters > 0)
             ? sigmaSMeters.clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)
             : 0.0;
-    final sV = (sigmaVMps != null && sigmaVMps.isFinite && sigmaVMps > 0)
-        ? sigmaVMps
-        : 0.0;
+    final sV =
+        (sigmaVMps != null && sigmaVMps.isFinite && sigmaVMps > 0)
+            ? sigmaVMps
+            : 0.0;
     final termS = sS / v;
     final termV = etaSeconds * sV / v;
     final varc = termS * termS + termV * termV;

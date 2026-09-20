@@ -47,8 +47,8 @@ typedef GuardianUriLauncher = Future<bool> Function(Uri uri);
 /// NO SMS gateway. When a founder wires a sender here, Guardian delivers without
 /// user mediation; until then every message is composed into the user's OWN
 /// SMS/WhatsApp composer for the user to send.
-typedef GuardianAutoSender = Future<void> Function(
-    GuardianContact contact, String message);
+typedef GuardianAutoSender =
+    Future<void> Function(GuardianContact contact, String message);
 
 class GuardianService {
   GuardianService._({
@@ -56,12 +56,13 @@ class GuardianService {
     JourneyShareService? share,
     GuardianUriLauncher? launcher,
     GuardianAutoSender? autoSender,
-  })  : _entitlement = entitlement ??
-            (() =>
-                MonetizationService.instance.premiumOrNull?.canUseGuardianMode ??
-                false),
-        _share = share ?? JourneyShareService.instance,
-        _launcher = launcher ?? _defaultLaunch {
+  }) : _entitlement =
+           entitlement ??
+           (() =>
+               MonetizationService.instance.premiumOrNull?.canUseGuardianMode ??
+               false),
+       _share = share ?? JourneyShareService.instance,
+       _launcher = launcher ?? _defaultLaunch {
     autoDeliverySender = autoSender;
   }
 
@@ -75,13 +76,12 @@ class GuardianService {
     JourneyShareService? share,
     GuardianUriLauncher? launcher,
     GuardianAutoSender? autoSender,
-  }) =>
-      GuardianService._(
-        entitlement: entitlement,
-        share: share,
-        launcher: launcher ?? ((Uri _) async => true),
-        autoSender: autoSender,
-      );
+  }) => GuardianService._(
+    entitlement: entitlement,
+    share: share,
+    launcher: launcher ?? ((Uri _) async => true),
+    autoSender: autoSender,
+  );
 
   /// Real out-of-app launch: hands the composer URI to the OS (SMS / WhatsApp).
   static Future<bool> _defaultLaunch(Uri uri) =>
@@ -101,6 +101,11 @@ class GuardianService {
   /// (no SMS gateway shipped) → delivery falls back to the user-mediated
   /// composer deep link. A founder may set this once a paid backend is wired.
   GuardianAutoSender? autoDeliverySender;
+
+  /// Whether this build has a genuine no-user-tap delivery transport. The
+  /// default mobile build does not: Android/Play require user-mediated SMS
+  /// intents unless GeoWake wires an approved server-side provider.
+  bool get hasAutomaticDelivery => autoDeliverySender != null;
 
   /// Reactive: the Guardian on/off state for UI toggles.
   final ValueNotifier<bool> enabledListenable = ValueNotifier<bool>(false);
@@ -187,11 +192,23 @@ class GuardianService {
   }) async {
     _requirePro();
     await _load();
+    final name = displayName.trim();
+    final normalizedAddress = normalizePhone(address);
+    if (name.isEmpty) {
+      throw ArgumentError.value(displayName, 'displayName', 'Name is required');
+    }
+    if (normalizedAddress == null) {
+      throw ArgumentError.value(
+        address,
+        'address',
+        'Enter a valid phone number',
+      );
+    }
     final contact = GuardianContact(
       id: _contact?.id ?? _uuid.v4(),
-      displayName: displayName.trim(),
+      displayName: name,
       channel: channel,
-      address: address.trim(),
+      address: normalizedAddress,
     );
     final box = await _openBox(contactsBox);
     await box?.put(_contactKey, contact.encode());
@@ -276,8 +293,9 @@ class GuardianService {
       final contact = _contact;
       final auto = autoDeliverySender;
       if (contact != null && auto != null) {
-        final msg =
-            ShareLinkBuilder.buildArrivedMessage(destLabel: _activeDestLabel);
+        final msg = ShareLinkBuilder.buildArrivedMessage(
+          destLabel: _activeDestLabel,
+        );
         unawaited(auto(contact, msg));
       }
     } catch (e) {
@@ -328,13 +346,25 @@ class GuardianService {
         final phone = addr.replaceAll(RegExp(r'[^0-9]'), '');
         if (phone.isEmpty) return null;
         return Uri.parse(
-            'https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+          'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+        );
       case GuardianChannel.sms:
       case GuardianChannel.app: // no in-app transport yet → SMS composer
         final phone = addr.replaceAll(RegExp(r'[^0-9+]'), '');
         if (phone.isEmpty) return null;
         return Uri.parse('sms:$phone?body=${Uri.encodeComponent(message)}');
     }
+  }
+
+  /// Normalize a picked/manually-entered phone number without requesting broad
+  /// contacts access. Accepts an optional leading + and 7–15 digits.
+  static String? normalizePhone(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+    final hasPlus = trimmed.startsWith('+');
+    final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 7 || digits.length > 15) return null;
+    return '${hasPlus ? '+' : ''}$digits';
   }
 
   // ---------------------------------------------------------------------------
@@ -350,14 +380,18 @@ class GuardianService {
       if (Hive.isBoxOpen(name)) return Hive.box<String>(name);
       return await Hive.openBox<String>(name);
     } catch (e) {
-      dev.log('guardian box "$name" open failed: $e — recreating',
-          name: 'GuardianService');
+      dev.log(
+        'guardian box "$name" open failed: $e — recreating',
+        name: 'GuardianService',
+      );
       try {
         await Hive.deleteBoxFromDisk(name);
         return await Hive.openBox<String>(name);
       } catch (e2) {
-        dev.log('guardian box "$name" recreate failed: $e2',
-            name: 'GuardianService');
+        dev.log(
+          'guardian box "$name" recreate failed: $e2',
+          name: 'GuardianService',
+        );
         return null;
       }
     }

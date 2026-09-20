@@ -51,6 +51,25 @@ void main() {
       expect(loaded, isNull);
     });
 
+    test('missing or invalid arm timestamp is rejected, never made fresh', () {
+      Map<String, dynamic> raw() => {
+        'destinationName': 'Dest',
+        'destinationLat': 1.0,
+        'destinationLng': 2.0,
+        'alarmMode': 'distance',
+        'alarmValue': 1.0,
+        'metroMode': false,
+        'userLat': 1.0,
+        'userLng': 2.0,
+      };
+
+      expect(TrackingSnapshot.fromJson(raw()), isNull);
+      expect(
+        TrackingSnapshot.fromJson({...raw(), 'createdAt': 'not-a-date'}),
+        isNull,
+      );
+    });
+
     test('notificationsMuted persists and clears correctly', () async {
       expect(await TrackingStateStore.notificationsMuted(), isFalse);
 

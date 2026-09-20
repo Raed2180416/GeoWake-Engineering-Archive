@@ -12,7 +12,8 @@ class AppConfig {
     return 'Secure Server';
   }
 
-  // Buyers and local developers can use their own backend without editing code.
+  // Server configuration. Override at build time to move the same hardened API
+  // between Railway, Oracle Cloud, or staging without changing application code.
   static const String serverBaseUrl = String.fromEnvironment(
     'GEOWAKE_API_BASE_URL',
     defaultValue: 'https://geowake-production.up.railway.app/api',
@@ -23,4 +24,13 @@ class AppConfig {
   // - android/app/build.gradle.kts
   // - geowake-server/src/config/config.js (APP_BUNDLE_ID env)
   static const String appBundleId = 'com.geowake.app';
+
+  /// Explicit opt-in for field-validation builds. When enabled, the tracking
+  /// isolate writes raw IMU samples, GPS fixes and EKF state to device-local
+  /// logs for post-journey replay. Normal production builds cannot collect
+  /// these raw traces accidentally.
+  static const bool fieldDiagnosticsEnabled = bool.fromEnvironment(
+    'GEOWAKE_FIELD_DIAGNOSTICS',
+    defaultValue: false,
+  );
 }

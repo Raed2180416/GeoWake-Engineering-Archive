@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/location_manager.dart';
@@ -99,5 +101,37 @@ void main() {
       final maxSpeed = speeds.reduce((a, b) => a > b ? a : b);
       expect(maxSpeed, lessThan(8.0));
     });
+
+    test(
+      'a cancelled start cannot attach after arbitrarily delayed cleanup',
+      () async {
+        LocationManager.isTestMode = true;
+        final releaseCancellation = Completer<void>();
+        final replacementSource = StreamController<Position>.broadcast();
+
+        await manager.start();
+
+        var commandCurrent = true;
+        manager.testStopBarrier = () => releaseCancellation.future;
+        manager.testModeStream = replacementSource.stream;
+        final delayedRestart = manager.start(
+          isStartCurrent: () => commandCurrent,
+        );
+        await pumpEventQueue();
+
+        // This is the Stop generation flip. It can happen after six seconds or
+        // six minutes; releasing the platform cancellation later must not attach
+        // the replacement source.
+        commandCurrent = false;
+        releaseCancellation.complete();
+        manager.testStopBarrier = null;
+
+        await expectLater(delayedRestart, throwsA(isA<StateError>()));
+        expect(replacementSource.hasListener, isFalse);
+
+        manager.testModeStream = null;
+        await replacementSource.close();
+      },
+    );
   });
 }

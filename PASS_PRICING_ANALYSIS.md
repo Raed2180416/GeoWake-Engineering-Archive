@@ -15,6 +15,16 @@
 | Yearly | ₹899 | 365 days | ₹2.46 | 25% cheaper |
 | One-time (v2, not v1) | ₹1,950 or ₹2,400 | Lifetime | ~₹0.27/day after 2yr | "Lifer" price |
 
+### Launch offer (current plan, added 7 August 2026)
+
+Every genuinely first-time user receives **7 days of full Pro for ₹0**. It
+includes the same complete feature set as every paid pass, requires no card,
+does not auto-renew, and falls back to Free when the fixed seven-day window
+ends. The core wake alarm remains free. This offer is separate from—and does
+not replace—the ₹35 prepaid weekly pass. Device-local eligibility is suitable
+for development only; public launch requires a server-side first-user ledger
+to prevent reinstall and wall-clock abuse without introducing auto-renewal.
+
 ### The Price Ladder Logic
 
 This is the **sachet pricing model** that dominates Indian FMCG and is now

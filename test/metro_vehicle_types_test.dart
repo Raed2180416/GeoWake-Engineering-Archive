@@ -119,7 +119,8 @@ void main() {
         expect(
           result.isValid,
           isTrue,
-          reason: '_routeHasMetroLeg must accept a $vType-only alternate: '
+          reason:
+              '_routeHasMetroLeg must accept a $vType-only alternate: '
               '${result.failureReason}',
         );
       });
@@ -137,123 +138,127 @@ void main() {
     });
   });
 
-  group('BACKLOG #28 — explicit leg cityKey overrides majority vote', () {
-    // A polyline with three on-line stops. The OSM stops are all labelled
-    // city "mumbai" (so the majority vote would pick "mumbai"). We assert that
-    // supplying an explicit, DIFFERENT geocoded cityKey ("delhi") wins: the
-    // city guard then drops the mumbai-labelled stops (no confident Delhi/Blue
-    // sequence exists) and the API-uniform leg is kept — proving the vote no
-    // longer decides the leg's city.
+  group('BACKLOG #28 — exact anchors require explicit trusted city', () {
+    // A real contiguous slice of Mumbai Blue. The nearby stops are all labelled
+    // city "mumbai". We assert that nearby-stop voting is never enough and
+    // that an explicit, DIFFERENT cityKey also cannot adopt those stations.
+    // Using a real ordered slice is intentional: arbitrary same-line points
+    // must never be promoted to trusted station anchors.
     final onLineStops = <Map<String, dynamic>>[
       {
         'id': 'S1',
         'city': 'mumbai',
-        'name': 'Alpha',
-        'lat': 0.005,
-        'lng': 0.0,
+        'name': 'DN Nagar',
+        'lat': 19.128316,
+        'lng': 72.8303036,
         'line': 'Blue Line',
         'status': 'active',
       },
       {
         'id': 'S2',
         'city': 'mumbai',
-        'name': 'Beta',
-        'lat': 0.010,
-        'lng': 0.0,
+        'name': 'Azad Nagar',
+        'lat': 19.1268998,
+        'lng': 72.8376982,
         'line': 'Blue Line',
         'status': 'active',
       },
       {
         'id': 'S3',
         'city': 'mumbai',
-        'name': 'Gamma',
-        'lat': 0.015,
-        'lng': 0.0,
+        'name': 'Andheri',
+        'lat': 19.120561,
+        'lng': 72.8487279,
         'line': 'Blue Line',
         'status': 'active',
       },
     ];
 
     Map<String, dynamic> directions() => {
-          'routes': [
+      'routes': [
+        {
+          'legs': [
             {
-              'legs': [
+              'steps': [
                 {
-                  'steps': [
-                    {
-                      'travel_mode': 'TRANSIT',
-                      'polyline': {
-                        'points': _encodePolyline(
-                          const [LatLng(0.0, 0.0), LatLng(0.02, 0.0)],
-                        ),
-                      },
-                      'transit_details': {
-                        'line': {
-                          'short_name': 'Blue Line',
-                          'vehicle': {'type': 'SUBWAY'},
-                        },
-                        'num_stops': 3,
-                      },
+                  'travel_mode': 'TRANSIT',
+                  'polyline': {
+                    'points': _encodePolyline(const [
+                      LatLng(19.1303249, 72.8214049), // Versova
+                      LatLng(19.128316, 72.8303036), // DN Nagar
+                      LatLng(19.1268998, 72.8376982), // Azad Nagar
+                      LatLng(19.120561, 72.8487279), // Andheri
+                      LatLng(19.115875, 72.85648), // WEH
+                    ]),
+                  },
+                  'transit_details': {
+                    'line': {
+                      'short_name': 'Blue Line',
+                      'vehicle': {'type': 'SUBWAY'},
                     },
-                  ],
+                    'num_stops': 3,
+                  },
                 },
               ],
             },
           ],
-        };
+        },
+      ],
+    };
 
     TransitLegStops leg({String? cityKey}) => TransitLegStops(
-          legStartMeters: 0.0,
-          legEndMeters: 2224.0,
-          numStops: 3,
-          stopPositions: const [
-            LatLng(0.005, 0.0),
-            LatLng(0.010, 0.0),
-            LatLng(0.015, 0.0),
-          ],
-          stopMeters: const [556.0, 1112.0, 1668.0],
-          lineName: 'Blue Line',
-          isMetro: true,
-          cityKey: cityKey,
+      legStartMeters: 0.0,
+      legEndMeters: 4000.0,
+      numStops: 3,
+      stopPositions: const [
+        LatLng(19.128316, 72.8303036),
+        LatLng(19.1268998, 72.8376982),
+        LatLng(19.120561, 72.8487279),
+      ],
+      stopMeters: const [1000.0, 2000.0, 3000.0],
+      lineName: 'Blue Line',
+      isMetro: true,
+      cityKey: cityKey,
+    );
+
+    test(
+      'no cityKey refuses nearby-stop voting and exact station anchors',
+      () async {
+        final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
+          [leg(cityKey: null)],
+          directions(),
+          stopsOverride: onLineStops,
         );
+        final result = enhanced.single;
+        expect(result.isActualPositions, isFalse);
+        expect(result.stopNames, isEmpty);
+        expect(result.numStops, equals(3));
+      },
+    );
 
-    test('control: no cityKey => majority vote ("mumbai") keeps OSM stops',
-        () async {
-      final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
-        [leg(cityKey: null)],
-        directions(),
-        stopsOverride: onLineStops,
-      );
-      final result = enhanced.single;
-      // Vote picked "mumbai"; mumbai-labelled stops pass the city guard.
-      expect(result.isActualPositions, isTrue);
-      expect(
-        result.stopNames,
-        containsAll(<String>['Alpha', 'Beta', 'Gamma']),
-      );
-    });
-
-    test('explicit cityKey ("delhi") overrides the vote and filters them out',
-        () async {
-      final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
-        [leg(cityKey: 'delhi')],
-        directions(),
-        stopsOverride: onLineStops,
-      );
-      final result = enhanced.single;
-      // legCityKey is now the explicit "delhi" (NOT the "mumbai" vote), so the
-      // mumbai-labelled stops fail the city guard and the API-uniform leg is
-      // preserved instead of snapping to the wrong-city stations.
-      expect(
-        result.isActualPositions,
-        isFalse,
-        reason: 'explicit city must veto the majority-vote city',
-      );
-      expect(result.stopNames, isNot(contains('Alpha')));
-      expect(result.stopNames, isNot(contains('Beta')));
-      expect(result.stopNames, isNot(contains('Gamma')));
-      expect(result.numStops, equals(3)); // API leg kept intact
-    });
+    test(
+      'explicit cityKey ("delhi") overrides the vote and filters them out',
+      () async {
+        final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
+          [leg(cityKey: 'delhi')],
+          directions(),
+          stopsOverride: onLineStops,
+        );
+        final result = enhanced.single;
+        // legCityKey is now the explicit "delhi" (NOT the "mumbai" vote), so the
+        // mumbai-labelled stops fail the city guard and the API-uniform leg is
+        // preserved instead of snapping to the wrong-city stations.
+        expect(
+          result.isActualPositions,
+          isFalse,
+          reason: 'explicit city must veto the majority-vote city',
+        );
+        expect(result.stopNames, isNot(contains('DN Nagar')));
+        expect(result.stopNames, isNot(contains('Azad Nagar')));
+        expect(result.stopNames, isNot(contains('Andheri')));
+        expect(result.numStops, equals(3)); // API leg kept intact
+      },
+    );
 
     test('cityKey round-trips through toJson / fromJson', () {
       final json = leg(cityKey: 'delhi').toJson();

@@ -48,8 +48,8 @@ class PermissionService {
     final proceed = await _showRationaleDialog(
       'Keep Alarms Reliable',
       'To make sure GeoWake can wake you even with the screen off, please '
-      'allow it to ignore battery optimization, and (on some phones) enable '
-      'Auto-start. We will open the right settings screens next.',
+          'allow it to ignore battery optimization, and (on some phones) enable '
+          'Auto-start. We will open the right settings screens next.',
     );
     if (!proceed) return;
 
@@ -59,7 +59,7 @@ class PermissionService {
       final openAutostart = await _showRationaleDialog(
         'Enable Auto-start',
         'Your phone\'s manufacturer may stop GeoWake in the background. On the '
-        'next screen, please turn ON Auto-start / background activity for GeoWake.',
+            'next screen, please turn ON Auto-start / background activity for GeoWake.',
       );
       if (openAutostart) {
         await OemAutostartService.openAutoStartSettings();
@@ -77,26 +77,26 @@ class PermissionService {
     if (status.isPermanentlyDenied) {
       await _showSettingsDialog(
         "Location is Crucial",
-        "GeoWake needs your location to track your journey. Please enable it in your device settings."
+        "GeoWake needs your location to track your journey. Please enable it in your device settings.",
       );
       return false;
     }
-    
+
     if (!status.isGranted) {
       final bool didAgree = await _showRationaleDialog(
         "Why We Need Location",
-        "To monitor your trip and alert you before your stop, GeoWake requires access to your location."
+        "To monitor your trip and alert you before your stop, GeoWake requires access to your location.",
       );
       if (!didAgree) return false;
-      
+
       status = await Permission.location.request();
     }
-    
+
     if (status.isGranted) {
       // If location is granted, immediately ask for background location which is essential.
       return await _requestBackgroundLocation();
     }
-    
+
     return false;
   }
 
@@ -117,7 +117,8 @@ class PermissionService {
           "journey and sound the wake-up alarm before your stop.\n\n"
           "Your location is never used for advertising and never sold. On the "
           "next screen, choose \"Allow all the time\" to enable the alarm while "
-          "you sleep. You can decline and still use GeoWake with the screen on.",
+          "you sleep. You can decline, but GeoWake will not arm a trip because "
+          "it cannot guarantee a screen-off wake alarm without this access.",
     );
     if (!didAgree) return false;
 
@@ -152,15 +153,23 @@ class PermissionService {
     if (status.isPermanentlyDenied) {
       await _showSettingsDialog(
         "Notifications are Important",
-        "We need to send you a notification to wake you up! Please enable notifications in your device settings."
+        "We need to send you a notification to wake you up! Please enable notifications in your device settings.",
       );
       return false;
     }
-    
+
+    final didAgree = await _showRationaleDialog(
+      "Allow wake-up notifications",
+      "GeoWake needs notifications to show and sound your journey alarm even "
+          "when the app is not open. Without this permission, it will not arm "
+          "a trip because there would be no reliable wake-up channel.",
+    );
+    if (!didAgree) return false;
+
     status = await Permission.notification.request();
     return status.isGranted;
   }
-  
+
   Future<void> _requestActivityRecognitionPermission() async {
     if (!Platform.isAndroid) return;
     PermissionStatus status = await Permission.activityRecognition.status;
@@ -170,29 +179,30 @@ class PermissionService {
     }
   }
 
-
   // --- Reusable Dialogs ---
 
   /// Shows the "Soft Ask" dialog to explain why a permission is needed.
   Future<bool> _showRationaleDialog(String title, String message) async {
     if (!context.mounted) return false;
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            child: const Text("Not Now"),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          TextButton(
-            child: const Text("Continue"),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    ) ?? false;
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Text(title),
+                content: Text(message),
+                actions: [
+                  TextButton(
+                    child: const Text("Not Now"),
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
+                  TextButton(
+                    child: const Text("Continue"),
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
   }
 
   /// Shows the "Hard Ask" dialog to go to settings when permanently denied.
@@ -200,23 +210,24 @@ class PermissionService {
     if (!context.mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            child: const Text("Cancel"),
-            onPressed: () => Navigator.of(context).pop(),
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              TextButton(
+                child: const Text("Open Settings"),
+                onPressed: () {
+                  AppSettings.openAppSettings();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
           ),
-          TextButton(
-            child: const Text("Open Settings"),
-            onPressed: () {
-              AppSettings.openAppSettings();
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
     );
   }
 }

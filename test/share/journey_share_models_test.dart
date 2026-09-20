@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/services/share/journey_share_models.dart';
 
 void main() {
-  test('snapshot rounds coords to 5 dp', () {
+  test('snapshot rounds coords to 3 dp', () {
     final s = ShareSnapshot(lat: 12.97161234, lng: 77.59468999, atMs: 1000);
-    expect(s.lat, 12.97161);
-    expect(s.lng, 77.59469);
+    expect(s.lat, 12.972);
+    expect(s.lng, 77.595);
   });
 
   test('snapshot has NO trajectory/history field (privacy invariant)', () {
@@ -23,6 +23,8 @@ void main() {
       status: ShareStatus.enRoute,
       createdAtMs: 1,
       expiresAtMs: 2,
+      readToken: 'read-cap',
+      writeToken: 'write-cap',
       destLabel: 'Stop',
       etaEpochMs: 99,
     );
@@ -32,6 +34,8 @@ void main() {
     expect(back.status, ShareStatus.enRoute);
     expect(back.destLabel, 'Stop');
     expect(back.etaEpochMs, 99);
+    expect(back.readToken, 'read-cap');
+    expect(back.writeToken, 'write-cap');
   });
 
   test('session expiry + active semantics', () {

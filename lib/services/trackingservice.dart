@@ -41,6 +41,7 @@ import 'package:geowake2/services/route_registry.dart';
 import 'package:geowake2/services/route_session_manager.dart';
 import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
+import 'package:geowake2/services/tracking_recovery_policy.dart';
 import 'package:geowake2/services/telemetry/telemetry_service.dart';
 import 'package:geowake2/core/clock/app_clock.dart';
 import 'package:geowake2/services/alarm_player.dart';
@@ -80,6 +81,58 @@ class _ResolvedAlarmRouteState {
   });
 }
 
+/// Raised when the foreground cannot prove that the background isolate has
+/// accepted correctness-critical tracking state.
+///
+/// A blind platform-channel invoke is not success: navigating after a dropped
+/// message would leave the rider looking at an armed trip with no confirmed
+/// alarm engine or route geometry.
+class TrackingHandshakeException implements Exception {
+  final String operation;
+
+  const TrackingHandshakeException(this.operation);
+
+  @override
+  String toString() =>
+      'TrackingHandshakeException: background did not acknowledge $operation';
+}
+
+/// Small, deterministic retry boundary kept outside the platform service so a
+/// dropped/restarting-isolate handshake can be regression-tested directly.
+class TrackingHandshakePolicy {
+  static Future<void> requireAcknowledgement({
+    required String operation,
+    required Future<bool> Function() attempt,
+    required Future<void> Function() recover,
+    Future<void> Function()? rollback,
+  }) async {
+    if (await attempt()) return;
+
+    try {
+      await recover();
+    } catch (_) {
+      // The second acknowledgement attempt below remains authoritative.
+    }
+    if (await attempt()) return;
+
+    if (rollback != null) {
+      await rollback();
+    }
+    throw TrackingHandshakeException(operation);
+  }
+}
+
+/// Process-lifetime gate for stream wiring that must happen exactly once.
+class OneShotBindingGate {
+  bool _claimed = false;
+
+  bool claim() {
+    if (_claimed) return false;
+    _claimed = true;
+    return true;
+  }
+}
+
 class TestServiceInstance implements ServiceInstance {
   final _eventControllers = <String, StreamController<Map<String, dynamic>?>>{};
   @override
@@ -116,6 +169,7 @@ class TrackingService {
 
   /// Whether to bypass strict termination rules (for simulation/dashboard usage).
   bool _isSimulationMode = false;
+  String? _currentArmSessionId;
   bool get isSimulationMode => _isSimulationMode;
 
   /// Enable/disable simulation mode (bypasses termination policies).
@@ -140,6 +194,7 @@ class TrackingService {
     service: _service,
     isTestMode: () => TrackingService.isTestMode,
   );
+  final OneShotBindingGate _bridgeStreamBinding = OneShotBindingGate();
 
   /// Returns true if [step] is a metro/rail TRANSIT step (SUBWAY, HEAVY_RAIL, RAIL, METRO_RAIL, MONORAIL).
 
@@ -150,6 +205,11 @@ class TrackingService {
 
     // Delegate all listener registration to ForegroundBridge
     _foregroundBridge.ensureListenersRegistered();
+
+    // The service singleton lives for the process lifetime. ACK setup is called
+    // before every critical invoke, but bridge streams must be piped exactly
+    // once or repeat arms multiply location/ETA/route-switch events.
+    if (!_bridgeStreamBinding.claim()) return;
 
     // Wire up alarm callback to show notifications
     _foregroundBridge.onAlarmTrigger ??= (
@@ -268,7 +328,11 @@ class TrackingService {
     // must never delay or break arming.
     unawaited(recordSessionStart(alarmMode: alarmMode, alarmValue: alarmValue));
 
+    final armSessionId =
+        '${DateTime.now().microsecondsSinceEpoch}_${_foregroundArmCounter++}';
+    _currentArmSessionId = armSessionId;
     final Map<String, dynamic> params = {
+      'armSessionId': armSessionId,
       'destinationLat': destination.latitude,
       'destinationLng': destination.longitude,
       'destinationName': destinationName,
@@ -311,6 +375,10 @@ class TrackingService {
     } catch (e) {
       trackingLog.error('initializeService before start failed', error: e);
     }
+    // Prevent the service's null-initialData boot path from restoring the same
+    // just-persisted snapshot while this explicit acknowledged start is in
+    // flight. Cleared only after ACK or transactional rollback.
+    await TrackingStateStore.setArmPending(true);
     if (!await (_service?.isRunning() ?? Future.value(false))) {
       await _service?.startService();
     }
@@ -338,46 +406,76 @@ class TrackingService {
       'DEBUG: Invoking startTracking on background service',
       name: 'TrackingService',
     );
-    final acked = await _invokeWithAckRetry(
-      method: 'startTracking',
-      args: params,
-      ackEvent: 'startTrackingAck',
-    );
-    if (!acked) {
-      // The background isolate never ACKed within the retry budget (~2.9s).
-      // Without escalation the UI arms while nothing tracks — the worst
-      // possible failure for a wake-up product. Record it durably, then try a
-      // full service (re)start + one more acked handshake before falling back
-      // to a blind invoke.
-      TelemetryService.instance.reliability(startAckFailed: true);
-      trackingLog.error(
-        'startTracking not ACKed by background isolate; attempting recovery',
-      );
-      bool recovered = false;
-      try {
+    await TrackingHandshakePolicy.requireAcknowledgement(
+      operation: 'startTracking',
+      attempt:
+          () => _invokeWithAckRetry(
+            method: 'startTracking',
+            args: params,
+            ackEvent: 'startTrackingAck',
+          ),
+      recover: () async {
+        // The background isolate did not ACK within its retry budget. Restart
+        // it once and repeat the acknowledged handshake; never treat an
+        // unconfirmed best-effort invoke as an armed alarm.
+        TelemetryService.instance.reliability(startAckFailed: true);
+        trackingLog.error(
+          'startTracking not ACKed by background isolate; attempting recovery',
+        );
         if (!await (_service?.isRunning() ?? Future.value(false))) {
           await _service?.startService();
         }
-        recovered = await _invokeWithAckRetry(
-          method: 'startTracking',
-          args: params,
-          ackEvent: 'startTrackingAck',
-        );
-      } catch (e) {
-        trackingLog.error('startTracking recovery attempt failed', error: e);
-      }
-      if (!recovered) {
-        // Last resort: best-effort invoke (older background or unexpected ack
-        // failures). The startAckFailed telemetry above keeps this diagnosable.
-        try {
-          _service?.invoke('startTracking', params);
-        } catch (e) {
-          trackingLog.error('startTracking fallback invoke failed', error: e);
-        }
-      }
-    }
+      },
+      rollback: abortUnconfirmedArm,
+    );
+    await TrackingStateStore.setArmPending(false);
     // Start sending heartbeats to background service
     _startForegroundHeartbeat();
+  }
+
+  /// Transactionally unwind an arm that the background isolate did not
+  /// confirm. Idempotent so both the service boundary and UI catch path may
+  /// call it without resurrecting or partially stopping a trip.
+  Future<void> abortUnconfirmedArm() async {
+    _currentArmSessionId = null;
+    _trackingSessionActive = false;
+    _stopForegroundHeartbeat();
+
+    try {
+      if (!isTestMode && await (_service?.isRunning() ?? Future.value(false))) {
+        _service?.invoke('stopTracking', {'stopSelf': true});
+      }
+    } catch (e) {
+      trackingLog.warn(
+        'Could not signal background while rolling back unconfirmed arm',
+        data: {'error': e.toString()},
+      );
+    }
+
+    try {
+      await Future.wait([
+        TrackingStateStore.clearSnapshot(),
+        TrackingStateStore.setArmPending(false),
+        TrackingStateStore.setActive(false),
+        TrackingStateStore.setPaused(false),
+        TrackingStateStore.setAlarmFired(false),
+        TrackingStateStore.setNotificationsMuted(false),
+      ]);
+    } catch (e) {
+      trackingLog.warn(
+        'Unconfirmed arm state rollback was partially unsuccessful',
+        data: {'error': e.toString()},
+      );
+    }
+
+    try {
+      await NotificationService().cancelJourneyProgress();
+    } catch (e) {
+      trackingLog.debug(
+        'Unconfirmed arm notification cleanup failed',
+        data: {'error': e.toString()},
+      );
+    }
   }
 
   Future<void> stopTracking({bool stopServiceInstance = true}) async {
@@ -400,7 +498,7 @@ class TrackingService {
     }
 
     if (isTestMode) {
-      _onStop();
+      await _onStop();
       return;
     }
 
@@ -409,7 +507,7 @@ class TrackingService {
       _service?.invoke("stopTracking", {'stopSelf': stopServiceInstance});
     } else {
       // If service already stopped, still clear foreground state
-      _onStop();
+      await _onStop();
     }
   }
 
@@ -426,6 +524,7 @@ class TrackingService {
   }
 
   Future<void> resumeFromNotification() async {
+    var restartAttempted = false;
     try {
       await TrackingStateStore.setNotificationsMuted(false);
 
@@ -434,9 +533,22 @@ class TrackingService {
         return;
       }
 
-      // If tracking was paused (app swiped away), restart from snapshot.
+      // Heartbeat "paused" is a UI/foreground state; alarm evaluation normally
+      // continues in the background isolate. Validate the persisted journey,
+      // then either unpause the running service or perform one acknowledged
+      // recovery if the service actually died. Never blindly reset a live trip.
+      final active = await TrackingStateStore.isActive();
       final snapshot = await TrackingStateStore.loadSnapshot();
-      if (snapshot != null) {
+      final recovery = TrackingRecoveryPolicy.evaluate(
+        isActive: active,
+        snapshot: snapshot,
+        now: AppClock().now(),
+      );
+      if (recovery != TrackingRecoveryDisposition.restore || snapshot == null) {
+        await completeEndTracking(navigateHome: false);
+        return;
+      }
+      {
         // If threshold already satisfied on reopen, end tracking immediately.
         if (!TrackingService.isTestMode) {
           try {
@@ -461,9 +573,7 @@ class TrackingService {
           }
         }
 
-        await TrackingStateStore.setActive(true);
         await TrackingStateStore.setPaused(false);
-        await TrackingStateStore.setAlarmFired(false);
         try {
           await NotificationService().cancelTrackingPaused();
         } catch (e) {
@@ -476,20 +586,36 @@ class TrackingService {
         if (!TrackingService.isTestMode) {
           final running = await _service?.isRunning() ?? false;
           if (!running) {
-            await _service?.startService();
+            restartAttempted = true;
+            await startTracking(
+              destination: LatLng(
+                snapshot.destinationLat,
+                snapshot.destinationLng,
+              ),
+              destinationName: snapshot.destinationName,
+              alarmMode: snapshot.alarmMode,
+              alarmValue: snapshot.alarmValue,
+              transitMode: snapshot.metroMode,
+            );
+            if (snapshot.directions != null) {
+              await registerRouteFromDirections(
+                directions: snapshot.directions!,
+                origin: LatLng(snapshot.userLat, snapshot.userLng),
+                destination: LatLng(
+                  snapshot.destinationLat,
+                  snapshot.destinationLng,
+                ),
+                transitMode: snapshot.metroMode,
+                destinationName: snapshot.destinationName,
+                activateRoute: true,
+              );
+            }
+          } else {
+            _service?.invoke('foregroundResumed', const {});
           }
-          _service?.invoke('startTracking', {
-            'destinationLat': snapshot.destinationLat,
-            'destinationLng': snapshot.destinationLng,
-            'destinationName': snapshot.destinationName,
-            'alarmMode': snapshot.alarmMode,
-            'alarmValue': snapshot.alarmValue,
-            'transitMode': snapshot.metroMode,
-            'useInjectedPositions': false,
-          });
-
-          // Restore route events/step bounds so alarms behave consistently.
-          // Route will be freshly fetched by UI after resume; we avoid reusing stale directions.
+        } else {
+          await TrackingStateStore.setActive(true);
+          await TrackingStateStore.setAlarmFired(false);
         }
 
         await NotificationService().showJourneyProgress(
@@ -500,19 +626,9 @@ class TrackingService {
         );
         return;
       }
-
-      // Fallback: just restore the last journey notification content.
-      final payload = await TrackingStateStore.loadProgressPayload();
-      if (payload != null) {
-        await NotificationService().showJourneyProgress(
-          title: payload.title,
-          subtitle: payload.subtitle,
-          progress0to1: payload.progress,
-          isTracking: true,
-        );
-      }
     } catch (e) {
       trackingLog.error('resumeFromNotification failed', error: e);
+      if (restartAttempted) await abortUnconfirmedArm();
     }
   }
 
@@ -528,7 +644,7 @@ class TrackingService {
   }
 
   // Mirror app lifecycle transitions for bookkeeping
-  void handleAppLifecycleChange(AppLifecycleState state) async {
+  Future<void> handleAppLifecycleChange(AppLifecycleState state) async {
     dev.log(
       'DEBUG: handleAppLifecycleChange called with state: $state',
       name: 'TrackingService',
@@ -542,7 +658,6 @@ class TrackingService {
         'DEBUG: App resumed - restarting foreground heartbeat',
         name: 'TrackingService',
       );
-      _startForegroundHeartbeat();
       _startForegroundHeartbeat();
       // Also tell background we're back
       final running = await _service?.isRunning() ?? false;
@@ -578,9 +693,11 @@ class TrackingService {
   }
 
   Future<void> completeEndTracking({bool navigateHome = true}) async {
+    _currentArmSessionId = null;
     try {
       await NotificationService().cancelAllNotifications();
       await TrackingStateStore.clearSnapshot();
+      await TrackingStateStore.setArmPending(false);
       await TrackingStateStore.setActive(false);
       await TrackingStateStore.setPaused(false);
       await TrackingStateStore.setAlarmFired(false);
@@ -678,10 +795,12 @@ bool onIosBackground(ServiceInstance service) {
 // BACKGROUND ISOLATE STATE
 // ===================================================================
 bool _isBackgroundIsolate = false;
+int _foregroundArmCounter = 0;
 bool _trackingSessionActive =
     false; // true only after startTracking is processed
 StreamSubscription<Position>? _positionSubscription;
 DateTime? _lastGpsUpdate;
+DateTime? _sessionArmedAt;
 SensorFusionManager? _sensorFusionManager;
 
 Timer? _gpsCheckTimer;
@@ -918,23 +1037,32 @@ set _lastRouteBroadcastAt(DateTime? v) =>
 // TrackingService used it check throttling. SessionManager handles throttling now.
 
 void _maybeBroadcastCachedRoute({bool force = false}) {
+  final activeKey = _activeManager?.activeKey;
+  final activeLegs =
+      activeKey == null
+          ? _transitLegStops
+          : (_transitLegStopsByKey[activeKey] ?? _transitLegStops);
+  final activeTransitMode =
+      activeKey == null ? _transitMode : (_transitModeByKey[activeKey] ?? _transitMode);
   _notificationUpdater.maybeBroadcastCachedRoute(
     force: force,
     context: RouteContext(
       cachedPayload: _cachedRoutePayload,
       registry: _registry,
-      activeKey: _activeManager?.activeKey,
-      transitLegStops: _transitLegStops,
-      transitMode: _transitMode,
+      activeKey: activeKey,
+      transitLegStops: activeLegs,
+      transitMode: activeTransitMode,
     ),
   );
 }
 
 @pragma('vm:entry-point')
-void _onStop() async {
+Future<void> _onStop() async {
   _isBackgroundIsolate = false;
   _trackingSessionActive = false;
+  _sessionArmedAt = null;
   _heartbeatMonitor.stop();
+  _sessionManager.cancelPendingRouteRegistrations();
 
   await _locationStreamHandler.stop();
 
@@ -1038,6 +1166,7 @@ void _onStop() async {
   _alarmValue = null;
   _lastEkfState = null;
   _lastEkfAlarmSnapshot = null;
+  _sessionManager.clearSession();
 
   // Explicitly stop any playing alarm and vibration
   try {
@@ -1260,8 +1389,12 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(
             'SoftLock Deviation Detected on non-metro leg',
             data: {'offset': latOffset, 'metro': isMetroStep},
           );
-          // TODO: Trigger actual reroute if DeviationMonitor doesn't pick this up
-          // For now, we rely on the log appearing in verification.
+          // SoftLock is the non-metro-specific detector.  Feed a confirmed
+          // corridor exit into the same policy used by DeviationMonitor so a
+          // bus/walk leg cannot remain log-only when GPS is consistently away
+          // from the route.  The policy's online/cooldown guards make a second
+          // signal from DeviationMonitor harmless.
+          _reroutePolicy?.onSustainedDeviation(at: currentPosition.timestamp);
         }
       }
       // -------------------------------------------------
@@ -1336,8 +1469,7 @@ Future<void> _checkAndTriggerAlarm(
   // do not overwrite the last good position, and do not feed it to snap /
   // deviation / session ingestion. It is used only to pull EKF arc-progress.
   final bool isDeadReckoned =
-      !currentPosition.accuracy.isFinite ||
-      currentPosition.accuracy >= 9000.0;
+      !currentPosition.accuracy.isFinite || currentPosition.accuracy >= 9000.0;
 
   if (!isDeadReckoned) {
     // Keep a fresh snapshot of position/speed for snapping and deviation logic
@@ -1397,7 +1529,8 @@ Future<void> _checkAndTriggerAlarm(
     ekfSpeedMps: _lastEkfAlarmSnapshot?.v,
     ekfSigmaS: _lastEkfAlarmSnapshot?.sigmaS,
     ekfSigmaV: _lastEkfAlarmSnapshot?.sigmaV,
-    preferEkfSpeed: (_lastEkfAlarmSnapshot != null) &&
+    preferEkfSpeed:
+        (_lastEkfAlarmSnapshot != null) &&
         (isDeadReckoned ||
             _lastEkfAlarmSnapshot!.mode == EkfMode.metro ||
             _lastEkfAlarmSnapshot!.mode == EkfMode.degraded),
@@ -1433,8 +1566,10 @@ Future<void> _handleRerouteDecision(RerouteDecision decision) async {
   // alarm / resurrects a finished session. Keep the deviate→reroute pipeline
   // quiescent after arrival.
   if (_alarmController.anyDestinationAlarmFired) {
-    dev.log('Reroute suppressed: destination alarm already fired',
-        name: 'TrackingService');
+    dev.log(
+      'Reroute suppressed: destination alarm already fired',
+      name: 'TrackingService',
+    );
     return;
   }
 
@@ -1515,8 +1650,10 @@ Future<void> _handleRerouteDecision(RerouteDecision decision) async {
     // registering the new route so a late reroute can't resurrect a stopped
     // session via the managers' lazy `??=` init.
     if (!_trackingSessionActive || _alarmController.anyDestinationAlarmFired) {
-      dev.log('Reroute aborted: session ended/alarm fired during route fetch',
-          name: 'TrackingService');
+      dev.log(
+        'Reroute aborted: session ended/alarm fired during route fetch',
+        name: 'TrackingService',
+      );
       return;
     }
 
@@ -1612,17 +1749,11 @@ Future<void> _terminateTrackingWithMessage(String message) async {
   dev.log('TERMINATION: $message', name: 'TrackingService');
 
   try {
-    if (!TrackingService.isTestMode) {
-      // Show termination notification
-      await NotificationService().showWakeUpAlarm(
-        title: 'Tracking Ended',
-        body: message,
-        allowContinueTracking: false,
-      );
-    }
-
-    // Stop tracking
-    await TrackingService().stopTracking();
+    // This is a terminal outcome, not a temporary runtime stop. Clear every
+    // persisted restore flag/snapshot so Splash or boot cannot resurrect a
+    // journey that the app just told the rider had ended.
+    await TrackingService().completeEndTracking(navigateHome: false);
+    await NotificationService().showTrackingEnded(message: message);
   } catch (e) {
     dev.log('Error during termination: $e', name: 'TrackingService');
   }
@@ -1632,14 +1763,22 @@ Future<void> _terminateTrackingWithMessage(String message) async {
 Future<void> triggerOnStartForRecoveryTest(ServiceInstance service) async =>
     _onStart(service, initialData: null);
 
-void _handleBackgroundStartTracking({
+Future<void> _handleBackgroundStartTracking({
   required LatLng destination,
   required String destinationName,
   required String alarmMode,
   required double alarmValue,
   required bool transitMode,
+  required bool Function() isCommandCurrent,
   required ServiceInstance service,
-}) {
+}) async {
+  void requireCurrentCommand() {
+    if (!isCommandCurrent()) {
+      throw StateError('startTracking command was cancelled or superseded');
+    }
+  }
+
+  requireCurrentCommand();
   dev.log(
     'DEBUG: Background received startTracking event: dest=$destinationName mode=$alarmMode value=$alarmValue transit=$transitMode',
     name: 'TrackingService',
@@ -1686,6 +1825,13 @@ void _handleBackgroundStartTracking({
   _alarmValue = alarmValue;
   _trackingSessionActive = true;
 
+  // Home persists the immutable arm timestamp before starting the service.
+  // Preserve it across every runtime restart so recovery cannot refresh its
+  // own age window forever.
+  _sessionArmedAt =
+      (await TrackingStateStore.loadSnapshot())?.createdAt ?? AppClock().now();
+  requireCurrentCommand();
+
   // GAP #1/#2 (BLOCK): seed the reachability anchor at ARM time. The route is
   // computed FROM the rider's current location, so route arc-progress 0 IS the
   // rider's position at arm — a known real position. Seeding s=0 at arm time
@@ -1702,12 +1848,13 @@ void _handleBackgroundStartTracking({
     TelemetryService.instance.alarmArmed(
       mode: alarmMode,
       value: alarmValue,
-      line: _transitLegStops.isNotEmpty ? _transitLegStops.first.lineName : null,
-      city: _transitLegStops.isNotEmpty
-          ? _transitLegStops.first.cityKey
-          : null,
+      line:
+          _transitLegStops.isNotEmpty ? _transitLegStops.first.lineName : null,
+      city: _transitLegStops.isNotEmpty ? _transitLegStops.first.cityKey : null,
     );
-  } catch (_) {/* telemetry must never break arming */}
+  } catch (_) {
+    /* telemetry must never break arming */
+  }
 
   // Initialize termination policy with destination
   _terminationPolicy.reset();
@@ -1722,7 +1869,9 @@ void _handleBackgroundStartTracking({
   _mgrSwitchSub?.cancel();
   _mgrSwitchSub = _sessionManager.routeSwitchStream.listen((e) {
     // Critical: Migrate alarm history to new key so we don't re-fire alarms
-    _alarmController.migrateAlarmState(e.fromKey, e.toKey);
+    if (e.fromKey != e.toKey) {
+      _alarmController.migrateAlarmState(e.fromKey, e.toKey);
+    }
     _locationStreamHandler.updateRouteGeometryForKey(e.toKey);
     _routeSwitchCtrl.add(e);
   });
@@ -1762,42 +1911,48 @@ void _handleBackgroundStartTracking({
 
   // Persist session-active flag for restore flows.
   try {
-    TrackingStateStore.setActive(true);
-    TrackingStateStore.setPaused(false);
-    TrackingStateStore.setAlarmFired(false);
+    await Future.wait([
+      TrackingStateStore.setActive(true),
+      TrackingStateStore.setPaused(false),
+      TrackingStateStore.setAlarmFired(false),
+    ]);
   } catch (e) {
     trackingLog.warn(
       'Failed to persist session flags',
       data: {'error': e.toString()},
     );
   }
+  requireCurrentCommand();
 
   // Ensure stop/time/event alarms have route context even if the
   // foreground->background route registration invoke is dropped.
   // HomeScreen persists directions into TrackingStateStore; restore from it here.
-  unawaited(() async {
-    await SnapshotRouteRestorer.restoreFromStoreIfActiveAndNotPaused(
-      isActive: TrackingStateStore.isActive,
-      isPaused: TrackingStateStore.isPaused,
-      loadSnapshot: TrackingStateStore.loadSnapshot,
-      registerRouteFromDirections: ({
-        required directions,
-        required origin,
-        required destination,
-        required transitMode,
-        destinationName,
-      }) {
-        return TrackingService().registerRouteFromDirections(
-          directions: directions,
-          origin: origin,
-          destination: destination,
-          transitMode: transitMode,
-          destinationName: destinationName,
-          activateRoute: true, // Ensure route is activated on restore
-        );
-      },
-    );
-  }());
+  // This restoration is correctness state, not optional decoration. Await it
+  // before startTrackingAck so the first location tick cannot race ahead of
+  // the route topology saved by HomeScreen.
+  await SnapshotRouteRestorer.restoreFromStoreIfActiveAndNotPaused(
+    isActive: TrackingStateStore.isActive,
+    isPaused: TrackingStateStore.isPaused,
+    loadSnapshot: TrackingStateStore.loadSnapshot,
+    registerRouteFromDirections: ({
+      required directions,
+      required origin,
+      required destination,
+      required transitMode,
+      destinationName,
+    }) {
+      return TrackingService().registerRouteFromDirections(
+        directions: directions,
+        origin: origin,
+        destination: destination,
+        transitMode: transitMode,
+        destinationName: destinationName,
+        activateRoute: true, // Ensure route is activated on restore
+        isCommandCurrent: isCommandCurrent,
+      );
+    },
+  );
+  requireCurrentCommand();
 
   _alarmController.resetAlarmState();
   _lastActiveState = null;
@@ -1851,7 +2006,8 @@ void _handleBackgroundStartTracking({
     'Starting TrackingService location stream via LocationManager',
     name: 'TrackingService',
   );
-  startLocationStream(service);
+  await startLocationStream(service, isStartCurrent: isCommandCurrent);
+  requireCurrentCommand();
 }
 
 Future<void> _handleBackgroundStopAlarm() async {
@@ -1907,6 +2063,8 @@ Future<void> _handleBackgroundRegisterRouteDirections({
   required LatLng destination,
   required bool transitMode,
   String? destinationName,
+  bool activateRoute = false,
+  required bool Function() isCommandCurrent,
 }) async {
   await TrackingService().registerRouteFromDirections(
     directions: directions,
@@ -1914,6 +2072,8 @@ Future<void> _handleBackgroundRegisterRouteDirections({
     destination: destination,
     transitMode: transitMode,
     destinationName: destinationName,
+    activateRoute: activateRoute,
+    isCommandCurrent: isCommandCurrent,
   );
 }
 
@@ -1957,6 +2117,44 @@ Future<void> _onStart(
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   _isBackgroundIsolate = true;
+  var waitForFreshArmCommand = false;
+
+  // A boot/OS restart enters with no event payload. Validate persisted intent
+  // before initializing notifications or location listeners so a stale flag
+  // cannot briefly revive yesterday's alarm. Fresh HomeScreen arms persist a
+  // complete snapshot before starting the service, so they pass this same gate.
+  if (initialData == null) {
+    try {
+      final isActive = await TrackingStateStore.isActive();
+      final snapshot = await TrackingStateStore.loadSnapshot();
+      final recovery = TrackingRecoveryPolicy.evaluate(
+        isActive: isActive,
+        snapshot: snapshot,
+        now: AppClock().now(),
+      );
+      waitForFreshArmCommand = await TrackingStateStore.hasFreshArmPending(
+        now: AppClock().now(),
+      );
+      if (recovery != TrackingRecoveryDisposition.restore) {
+        if (isActive || snapshot != null) {
+          await Future.wait([
+            TrackingStateStore.clearSnapshot(),
+            TrackingStateStore.setActive(false),
+            TrackingStateStore.setPaused(false),
+          ]);
+        }
+        await service.stopSelf();
+        return;
+      }
+    } catch (e) {
+      trackingLog.warn(
+        'Recovery preflight failed; refusing to resurrect persisted tracking',
+        data: {'error': e.toString()},
+      );
+      await service.stopSelf();
+      return;
+    }
+  }
 
   // Bridge RouteSessionManager streams to TrackingService controllers
   // This must be set up unconditionally to work in test mode
@@ -2014,7 +2212,10 @@ Future<void> _onStart(
       name: 'TrackingService',
     );
     if (!TrackingService.isTestMode) {
-      await NotificationService().initialize();
+      await NotificationService().initialize(
+        requestAndroidPermissions: false,
+        processAppLaunch: false,
+      );
       dev.log(
         'DEBUG: NotificationService initialized successfully in background',
         name: 'TrackingService',
@@ -2048,6 +2249,7 @@ Future<void> _onStart(
         required double alarmValue,
         required bool transitMode,
         bool isSimulationMode = false,
+        required bool Function() isCommandCurrent,
         required ServiceInstance service,
       }) async {
         if (isSimulationMode) {
@@ -2060,17 +2262,18 @@ Future<void> _onStart(
           TrackingService()._isSimulationMode = false;
         }
 
-        _handleBackgroundStartTracking(
+        await _handleBackgroundStartTracking(
           destination: destination,
           destinationName: destinationName,
           alarmMode: alarmMode,
           alarmValue: alarmValue,
           transitMode: transitMode,
+          isCommandCurrent: isCommandCurrent,
           service: service,
         );
       },
       onStopTracking: ({bool stopSelf = true}) async {
-        _onStop();
+        await _onStop();
       },
       onRegisterRoute: ({
         required String key,
@@ -2099,6 +2302,8 @@ Future<void> _onStart(
         required LatLng destination,
         required bool transitMode,
         String? destinationName,
+        bool activateRoute = false,
+        required bool Function() isCommandCurrent,
       }) async {
         await _handleBackgroundRegisterRouteDirections(
           directions: directions,
@@ -2106,6 +2311,8 @@ Future<void> _onStart(
           destination: destination,
           transitMode: transitMode,
           destinationName: destinationName,
+          activateRoute: activateRoute,
+          isCommandCurrent: isCommandCurrent,
         );
       },
       onStopAlarm: () async {
@@ -2131,17 +2338,6 @@ Future<void> _onStart(
     ),
   ).registerAll();
 
-  // --- INITIALIZATION AFTER LISTENERS ARE SET ---
-
-  try {
-    await NotificationService().initialize();
-  } catch (e) {
-    trackingLog.warn(
-      'NotificationService.initialize() failed in background',
-      data: {'error': e.toString()},
-    );
-  }
-
   // Set up alarm reset callback
   LocationManager().onAlarmReset = _resetAlarmState;
 
@@ -2150,6 +2346,7 @@ Future<void> _onStart(
 
   // Handle data passed directly (for test mode)
   if (initialData != null) {
+    _sessionArmedAt = AppClock().now();
     _destination = LatLng(
       initialData['destinationLat'],
       initialData['destinationLng'],
@@ -2187,7 +2384,7 @@ Future<void> _onStart(
     _smoothedSpeed = null;
     _locationStreamHandler.reset();
 
-    startLocationStream(service);
+    await startLocationStream(service);
     // Start fast polling for notification action buttons (Stop Alarm, Ignore, End Tracking)
     _alarmController.startAlarmStopPollTimer(
       trackingSessionActive: () => _trackingSessionActive,
@@ -2199,6 +2396,22 @@ Future<void> _onStart(
       name: 'TrackingService',
     );
     try {
+      if (waitForFreshArmCommand) {
+        // Listeners are ready; let the explicit fresh-arm command own startup.
+        // If its foreground process died before delivery, recover the valid
+        // snapshot after the full pending TTL instead of racing a slow OEM.
+        for (var i = 0; i < 60; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          if (_trackingSessionActive) return;
+          if (!await TrackingStateStore.hasFreshArmPending(
+            now: AppClock().now(),
+          )) {
+            break;
+          }
+        }
+        if (_trackingSessionActive) return;
+        await TrackingStateStore.setArmPending(false);
+      }
       final isActive = await TrackingStateStore.isActive();
       if (isActive) {
         // BACKLOG #14: emit reliability telemetry — the FGS was restarted by the
@@ -2211,6 +2424,7 @@ Future<void> _onStart(
         );
         final snapshot = await TrackingStateStore.loadSnapshot();
         if (snapshot != null) {
+          _sessionArmedAt = snapshot.createdAt;
           dev.log(
             'DEBUG: Restoring session from snapshot: ${snapshot.destinationName}',
             name: 'TrackingService',
@@ -2258,11 +2472,14 @@ Future<void> _onStart(
                 snapshot.createdAt.millisecondsSinceEpoch / 1000.0;
             final double age = wallNow - snapWall;
             final double monoNow = AppClock().monotonicSeconds();
-            final double tSeed = (age.isFinite && age >= 0 && age < 86400)
-                ? monoNow - age
-                : monoNow;
+            final double tSeed =
+                (age.isFinite && age >= 0 && age < 86400)
+                    ? monoNow - age
+                    : monoNow;
             _alarmController.seedReachabilityAnchorAtArm(
-                sMeters: sSeed, tSeconds: tSeed);
+              sMeters: sSeed,
+              tSeconds: tSeed,
+            );
           }
 
           // 2. Register Route (if directions available)
@@ -2289,7 +2506,7 @@ Future<void> _onStart(
           );
 
           // 3. Start Location Stream
-          startLocationStream(service);
+          await startLocationStream(service);
           _alarmController.startAlarmStopPollTimer(
             trackingSessionActive: () => _trackingSessionActive,
           );
@@ -2322,7 +2539,10 @@ Future<void> _onStart(
   }
 }
 
-Future<void> startLocationStream(ServiceInstance service) async {
+Future<void> startLocationStream(
+  ServiceInstance service, {
+  bool Function()? isStartCurrent,
+}) async {
   // G1: hold a PARTIAL_WAKE_LOCK for the whole tracking session so the CPU stays
   // awake with the screen off and the accel/gyro streams + EKF keep advancing
   // through tunnels. Acquired here so it is re-taken on the recovery-after-death
@@ -2482,7 +2702,7 @@ Future<void> startLocationStream(ServiceInstance service) async {
       await TrackingStateStore.setNotificationsMuted(false);
     } catch (_) {}
 
-    _onStop();
+    await _onStop();
     try {
       svc.stopSelf();
     } catch (_) {}
@@ -2503,14 +2723,18 @@ Future<void> startLocationStream(ServiceInstance service) async {
       alarmValue: _alarmValue,
       transitMode: _transitMode,
       currentDirections: _currentDirections,
+      armedAt: _sessionArmedAt,
       stepBoundsMeters: _stepBoundsMeters,
       stepDurationsSeconds: _stepDurationsSeconds,
+      stepBoundsMetersByKey: _sessionManager.stepBoundsMetersByKey,
+      stepDurationsSecondsByKey: _sessionManager.stepDurationsSecondsByKey,
       polylineTotalMeters: _lastComputedPolylineTotalMeters,
       transitLegStopsByKey: _sessionManager.transitLegStopsByKey,
       fallbackTransitLegStops:
           _sessionManager.transitLegStopsByKey.values.firstOrNull ??
           _transitLegStops,
     ),
+    isStartCurrent: isStartCurrent,
   );
 }
 
@@ -2746,6 +2970,7 @@ extension TrackingServiceRouteOps on TrackingService {
     required bool transitMode,
     String? destinationName,
     bool activateRoute = false,
+    bool Function()? isCommandCurrent,
   }) async {
     // In test mode, we run everything in-process and often register routes
     // before startTracking() invokes _onStart() (which flips _isBackgroundIsolate).
@@ -2758,17 +2983,18 @@ extension TrackingServiceRouteOps on TrackingService {
         transitMode: transitMode,
         destinationName: destinationName,
         activateRoute: activateRoute,
+        isRegistrationCurrent: isCommandCurrent,
       );
       return;
     }
 
     // IMPORTANT: route registration must occur in the background isolate,
-    // because snapping/progress (and therefore distance-mode alarms) are evaluated there.
-    // If ACK retry fails, fall back to a best-effort invoke to the background service,
-    // NOT a foreground-only registration.
+    // because snapping/progress (and therefore distance-mode alarms) are
+    // evaluated there. Missing ACK is a real failure, never implicit success.
     if (!_isBackgroundIsolate) {
       _ensureAckListenersRegistered();
       final args = {
+        if (_currentArmSessionId != null) 'armSessionId': _currentArmSessionId,
         'directions': directions,
         'origin': {'lat': origin.latitude, 'lng': origin.longitude},
         'destination': {
@@ -2780,25 +3006,23 @@ extension TrackingServiceRouteOps on TrackingService {
         'activateRoute': activateRoute,
       };
 
-      final ok = await _invokeWithAckRetry(
-        method: 'registerRouteDirections',
-        ackEvent: 'registerRouteDirectionsAck',
-        args: args,
+      await TrackingHandshakePolicy.requireAcknowledgement(
+        operation: 'registerRouteDirections',
+        attempt:
+            () => _invokeWithAckRetry(
+              method: 'registerRouteDirections',
+              ackEvent: 'registerRouteDirectionsAck',
+              args: args,
+            ),
+        recover: () async {
+          trackingLog.error(
+            'Route registration not ACKed; restarting service for one retry',
+          );
+          if (!await (_service?.isRunning() ?? Future.value(false))) {
+            await _service?.startService();
+          }
+        },
       );
-      if (ok) return;
-
-      // Best-effort fallback: still try to send to background even if ACK is missing.
-      try {
-        if (!await (_service?.isRunning() ?? Future.value(false))) {
-          await _service?.startService();
-        }
-        _service?.invoke('registerRouteDirections', args);
-      } catch (e) {
-        trackingLog.error(
-          'registerRouteFromDirections fallback invoke failed',
-          error: e,
-        );
-      }
       return;
     }
 
@@ -2810,6 +3034,7 @@ extension TrackingServiceRouteOps on TrackingService {
       transitMode: transitMode,
       destinationName: destinationName,
       activateRoute: activateRoute,
+      isRegistrationCurrent: isCommandCurrent,
     );
   }
 }

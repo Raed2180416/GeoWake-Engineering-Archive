@@ -27,26 +27,31 @@ class GuardianSettingsSection extends StatelessWidget {
         return ValueListenableBuilder<bool>(
           valueListenable: GuardianService.instance.enabledListenable,
           builder: (context, guardianOn, ___) {
+            final automatic = GuardianService.instance.hasAutomaticDelivery;
             return ListTile(
               leading: const Icon(Icons.shield_outlined),
               title: const Text('Guardian mode'),
               subtitle: Text(
                 allowed
                     ? (guardianOn
-                        ? 'On — a saved contact is told when you arrive'
-                        : 'Auto-share every commute with someone you trust')
-                    : 'Auto-share commutes + "arrived safely" — GeoWake Pro',
+                        ? (automatic
+                            ? 'On — your saved contact is notified automatically'
+                            : 'On — a ready-to-send live link opens when you arm')
+                        : (automatic
+                            ? 'Auto-share every commute with someone you trust'
+                            : 'Prepare a live link for someone you trust'))
+                    : 'Live commute links + "arrived safely" — GeoWake Pro',
               ),
-              trailing: allowed
-                  ? const Icon(Icons.chevron_right)
-                  : const ProBadge(),
-              onTap: () => ProGate.run(
-                context,
-                allowed: allowed,
-                source: PaywallSource.guardian,
-                onAllowed: () =>
-                    Navigator.of(context).pushNamed(guardianRoute),
-              ),
+              trailing:
+                  allowed ? const Icon(Icons.chevron_right) : const ProBadge(),
+              onTap:
+                  () => ProGate.run(
+                    context,
+                    allowed: allowed,
+                    source: PaywallSource.guardian,
+                    onAllowed:
+                        () => Navigator.of(context).pushNamed(guardianRoute),
+                  ),
             );
           },
         );

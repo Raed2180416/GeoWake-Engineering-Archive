@@ -215,7 +215,7 @@ void main() {
       'resumeFromNotification restores from snapshot and reissues journey',
       () async {
         await TrackingStateStore.setNotificationsMuted(true);
-        await TrackingStateStore.setActive(false);
+        await TrackingStateStore.setActive(true);
         await TrackingStateStore.setAlarmFired(true);
         await TrackingStateStore.setPaused(true);
 
@@ -229,7 +229,7 @@ void main() {
             metroMode: false,
             userLat: 0.0,
             userLng: 0.0,
-            createdAt: DateTime(2024, 1, 1),
+            createdAt: DateTime.now(),
             directions: null,
           ),
         );

@@ -7,6 +7,12 @@ const config = {
   
   // Google Maps API
   googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+
+  // Google Play Developer API. The JSON is a service-account credential whose
+  // Play Console account has order/subscription read access. Billing endpoints
+  // fail closed with 503 when this is absent; Maps and legal remain available.
+  googlePlayServiceAccountJson: process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON,
+  googlePlayPackageName: process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.geowake.app',
   
   // JWT Configuration
   jwtSecret: process.env.JWT_SECRET,

@@ -71,17 +71,33 @@ class ScenarioConfig {
   final double windowDur; // seconds (phantom/gap)
   final String label;
 
-  const ScenarioConfig._(this.kind, this.windowStart, this.windowDur, this.label);
+  const ScenarioConfig._(
+    this.kind,
+    this.windowStart,
+    this.windowDur,
+    this.label,
+  );
 
   factory ScenarioConfig.primary() =>
       const ScenarioConfig._(ScenarioKind.primary, 0, 0, 'PRIMARY');
   factory ScenarioConfig.phantom(double start, double dur) => ScenarioConfig._(
-      ScenarioKind.phantomInject, start, dur, 'SYNTHETIC:PHANTOM_INJECT');
+    ScenarioKind.phantomInject,
+    start,
+    dur,
+    'SYNTHETIC:PHANTOM_INJECT',
+  );
   factory ScenarioConfig.gap(double start, double dur) => ScenarioConfig._(
-      ScenarioKind.gapInject, start, dur,
-      'SYNTHETIC:GAP_INJECT(${dur.toStringAsFixed(0)}s)');
-  factory ScenarioConfig.coldStart() =>
-      const ScenarioConfig._(ScenarioKind.coldStart, 0, 0, 'SYNTHETIC:COLD_START');
+    ScenarioKind.gapInject,
+    start,
+    dur,
+    'SYNTHETIC:GAP_INJECT(${dur.toStringAsFixed(0)}s)',
+  );
+  factory ScenarioConfig.coldStart() => const ScenarioConfig._(
+    ScenarioKind.coldStart,
+    0,
+    0,
+    'SYNTHETIC:COLD_START',
+  );
 
   double get windowEnd => windowStart + windowDur;
 }
@@ -97,7 +113,13 @@ class _StationAnchor {
   final double arrivalTs;
   final double sTravelJson;
   double sProj = double.nan;
-  _StationAnchor(this.name, this.lat, this.lng, this.arrivalTs, this.sTravelJson);
+  _StationAnchor(
+    this.name,
+    this.lat,
+    this.lng,
+    this.arrivalTs,
+    this.sTravelJson,
+  );
 }
 
 class _ImuRow {
@@ -211,19 +233,23 @@ _Fixture _loadFixture(String basename) {
   final polyline = <LatLng>[];
   for (final p in (j['oriented_polyline'] as List)) {
     final pair = p as List;
-    polyline.add(LatLng((pair[0] as num).toDouble(), (pair[1] as num).toDouble()));
+    polyline.add(
+      LatLng((pair[0] as num).toDouble(), (pair[1] as num).toDouble()),
+    );
   }
 
   final stations = <_StationAnchor>[];
   for (final s in (j['stations'] as List)) {
     final m = s as Map<String, dynamic>;
-    stations.add(_StationAnchor(
-      m['name'] as String,
-      (m['lat'] as num).toDouble(),
-      (m['lng'] as num).toDouble(),
-      (m['arrival_t_s'] as num).toDouble(),
-      (m['s_travel'] as num).toDouble(),
-    ));
+    stations.add(
+      _StationAnchor(
+        m['name'] as String,
+        (m['lat'] as num).toDouble(),
+        (m['lng'] as num).toDouble(),
+        (m['arrival_t_s'] as num).toDouble(),
+        (m['s_travel'] as num).toDouble(),
+      ),
+    );
   }
 
   final at = j['alarm_target'] as Map<String, dynamic>;
@@ -238,7 +264,10 @@ _Fixture _loadFixture(String basename) {
   final blindWindows = <List<double>>[];
   for (final w in (j['gps_blind_windows_s'] as List? ?? const [])) {
     final pair = w as List;
-    blindWindows.add([(pair[0] as num).toDouble(), (pair[1] as num).toDouble()]);
+    blindWindows.add([
+      (pair[0] as num).toDouble(),
+      (pair[1] as num).toDouble(),
+    ]);
   }
 
   final imu = <_ImuRow>[];
@@ -248,11 +277,17 @@ _Fixture _loadFixture(String basename) {
     if (line.isEmpty) continue;
     final c = line.split(',');
     if (c.length < 7) continue;
-    imu.add(_ImuRow(
-      double.parse(c[0]),
-      double.parse(c[1]), double.parse(c[2]), double.parse(c[3]),
-      double.parse(c[4]), double.parse(c[5]), double.parse(c[6]),
-    ));
+    imu.add(
+      _ImuRow(
+        double.parse(c[0]),
+        double.parse(c[1]),
+        double.parse(c[2]),
+        double.parse(c[3]),
+        double.parse(c[4]),
+        double.parse(c[5]),
+        double.parse(c[6]),
+      ),
+    );
   }
 
   final gps = <_GpsRow>[];
@@ -263,12 +298,19 @@ _Fixture _loadFixture(String basename) {
     final c = line.split(',');
     if (c.length < 4) continue;
     final speedStr = c.length >= 5 ? c[4].trim() : '';
-    final speed = speedStr.isEmpty ? double.nan : (double.tryParse(speedStr) ?? double.nan);
-    gps.add(_GpsRow(
-      double.parse(c[0]),
-      double.parse(c[1]), double.parse(c[2]), double.parse(c[3]),
-      speed,
-    ));
+    final speed =
+        speedStr.isEmpty
+            ? double.nan
+            : (double.tryParse(speedStr) ?? double.nan);
+    gps.add(
+      _GpsRow(
+        double.parse(c[0]),
+        double.parse(c[1]),
+        double.parse(c[2]),
+        double.parse(c[3]),
+        speed,
+      ),
+    );
   }
 
   return _Fixture(
@@ -319,7 +361,13 @@ class _StationScore {
   final double sTarget;
   final double sEstAtArrival;
   final double sErr;
-  _StationScore(this.name, this.arrivalTs, this.sTarget, this.sEstAtArrival, this.sErr);
+  _StationScore(
+    this.name,
+    this.arrivalTs,
+    this.sTarget,
+    this.sEstAtArrival,
+    this.sErr,
+  );
 }
 
 /// Diagnostics captured across a scenario window (phantom / gap).
@@ -427,7 +475,8 @@ bool _inBlindWindow(double t, List<List<double>> windows) {
 // LocationManagerReplica.process (location_manager.dart:305-344):
 // G27 100m accuracy gate + speed-sentinel rewrite.
 _GpsRow? _locationReplicaProcess(_GpsRow r, _GpsRow? prev) {
-  if (!r.hacc.isFinite || r.hacc > FireDecisionConfig.defaultAccuracyGateMeters) {
+  if (!r.hacc.isFinite ||
+      r.hacc > FireDecisionConfig.defaultAccuracyGateMeters) {
     return null;
   }
   double speed = r.speed;
@@ -448,12 +497,14 @@ double _haversine(double lat1, double lon1, double lat2, double lon2) {
   final p2 = lat2 * math.pi / 180.0;
   final dp = (lat2 - lat1) * math.pi / 180.0;
   final dl = (lon2 - lon1) * math.pi / 180.0;
-  final a = math.sin(dp / 2) * math.sin(dp / 2) +
+  final a =
+      math.sin(dp / 2) * math.sin(dp / 2) +
       math.cos(p1) * math.cos(p2) * math.sin(dl / 2) * math.sin(dl / 2);
   return 2 * R * math.asin(math.min(1.0, math.sqrt(a)));
 }
 
-Duration _dur(double tSeconds) => Duration(microseconds: (tSeconds * 1e6).round());
+Duration _dur(double tSeconds) =>
+    Duration(microseconds: (tSeconds * 1e6).round());
 
 // ---------------------------------------------------------------------------
 // The replay
@@ -462,13 +513,15 @@ Duration _dur(double tSeconds) => Duration(microseconds: (tSeconds * 1e6).round(
 // When true, the driver feeds the physics reachability bound into the REAL
 // evaluator (production behavior). When false, reachability is disabled so the
 // harness can A/B prove the bound only ever fires earlier, never later.
-RunResult runReplay(String basename,
-    {ScenarioConfig? config,
-    bool useReachability = true,
-    // Diagnostic seam: lets a probe attach orchestrator hooks (onLog,
-    // onStationSnapConfirmed, publicState sampling) without altering replay
-    // behaviour. Null in all gate tests.
-    void Function(EkfOrchestrator orch)? onOrchestrator}) {
+RunResult runReplay(
+  String basename, {
+  ScenarioConfig? config,
+  bool useReachability = true,
+  // Diagnostic seam: lets a probe attach orchestrator hooks (onLog,
+  // onStationSnapConfirmed, publicState sampling) without altering replay
+  // behaviour. Null in all gate tests.
+  void Function(EkfOrchestrator orch)? onOrchestrator,
+}) {
   final cfg = config ?? ScenarioConfig.primary();
   AppLogger.minLevel = LogLevel.error; // silence evaluator dev.log spam
 
@@ -479,20 +532,21 @@ RunResult runReplay(String basename,
   for (final s in fx.stations) {
     s.sProj = route.projectLatLng(s.lat, s.lng);
   }
-  fx.alarmTarget.sProj = route.projectLatLng(fx.alarmTarget.lat, fx.alarmTarget.lng);
+  fx.alarmTarget.sProj = route.projectLatLng(
+    fx.alarmTarget.lat,
+    fx.alarmTarget.lng,
+  );
   if (fx.stations.first.sProj.isNaN) fx.stations.first.sProj = 0.0;
   if (fx.alarmTarget.sProj.isNaN) fx.alarmTarget.sProj = totalLen;
 
-  final stationMeters = fx.stations
-      .map((s) => s.sProj)
-      .where((v) => v.isFinite)
-      .toList()
-    ..sort();
+  final stationMeters =
+      fx.stations.map((s) => s.sProj).where((v) => v.isFinite).toList()..sort();
 
   final gtT = <double>[];
   final gtS = <double>[];
   {
-    final sorted = [...fx.stations]..sort((a, b) => a.arrivalTs.compareTo(b.arrivalTs));
+    final sorted = [...fx.stations]
+      ..sort((a, b) => a.arrivalTs.compareTo(b.arrivalTs));
     double lastS = 0.0;
     for (final s in sorted) {
       final sv = s.sProj.isFinite ? s.sProj : lastS;
@@ -506,9 +560,10 @@ RunResult runReplay(String basename,
   // Single final metro leg for evaluateCoinciding. Guard against degenerate
   // 0/1-station fixtures (a destination alarm needs a first + last station);
   // sublist(1, len-1) would RangeError on len<2.
-  final intermediate = fx.stations.length >= 2
-      ? fx.stations.sublist(1, fx.stations.length - 1)
-      : <_StationAnchor>[];
+  final intermediate =
+      fx.stations.length >= 2
+          ? fx.stations.sublist(1, fx.stations.length - 1)
+          : <_StationAnchor>[];
   final leg = TransitLegStops(
     legStartMeters: 0.0,
     legEndMeters: fx.alarmTarget.sProj,
@@ -540,13 +595,16 @@ RunResult runReplay(String basename,
     vLineTable: const VLineTable(),
     config: const ReachabilityConfig(dwellMinSeconds: 0.0),
   );
-  final reachTopo =
-      RouteTopology(stationMeters: stationMeters, dwellMinSeconds: 0.0);
+  final reachTopo = RouteTopology(
+    stationMeters: stationMeters,
+    dwellMinSeconds: 0.0,
+  );
   // Seed the cold-start anchor at trip origin (s=0) so reachability is a safety
   // net from t0 even if GPS never yields a single fix (closes GLMT-03).
-  final double reachT0 = fx.imu.isNotEmpty
-      ? fx.imu.first.t
-      : (fx.gps.isNotEmpty ? fx.gps.first.t : 0.0);
+  final double reachT0 =
+      fx.imu.isNotEmpty
+          ? fx.imu.first.t
+          : (fx.gps.isNotEmpty ? fx.gps.first.t : 0.0);
   reach.seedColdStart(tSeconds: reachT0, sMeters: 0.0);
   double reachBoundAtFire = double.nan;
 
@@ -592,7 +650,10 @@ RunResult runReplay(String basename,
   double maxBackwardStep = 0.0;
   double lastS = double.nan;
 
-  double maxDriftAbs = -1, maxDriftTs = double.nan, maxDriftEkf = double.nan, maxDriftTrue = double.nan;
+  double maxDriftAbs = -1,
+      maxDriftTs = double.nan,
+      maxDriftEkf = double.nan,
+      maxDriftTrue = double.nan;
   double maxSpeedSeen = 0.0, maxVSeen = 0.0;
 
   void feedMetrics(double t, double sEst, bool gpsAvail) {
@@ -629,8 +690,11 @@ RunResult runReplay(String basename,
     final st = orch.publicState;
     double? reachBound;
     if (useReachability) {
-      final rb =
-          reach.boundNow(nowSeconds: t, lineName: fx.line, topology: reachTopo);
+      final rb = reach.boundNow(
+        nowSeconds: t,
+        lineName: fx.line,
+        topology: reachTopo,
+      );
       if (rb != null && rb.sMaxMeters.isFinite) reachBound = rb.sMaxMeters;
     }
     final trigger = AlarmEvaluator.evaluateCoinciding(
@@ -652,7 +716,8 @@ RunResult runReplay(String basename,
       fractileK: FireDecisionConfig.fractileK,
       reachableProgressBoundMeters: reachBound,
     );
-    if (trigger != null && trigger.eventType == AlarmEventType.finalDestination) {
+    if (trigger != null &&
+        trigger.eventType == AlarmEventType.finalDestination) {
       fired = true;
       fireTs = t;
       fireS = st.s;
@@ -663,35 +728,40 @@ RunResult runReplay(String basename,
   }
 
   // Accept a GPS fix (used by both the real branch and the phantom injector).
-  void acceptGps(_GpsRow pos, double t) {
-    lastGpsFixTs = t; // BEFORE projection (phantom trap, sensor_fusion:140)
-    prevAcceptedGps = pos;
+  bool acceptGps(_GpsRow pos, double t) {
     final ts = _dur(t);
-    final sProj = route.projectLatLng(pos.lat, pos.lng);
-    if (sProj.isFinite) {
+    orch.setStationContext(stationMeters: stationMeters, isMetroLeg: true);
+    final accepted = orch.onGpsFixAuto(
+      GpsFix(
+        lat: pos.lat,
+        lng: pos.lng,
+        accuracyMeters: pos.hacc,
+        speedMps: pos.speed,
+        timestamp: ts,
+      ),
+    );
+    if (accepted) {
+      lastGpsFixTs = t;
+      prevAcceptedGps = pos;
       firstInitTs ??= t;
       lastAcceptedFixTs = t;
+      if (pos.speed.isFinite && pos.speed.abs() > maxSpeedSeen) {
+        maxSpeedSeen = pos.speed.abs();
+      }
     }
-    if (pos.speed.isFinite && pos.speed.abs() > maxSpeedSeen) {
-      maxSpeedSeen = pos.speed.abs();
-    }
-    orch.setStationContext(stationMeters: stationMeters, isMetroLeg: true);
-    orch.onGpsFixAuto(GpsFix(
-      lat: pos.lat, lng: pos.lng,
-      accuracyMeters: pos.hacc, speedMps: pos.speed, timestamp: ts,
-    ));
     final st = orch.publicState;
     if (st.v.abs() > maxVSeen) maxVSeen = st.v.abs();
     recT.add(t);
     recS.add(st.s);
     if (firstInitTs != null) {
-      feedMetrics(t, st.s, true);
+      feedMetrics(t, st.s, accepted);
     }
     if (st.s.isFinite) lastS = st.s;
     if (firstInitTs != null) {
       lastFireEvalTs = t;
       maybeEvaluateFire(t);
     }
+    return accepted;
   }
 
   void recordWindow(double t, double s, double v) {
@@ -721,7 +791,8 @@ RunResult runReplay(String basename,
 
         // GAP_INJECT: drop IMU rows inside the spliced gap.
         if (cfg.kind == ScenarioKind.gapInject &&
-            r.t >= cfg.windowStart && r.t < cfg.windowEnd) {
+            r.t >= cfg.windowStart &&
+            r.t < cfg.windowEnd) {
           continue;
         }
 
@@ -740,15 +811,23 @@ RunResult runReplay(String basename,
 
         if (lastGpsFixTs != null &&
             (r.t - lastGpsFixTs!) > 3.0 &&
-            (lastGpsUnavailableTs == null || (r.t - lastGpsUnavailableTs!) > 0.5)) {
+            (lastGpsUnavailableTs == null ||
+                (r.t - lastGpsUnavailableTs!) > 0.5)) {
           lastGpsUnavailableTs = r.t;
           orch.onGpsUnavailable(ts);
         }
 
-        orch.onImuSample(ImuSample(
-          ax: r.ax, ay: r.ay, az: r.az,
-          gx: r.gx, gy: r.gy, gz: r.gz, timestamp: ts,
-        ));
+        orch.onImuSample(
+          ImuSample(
+            ax: r.ax,
+            ay: r.ay,
+            az: r.az,
+            gx: r.gx,
+            gy: r.gy,
+            gz: r.gz,
+            timestamp: ts,
+          ),
+        );
 
         final st = orch.publicState;
         if (st.v.abs() > maxVSeen) maxVSeen = st.v.abs();
@@ -779,7 +858,8 @@ RunResult runReplay(String basename,
 
         // PHANTOM_INJECT: emit a frozen confident fix every 2s inside the window.
         if (cfg.kind == ScenarioKind.phantomInject &&
-            r.t >= cfg.windowStart && r.t < cfg.windowEnd &&
+            r.t >= cfg.windowStart &&
+            r.t < cfg.windowEnd &&
             frozenLat.isFinite &&
             (lastPhantomTs == null || (r.t - lastPhantomTs!) >= 2.0)) {
           lastPhantomTs = r.t;
@@ -812,14 +892,16 @@ RunResult runReplay(String basename,
 
         // GAP_INJECT: drop GPS rows inside the spliced gap.
         if (cfg.kind == ScenarioKind.gapInject &&
-            r.t >= cfg.windowStart && r.t < cfg.windowEnd) {
+            r.t >= cfg.windowStart &&
+            r.t < cfg.windowEnd) {
           continue;
         }
 
         // PHANTOM_INJECT: suppress real fixes in the window (frozen ones injected
         // from the IMU branch instead).
         if (cfg.kind == ScenarioKind.phantomInject &&
-            r.t >= cfg.windowStart && r.t < cfg.windowEnd) {
+            r.t >= cfg.windowStart &&
+            r.t < cfg.windowEnd) {
           continue;
         }
 
@@ -829,11 +911,11 @@ RunResult runReplay(String basename,
         final pos = _locationReplicaProcess(r, prevAcceptedGps);
         if (pos == null) continue;
 
-        acceptGps(pos, r.t);
+        final accepted = acceptGps(pos, r.t);
         // Reset the reachability anchor ONLY on a real accepted fix (precond
         // iii). Phantom-injected fixes (other branch) must never anchor here —
         // production protects this via the accuracy gate + EKF phantom rejection.
-        if (useReachability) {
+        if (useReachability && accepted) {
           final sp = route.projectLatLng(pos.lat, pos.lng);
           if (sp.isFinite) {
             reach.onAcceptedFix(
@@ -849,8 +931,14 @@ RunResult runReplay(String basename,
     }
   }
 
-  runZoned(body,
-      zoneSpecification: ZoneSpecification(print: (s, p, z, l) {/* swallow */}));
+  runZoned(
+    body,
+    zoneSpecification: ZoneSpecification(
+      print: (s, p, z, l) {
+        /* swallow */
+      },
+    ),
+  );
 
   double sEstAt(double t) {
     if (recT.isEmpty) return double.nan;
@@ -873,7 +961,9 @@ RunResult runReplay(String basename,
   for (final s in fx.stations) {
     final est = sEstAt(s.arrivalTs);
     final target = s.sProj.isFinite ? s.sProj : double.nan;
-    stationScores.add(_StationScore(s.name, s.arrivalTs, target, est, est - target));
+    stationScores.add(
+      _StationScore(s.name, s.arrivalTs, target, est, est - target),
+    );
   }
 
   final fireTrueS = fired ? gt.at(fireTs) : double.nan;
@@ -887,11 +977,15 @@ RunResult runReplay(String basename,
     final entry = windowEntryS[w];
     final exit = windowExitS[w];
     if (entry != null && exit != null) {
-      blindNotes.add('window ${win[0].toStringAsFixed(0)}-${win[1].toStringAsFixed(0)}s: '
-          's_est ${entry.toStringAsFixed(0)}->${exit.toStringAsFixed(0)} '
-          '(d${(exit - entry).toStringAsFixed(0)}m)');
+      blindNotes.add(
+        'window ${win[0].toStringAsFixed(0)}-${win[1].toStringAsFixed(0)}s: '
+        's_est ${entry.toStringAsFixed(0)}->${exit.toStringAsFixed(0)} '
+        '(d${(exit - entry).toStringAsFixed(0)}m)',
+      );
     } else {
-      blindNotes.add('window ${win[0].toStringAsFixed(0)}-${win[1].toStringAsFixed(0)}s: (pre-init)');
+      blindNotes.add(
+        'window ${win[0].toStringAsFixed(0)}-${win[1].toStringAsFixed(0)}s: (pre-init)',
+      );
     }
   }
   if (wd != null && wd.minSInWindow.isInfinite) wd.minSInWindow = double.nan;
@@ -941,74 +1035,113 @@ String _f(double v, [int d = 1]) => v.isNaN ? 'NaN' : v.toStringAsFixed(d);
 void printScorecard(RunResult r) {
   final b = StringBuffer();
   b.writeln('');
-  b.writeln('================= EKF REPLAY SCORECARD [${r.scenario}] =================');
+  b.writeln(
+    '================= EKF REPLAY SCORECARD [${r.scenario}] =================',
+  );
   b.writeln('ride     : ${r.ride}');
   b.writeln('device   : ${r.device}  platform: ${r.platform}');
-  b.writeln('route len: ${_f(r.totalLen)} m   IMU rows: ${r.numImu}   GPS rows: ${r.numGps}');
-  b.writeln('EKF first-init at t = ${_f(r.firstInitTs)} s (s_est=0 before this)');
+  b.writeln(
+    'route len: ${_f(r.totalLen)} m   IMU rows: ${r.numImu}   GPS rows: ${r.numGps}',
+  );
+  b.writeln(
+    'EKF first-init at t = ${_f(r.firstInitTs)} s (s_est=0 before this)',
+  );
   b.writeln('');
   b.writeln('PER-STATION  (s_err = s_est - s_target)');
-  b.writeln('  ${'station'.padRight(34)} ${'t_s'.padLeft(8)} '
-      '${'s_target'.padLeft(10)} ${'s_est@arr'.padLeft(10)} ${'s_err'.padLeft(9)}');
+  b.writeln(
+    '  ${'station'.padRight(34)} ${'t_s'.padLeft(8)} '
+    '${'s_target'.padLeft(10)} ${'s_est@arr'.padLeft(10)} ${'s_err'.padLeft(9)}',
+  );
   for (final s in r.stationScores) {
     final nm = s.name.length > 34 ? s.name.substring(0, 34) : s.name;
-    b.writeln('  ${nm.padRight(34)} ${_f(s.arrivalTs).padLeft(8)} '
-        '${_f(s.sTarget).padLeft(10)} ${_f(s.sEstAtArrival).padLeft(10)} '
-        '${_f(s.sErr).padLeft(9)}');
+    b.writeln(
+      '  ${nm.padRight(34)} ${_f(s.arrivalTs).padLeft(8)} '
+      '${_f(s.sTarget).padLeft(10)} ${_f(s.sEstAtArrival).padLeft(10)} '
+      '${_f(s.sErr).padLeft(9)}',
+    );
   }
   b.writeln('');
   b.writeln('DESTINATION FIRE  (mode=stops, N=2 stops prior)');
   if (r.fired) {
     b.writeln('  FIRED = YES   reason: ${r.fireReason}');
-    b.writeln('  fire_t_s=${_f(r.fireTs)}s  target_arrival=${_f(r.stationScores.last.arrivalTs)}s');
-    b.writeln('  fire_s=${_f(r.fireS)}m  sigma_s=${_f(r.fireSigma)}m  s_true@fire=${_f(r.fireTrueS)}m');
-    b.writeln('  seconds_margin=${_f(r.secondsMargin)}s '
-        '(${r.secondsMargin >= 0 ? 'EARLY-OK' : 'LATE-FAIL'})   meters_early=${_f(r.metersEarly)}m');
+    b.writeln(
+      '  fire_t_s=${_f(r.fireTs)}s  target_arrival=${_f(r.stationScores.last.arrivalTs)}s',
+    );
+    b.writeln(
+      '  fire_s=${_f(r.fireS)}m  sigma_s=${_f(r.fireSigma)}m  s_true@fire=${_f(r.fireTrueS)}m',
+    );
+    b.writeln(
+      '  seconds_margin=${_f(r.secondsMargin)}s '
+      '(${r.secondsMargin >= 0 ? 'EARLY-OK' : 'LATE-FAIL'})   meters_early=${_f(r.metersEarly)}m',
+    );
   } else {
     b.writeln('  FIRED = NO  -> NEVER-FIRED = HARD FAIL');
   }
   b.writeln('');
-  b.writeln('DRIFT: rmse=${_f(r.rmse)}m  maxDrift=${_f(r.maxDrift)}m  maxBlackoutError=${_f(r.maxBlackoutError)}m');
-  b.writeln('DR   : degradedTicks=${r.degradedTicks}  backwardEvents=${r.backwardEvents} (max ${_f(r.maxBackwardStep)}m)');
+  b.writeln(
+    'DRIFT: rmse=${_f(r.rmse)}m  maxDrift=${_f(r.maxDrift)}m  maxBlackoutError=${_f(r.maxBlackoutError)}m',
+  );
+  b.writeln(
+    'DR   : degradedTicks=${r.degradedTicks}  backwardEvents=${r.backwardEvents} (max ${_f(r.maxBackwardStep)}m)',
+  );
   for (final n in r.blindWindowNotes) {
     b.writeln('  blind $n');
   }
-  b.writeln('======================================================================');
+  b.writeln(
+    '======================================================================',
+  );
   stdout.writeln(b.toString());
 }
 
 void printCombinedTable(List<RunResult> results, List<String> errors) {
   final b = StringBuffer();
   b.writeln('');
-  b.writeln('############ NEVER-LATE BASELINE GATE — COMBINED SCORECARD ############');
-  b.writeln('  ${'ride'.padRight(30)} ${'device'.padRight(10)} ${'nSt'.padLeft(3)} '
-      '${'sec_margin'.padLeft(11)} ${'rmse'.padLeft(8)} ${'maxDrift'.padLeft(9)} ${'maxBlkout'.padLeft(9)}  verdict');
+  b.writeln(
+    '############ NEVER-LATE BASELINE GATE — COMBINED SCORECARD ############',
+  );
+  b.writeln(
+    '  ${'ride'.padRight(30)} ${'device'.padRight(10)} ${'nSt'.padLeft(3)} '
+    '${'sec_margin'.padLeft(11)} ${'rmse'.padLeft(8)} ${'maxDrift'.padLeft(9)} ${'maxBlkout'.padLeft(9)}  verdict',
+  );
   for (final r in results) {
     var rideShort = r.ride;
     if (rideShort.length > 30) rideShort = rideShort.substring(0, 30);
-    final verdict = r.isLate
-        ? (r.fired ? 'LATE(${_f(r.secondsMargin)}s)' : 'NEVER-FIRED')
-        : 'ok(+${_f(r.secondsMargin)}s)';
+    final verdict =
+        r.isLate
+            ? (r.fired ? 'LATE(${_f(r.secondsMargin)}s)' : 'NEVER-FIRED')
+            : 'ok(+${_f(r.secondsMargin)}s)';
     final marginCell = r.fired ? _f(r.secondsMargin) : 'no-fire';
-    b.writeln('  ${rideShort.padRight(30)} ${r.device.padRight(10)} '
-        '${r.nStations.toString().padLeft(3)} ${marginCell.padLeft(11)} '
-        '${_f(r.rmse).padLeft(8)} ${_f(r.maxDrift).padLeft(9)} '
-        '${_f(r.maxBlackoutError).padLeft(9)}  $verdict');
+    b.writeln(
+      '  ${rideShort.padRight(30)} ${r.device.padRight(10)} '
+      '${r.nStations.toString().padLeft(3)} ${marginCell.padLeft(11)} '
+      '${_f(r.rmse).padLeft(8)} ${_f(r.maxDrift).padLeft(9)} '
+      '${_f(r.maxBlackoutError).padLeft(9)}  $verdict',
+    );
     // Flag catastrophic DR (max drift far beyond plausible route length).
     if (r.maxDrift > 2 * r.totalLen) {
-      b.writeln('      ^ANOMALY worst-drift @t=${_f(r.maxDriftTs)}s '
-          's_est=${_f(r.maxDriftEkf)} vs s_true=${_f(r.maxDriftTrue)} | '
-          'maxGpsSpeedIn=${_f(r.maxSpeedSeen)}m/s maxV=${_f(r.maxVSeen)}m/s');
+      b.writeln(
+        '      ^ANOMALY worst-drift @t=${_f(r.maxDriftTs)}s '
+        's_est=${_f(r.maxDriftEkf)} vs s_true=${_f(r.maxDriftTrue)} | '
+        'maxGpsSpeedIn=${_f(r.maxSpeedSeen)}m/s maxV=${_f(r.maxVSeen)}m/s',
+      );
     }
   }
   for (final e in errors) {
     b.writeln('  [ERROR] $e');
   }
   final lateCount = results.where((r) => r.isLate).length;
-  b.writeln('  ---------------------------------------------------------------');
-  b.writeln('  rides run: ${results.length}   LATE/never-fired: $lateCount   errors: ${errors.length}');
-  b.writeln('  GATE: ${lateCount == 0 ? 'PASS (0 late)' : 'FAIL ($lateCount late/never-fired)'}');
-  b.writeln('#######################################################################');
+  b.writeln(
+    '  ---------------------------------------------------------------',
+  );
+  b.writeln(
+    '  rides run: ${results.length}   LATE/never-fired: $lateCount   errors: ${errors.length}',
+  );
+  b.writeln(
+    '  GATE: ${lateCount == 0 ? 'PASS (0 late)' : 'FAIL ($lateCount late/never-fired)'}',
+  );
+  b.writeln(
+    '#######################################################################',
+  );
   stdout.writeln(b.toString());
 }
 
@@ -1022,55 +1155,74 @@ void main() {
   // -------------------------------------------------------------------------
   // TASK 1: never-late baseline gate over ALL discovered fixtures.
   // -------------------------------------------------------------------------
-  test('NEVER-LATE GATE — all fixtures (destination alarm, N=2 stops)', () {
-    expect(fixtures, isNotEmpty,
-        reason: 'no fixture_*.json found in $kInRepoFixturesDir '
+  test(
+    'NEVER-LATE GATE — all fixtures (destination alarm, N=2 stops)',
+    () {
+      expect(
+        fixtures,
+        isNotEmpty,
+        reason:
+            'no fixture_*.json found in $kInRepoFixturesDir '
             '(committed CI set) or $kExternalFixturesDir (external rides). '
             'The never-late gate MUST have fixtures — run '
-            'tools/make_replay_fixtures.py to regenerate the committed set.');
+            'tools/make_replay_fixtures.py to regenerate the committed set.',
+      );
 
-    final results = <RunResult>[];
-    final errors = <String>[];
-    for (final b in fixtures) {
-      try {
-        results.add(runReplay(b));
-      } catch (e) {
-        errors.add('$b: $e');
+      final results = <RunResult>[];
+      final errors = <String>[];
+      for (final b in fixtures) {
+        try {
+          results.add(runReplay(b));
+        } catch (e) {
+          errors.add('$b: $e');
+        }
       }
-    }
 
-    printCombinedTable(results, errors);
+      printCombinedTable(results, errors);
 
-    // Hard gate: no ride may fire LATE (or never-fire) on the destination.
-    final late = results.where((r) => r.isLate).toList();
-    final names = late
-        .map((r) => '${r.ride} (${r.fired ? "${_f(r.secondsMargin)}s LATE" : "never-fired"})')
-        .join('; ');
-    expect(late, isEmpty, reason: 'rides fired LATE / never-fired: $names');
+      // Hard gate: no ride may fire LATE (or never-fire) on the destination.
+      final late = results.where((r) => r.isLate).toList();
+      final names = late
+          .map(
+            (r) =>
+                '${r.ride} (${r.fired ? "${_f(r.secondsMargin)}s LATE" : "never-fired"})',
+          )
+          .join('; ');
+      expect(late, isEmpty, reason: 'rides fired LATE / never-fired: $names');
 
-    // Per-ride NEVER-WRONG-PLACE gate (plan §4). Complements never-late (time)
-    // with the SPATIAL guarantee: the fire must be at-or-before the target stop
-    // in arc-length, and cannot be more than a whole route early (garbage
-    // anchor). We intentionally do NOT gate a time-based "not before boarding"
-    // bound — an "N stops prior" alarm on a short leg legitimately fires at or
-    // before boarding, so that would false-fail; early-firing is the SAFE state.
-    const double kSpatialTolM = 200.0; // GPS accuracy + snap tolerance
-    for (final r in results) {
-      if (!r.fired) continue; // never-fired already gated above
-      if (r.nStations < 2) continue; // degenerate leg (no first+last pair)
-      // (a) Spatial never-late / never-wrong-place: fire at/before the target
-      // stop IN SPACE. metersEarly = target - s_true@fire; materially negative
-      // => woke the rider AFTER passing the stop.
-      expect(r.metersEarly, greaterThanOrEqualTo(-kSpatialTolM),
-          reason: '${r.ride}: fired ${_f(-r.metersEarly)}m PAST the target stop '
-              '(spatially late / wrong place)');
-      // (b) Earliness bounded by route length — firing earlier than the whole
-      // route means s_true@fire is garbage-negative (broken anchor).
-      expect(r.metersEarly, lessThanOrEqualTo(r.totalLen + kSpatialTolM),
-          reason: '${r.ride}: fired ${_f(r.metersEarly)}m early on a '
-              '${_f(r.totalLen)}m route — impossible, garbage anchor');
-    }
-  }, timeout: const Timeout(Duration(minutes: 15)));
+      // Per-ride NEVER-WRONG-PLACE gate (plan §4). Complements never-late (time)
+      // with the SPATIAL guarantee: the fire must be at-or-before the target stop
+      // in arc-length, and cannot be more than a whole route early (garbage
+      // anchor). We intentionally do NOT gate a time-based "not before boarding"
+      // bound — an "N stops prior" alarm on a short leg legitimately fires at or
+      // before boarding, so that would false-fail; early-firing is the SAFE state.
+      const double kSpatialTolM = 200.0; // GPS accuracy + snap tolerance
+      for (final r in results) {
+        if (!r.fired) continue; // never-fired already gated above
+        if (r.nStations < 2) continue; // degenerate leg (no first+last pair)
+        // (a) Spatial never-late / never-wrong-place: fire at/before the target
+        // stop IN SPACE. metersEarly = target - s_true@fire; materially negative
+        // => woke the rider AFTER passing the stop.
+        expect(
+          r.metersEarly,
+          greaterThanOrEqualTo(-kSpatialTolM),
+          reason:
+              '${r.ride}: fired ${_f(-r.metersEarly)}m PAST the target stop '
+              '(spatially late / wrong place)',
+        );
+        // (b) Earliness bounded by route length — firing earlier than the whole
+        // route means s_true@fire is garbage-negative (broken anchor).
+        expect(
+          r.metersEarly,
+          lessThanOrEqualTo(r.totalLen + kSpatialTolM),
+          reason:
+              '${r.ride}: fired ${_f(r.metersEarly)}m early on a '
+              '${_f(r.totalLen)}m route — impossible, garbage anchor',
+        );
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 15)),
+  );
 
   // -------------------------------------------------------------------------
   // TASK 2: synthetic scenarios (plan §3.4), derived from a real GPS-rich ride.
@@ -1079,120 +1231,191 @@ void main() {
   // -------------------------------------------------------------------------
   final scenarioBase = pickScenarioFixture(fixtures);
 
-  test('SYNTHETIC: PHANTOM_INJECT — frozen confident fix over a moving window',
-      () {
-    if (scenarioBase == null) {
-      stdout.writeln('SYNTHETIC:PHANTOM skipped — no GPS-rich fixture available');
-      return;
-    }
-    // Choose a mid-route moving window (~45% through), 120s long.
-    final hdr = _loadFixture(scenarioBase);
-    final idx = (hdr.stations.length * 0.45).floor().clamp(1, hdr.stations.length - 2);
-    final wStart = hdr.stations[idx].arrivalTs;
-    const wDur = 120.0;
+  test(
+    'SYNTHETIC: PHANTOM_INJECT — frozen confident fix over a moving window',
+    () {
+      if (scenarioBase == null) {
+        stdout.writeln(
+          'SYNTHETIC:PHANTOM skipped — no GPS-rich fixture available',
+        );
+        return;
+      }
+      // Choose a mid-route moving window (~45% through), 120s long.
+      final hdr = _loadFixture(scenarioBase);
+      final idx = (hdr.stations.length * 0.45).floor().clamp(
+        1,
+        hdr.stations.length - 2,
+      );
+      final wStart = hdr.stations[idx].arrivalTs;
+      const wDur = 120.0;
 
-    final base = runReplay(scenarioBase);
-    final r = runReplay(scenarioBase, config: ScenarioConfig.phantom(wStart, wDur));
-    printScorecard(r);
-
-    final w = r.window!;
-    final estAdvance = (w.sAtEnd - w.sAtStart);
-    final trueAdvance = (w.trueAtEnd - w.trueAtStart);
-    final defended = trueAdvance > 1 && estAdvance >= 0.5 * trueAdvance;
-    final fireDelay = (base.fired && r.fired)
-        ? (r.fireTs - base.fireTs)
-        : double.nan;
-
-    final b = StringBuffer();
-    b.writeln('');
-    b.writeln('---- SYNTHETIC PHANTOM_INJECT RESULT ----');
-    b.writeln('  window: ${_f(wStart)}..${_f(wStart + wDur)}s  '
-        'frozen@ last-pre-window fix, hacc=5m, speed decays (tau=40s)');
-    b.writeln('  s_est advance in window : ${_f(estAdvance)} m  (true advance ${_f(trueAdvance)} m)');
-    b.writeln('  s_est min in window     : ${_f(w.minSInWindow)} m  (start ${_f(w.sAtStart)} m)');
-    b.writeln('  v at window end         : ${_f(w.vAtEnd)} m/s');
-    b.writeln('  dest fire: baseline ${_f(base.fireTs)}s (margin ${_f(base.secondsMargin)}s) '
-        '-> phantom ${_f(r.fireTs)}s (margin ${_f(r.secondsMargin)}s), delay ${_f(fireDelay)}s');
-    b.writeln('  PHANTOM DEFENSE: ${defended ? "PASS (s kept advancing)" : "FAIL (progress frozen/dragged by stale fix)"}');
-    b.writeln('  (baseline expectation: FAIL — no phantom defense in current lib/)');
-    b.writeln('-----------------------------------------');
-    stdout.writeln(b.toString());
-
-    expect(r.window, isNotNull);
-  }, timeout: const Timeout(Duration(minutes: 15)));
-
-  test('SYNTHETIC: GAP_INJECT — 60s and 300s IMU+GPS splice (dt>1s reset probe)',
-      () {
-    if (scenarioBase == null) {
-      stdout.writeln('SYNTHETIC:GAP skipped — no GPS-rich fixture available');
-      return;
-    }
-    final hdr = _loadFixture(scenarioBase);
-    final idx = (hdr.stations.length * 0.45).floor().clamp(1, hdr.stations.length - 2);
-    final wStart = hdr.stations[idx].arrivalTs;
-
-    final base = runReplay(scenarioBase);
-    for (final dur in [60.0, 300.0]) {
-      final r = runReplay(scenarioBase, config: ScenarioConfig.gap(wStart, dur));
+      final base = runReplay(scenarioBase);
+      final r = runReplay(
+        scenarioBase,
+        config: ScenarioConfig.phantom(wStart, wDur),
+      );
       printScorecard(r);
+
       final w = r.window!;
+      final estAdvance = (w.sAtEnd - w.sAtStart);
+      final trueAdvance = (w.trueAtEnd - w.trueAtStart);
+      final defended = trueAdvance > 1 && estAdvance >= 0.5 * trueAdvance;
+      final fireDelay =
+          (base.fired && r.fired) ? (r.fireTs - base.fireTs) : double.nan;
+
       final b = StringBuffer();
       b.writeln('');
-      b.writeln('---- SYNTHETIC GAP_INJECT(${dur.toStringAsFixed(0)}s) RESULT ----');
-      b.writeln('  gap window: ${_f(wStart)}..${_f(wStart + dur)}s (all IMU+GPS dropped)');
-      b.writeln('  s_est before gap: ${_f(w.sBeforeWindow)} m  (true ${_f(w.trueAtStart)} m)');
-      b.writeln('  s_est after gap : ${_f(w.sAfterWindow)} m  (true ${_f(w.trueAtEnd)} m)');
-      b.writeln('  s-progress across gap: est ${_f(w.sAfterWindow - w.sBeforeWindow)} m '
-          'vs true ${_f(w.trueAtEnd - w.trueAtStart)} m  '
-          '(lost ${_f((w.trueAtEnd - w.trueAtStart) - (w.sAfterWindow - w.sBeforeWindow))} m)');
-      b.writeln('  dest fire: baseline ${_f(base.fireTs)}s (margin ${_f(base.secondsMargin)}s) '
-          '-> gap ${_f(r.fireTs)}s (margin ${_f(r.secondsMargin)}s), '
-          'margin shift ${_f(r.secondsMargin - base.secondsMargin)}s');
-      b.writeln('  late? ${r.isLate ? "YES" : "no"} (dt>1s reset zeroes v; GPS after gap re-anchors)');
-      b.writeln('------------------------------------------');
+      b.writeln('---- SYNTHETIC PHANTOM_INJECT RESULT ----');
+      b.writeln(
+        '  window: ${_f(wStart)}..${_f(wStart + wDur)}s  '
+        'frozen@ last-pre-window fix, hacc=5m, speed decays (tau=40s)',
+      );
+      b.writeln(
+        '  s_est advance in window : ${_f(estAdvance)} m  (true advance ${_f(trueAdvance)} m)',
+      );
+      b.writeln(
+        '  s_est min in window     : ${_f(w.minSInWindow)} m  (start ${_f(w.sAtStart)} m)',
+      );
+      b.writeln('  v at window end         : ${_f(w.vAtEnd)} m/s');
+      b.writeln(
+        '  dest fire: baseline ${_f(base.fireTs)}s (margin ${_f(base.secondsMargin)}s) '
+        '-> phantom ${_f(r.fireTs)}s (margin ${_f(r.secondsMargin)}s), delay ${_f(fireDelay)}s',
+      );
+      b.writeln(
+        '  PHANTOM DEFENSE: ${defended ? "PASS (s kept advancing)" : "FAIL (progress frozen/dragged by stale fix)"}',
+      );
+      b.writeln(
+        '  (baseline expectation: FAIL — no phantom defense in current lib/)',
+      );
+      b.writeln('-----------------------------------------');
       stdout.writeln(b.toString());
+
       expect(r.window, isNotNull);
-    }
-  }, timeout: const Timeout(Duration(minutes: 15)));
+    },
+    timeout: const Timeout(Duration(minutes: 15)),
+  );
 
-  test('SYNTHETIC: COLD_START — all GPS withheld (GLMT-03 init probe)', () {
-    if (scenarioBase == null) {
-      stdout.writeln('SYNTHETIC:COLD_START skipped — no GPS-rich fixture available');
-      return;
-    }
-    final r = runReplay(scenarioBase, config: ScenarioConfig.coldStart());
-    printScorecard(r);
+  test(
+    'SYNTHETIC: GAP_INJECT — 60s and 300s IMU+GPS splice (dt>1s reset probe)',
+    () {
+      if (scenarioBase == null) {
+        stdout.writeln('SYNTHETIC:GAP skipped — no GPS-rich fixture available');
+        return;
+      }
+      final hdr = _loadFixture(scenarioBase);
+      final idx = (hdr.stations.length * 0.45).floor().clamp(
+        1,
+        hdr.stations.length - 2,
+      );
+      final wStart = hdr.stations[idx].arrivalTs;
 
-    final b = StringBuffer();
-    b.writeln('');
-    b.writeln('---- SYNTHETIC COLD_START RESULT ----');
-    b.writeln('  first-init t : ${_f(r.firstInitTs)} (NaN = never initialized)');
-    b.writeln('  ever fired   : ${r.fired}');
-    b.writeln('  final s_est  : ${_f(r.stationScores.last.sEstAtArrival)} m '
-        '(target ${_f(r.stationScores.last.sTarget)} m)');
-    b.writeln('  VERDICT: ${(!r.fired && r.firstInitTs.isNaN) ? "NEVER INIT -> NEVER FIRES (GLMT-03 confirmed)" : "REACHABILITY FIRED with ZERO GPS (GLMT-03 CLOSED)"}');
-    b.writeln('-------------------------------------');
-    stdout.writeln(b.toString());
+      final base = runReplay(scenarioBase);
+      for (final dur in [60.0, 300.0]) {
+        final r = runReplay(
+          scenarioBase,
+          config: ScenarioConfig.gap(wStart, dur),
+        );
+        printScorecard(r);
+        final w = r.window!;
+        final b = StringBuffer();
+        b.writeln('');
+        b.writeln(
+          '---- SYNTHETIC GAP_INJECT(${dur.toStringAsFixed(0)}s) RESULT ----',
+        );
+        b.writeln(
+          '  gap window: ${_f(wStart)}..${_f(wStart + dur)}s (all IMU+GPS dropped)',
+        );
+        b.writeln(
+          '  s_est before gap: ${_f(w.sBeforeWindow)} m  (true ${_f(w.trueAtStart)} m)',
+        );
+        b.writeln(
+          '  s_est after gap : ${_f(w.sAfterWindow)} m  (true ${_f(w.trueAtEnd)} m)',
+        );
+        b.writeln(
+          '  s-progress across gap: est ${_f(w.sAfterWindow - w.sBeforeWindow)} m '
+          'vs true ${_f(w.trueAtEnd - w.trueAtStart)} m  '
+          '(lost ${_f((w.trueAtEnd - w.trueAtStart) - (w.sAfterWindow - w.sBeforeWindow))} m)',
+        );
+        b.writeln(
+          '  dest fire: baseline ${_f(base.fireTs)}s (margin ${_f(base.secondsMargin)}s) '
+          '-> gap ${_f(r.fireTs)}s (margin ${_f(r.secondsMargin)}s), '
+          'margin shift ${_f(r.secondsMargin - base.secondsMargin)}s',
+        );
+        b.writeln(
+          '  late? ${r.isLate ? "YES" : "no"} (dt>1s reset zeroes v; GPS after gap re-anchors)',
+        );
+        b.writeln('------------------------------------------');
+        stdout.writeln(b.toString());
+        expect(r.window, isNotNull);
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 15)),
+  );
 
-    expect(r.window, isNull);
-    // HARD GATE (P0): reachability closes GLMT-03 — the EKF never initialises
-    // with zero GPS, but the physics Protection Level fires from the trip-origin
-    // anchor anyway, and it fires EARLY (never late).
-    expect(r.fired, isTrue,
-        reason: 'COLD_START must fire via reachability even with zero GPS fixes '
-            '(GLMT-03). first-init=${r.firstInitTs} (NaN => EKF never inited).');
-    expect(r.isLate, isFalse,
-        reason: 'COLD_START reachability fire must be at-or-before arrival.');
+  test(
+    'SYNTHETIC: COLD_START — all GPS withheld (GLMT-03 init probe)',
+    () {
+      if (scenarioBase == null) {
+        stdout.writeln(
+          'SYNTHETIC:COLD_START skipped — no GPS-rich fixture available',
+        );
+        return;
+      }
+      final r = runReplay(scenarioBase, config: ScenarioConfig.coldStart());
+      printScorecard(r);
 
-    // Cross-check: with reachability DISABLED the EKF-only path must NOT fire
-    // (proves the fire is genuinely the reachability layer, not the EKF).
-    final rNoReach =
-        runReplay(scenarioBase, config: ScenarioConfig.coldStart(), useReachability: false);
-    expect(rNoReach.fired, isFalse,
-        reason: 'Without reachability, cold-start must reproduce GLMT-03 '
+      final b = StringBuffer();
+      b.writeln('');
+      b.writeln('---- SYNTHETIC COLD_START RESULT ----');
+      b.writeln(
+        '  first-init t : ${_f(r.firstInitTs)} (NaN = never initialized)',
+      );
+      b.writeln('  ever fired   : ${r.fired}');
+      b.writeln(
+        '  final s_est  : ${_f(r.stationScores.last.sEstAtArrival)} m '
+        '(target ${_f(r.stationScores.last.sTarget)} m)',
+      );
+      b.writeln(
+        '  VERDICT: ${(!r.fired && r.firstInitTs.isNaN) ? "NEVER INIT -> NEVER FIRES (GLMT-03 confirmed)" : "REACHABILITY FIRED with ZERO GPS (GLMT-03 CLOSED)"}',
+      );
+      b.writeln('-------------------------------------');
+      stdout.writeln(b.toString());
+
+      expect(r.window, isNull);
+      // HARD GATE (P0): reachability closes GLMT-03 — the EKF never initialises
+      // with zero GPS, but the physics Protection Level fires from the trip-origin
+      // anchor anyway, and it fires EARLY (never late).
+      expect(
+        r.fired,
+        isTrue,
+        reason:
+            'COLD_START must fire via reachability even with zero GPS fixes '
+            '(GLMT-03). first-init=${r.firstInitTs} (NaN => EKF never inited).',
+      );
+      expect(
+        r.isLate,
+        isFalse,
+        reason: 'COLD_START reachability fire must be at-or-before arrival.',
+      );
+
+      // Cross-check: with reachability DISABLED the EKF-only path must NOT fire
+      // (proves the fire is genuinely the reachability layer, not the EKF).
+      final rNoReach = runReplay(
+        scenarioBase,
+        config: ScenarioConfig.coldStart(),
+        useReachability: false,
+      );
+      expect(
+        rNoReach.fired,
+        isFalse,
+        reason:
+            'Without reachability, cold-start must reproduce GLMT-03 '
             '(EKF never inits => never fires). If this fires, the test no longer '
-            'isolates the reachability contribution.');
-  }, timeout: const Timeout(Duration(minutes: 15)));
+            'isolates the reachability contribution.',
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 15)),
+  );
 
   // -------------------------------------------------------------------------
   // REAL underground rides — the REALISTIC tunnel case, where ZUPT +
@@ -1208,72 +1431,96 @@ void main() {
   // positioning mechanism, on real Namma Purple Line IMU + real tunnel geometry.
   // Skips gracefully in CI where these external rides aren't committed.
   // -------------------------------------------------------------------------
-  test('REAL underground ride — ZUPT/station-cadence keeps position tight through tunnel', () {
-    final realUnderground = fixtures.where((b) {
-      final h = _readHeader(b);
-      if (h == null) return false;
-      final synthetic = (h['synthetic'] as bool?) ?? false;
-      final windows = (h['gps_blind_windows_s'] as List?) ?? const [];
-      return !synthetic && windows.isNotEmpty;
-    }).toList();
+  test(
+    'REAL underground ride — ZUPT/station-cadence keeps position tight through tunnel',
+    () {
+      final realUnderground =
+          fixtures.where((b) {
+            final h = _readHeader(b);
+            if (h == null) return false;
+            final synthetic = (h['synthetic'] as bool?) ?? false;
+            final windows = (h['gps_blind_windows_s'] as List?) ?? const [];
+            return !synthetic && windows.isNotEmpty;
+          }).toList();
 
-    if (realUnderground.isEmpty) {
-      stdout.writeln('REAL underground ZUPT test skipped — no real underground '
-          'fixture present (external rides not committed to CI).');
-      return;
-    }
-
-    for (final b in realUnderground) {
-      final h = _readHeader(b)!;
-      final windows = ((h['gps_blind_windows_s'] as List?) ?? const [])
-          .map((w) => (w as List).map((x) => (x as num).toDouble()).toList())
-          .toList();
-      bool inTunnel(double t) => windows.any((w) => t >= w[0] && t <= w[1]);
-
-      final r = runReplay(b); // NATURAL run: real GPS + real blind windows + IMU
-
-      var maxUndergroundErr = 0.0;
-      var undergroundStations = 0;
-      final rows = <String>[];
-      for (final s in r.stationScores) {
-        final ug = inTunnel(s.arrivalTs);
-        if (ug) {
-          undergroundStations++;
-          if (s.sErr.abs() > maxUndergroundErr) maxUndergroundErr = s.sErr.abs();
-        }
-        rows.add('    ${ug ? "TUNNEL" : " gps  "} ${s.name.padRight(30)} '
-            'err=${_f(s.sErr).padLeft(8)}m @${_f(s.arrivalTs)}s');
+      if (realUnderground.isEmpty) {
+        stdout.writeln(
+          'REAL underground ZUPT test skipped — no real underground '
+          'fixture present (external rides not committed to CI).',
+        );
+        return;
       }
-      // "Precise wake" wants GPS-denied along-track error under a fraction of a
-      // station spacing (~400 m). Above that, the reachability safety net still
-      // guarantees never-late, but the wake is conservative (early), not precise.
-      const preciseWakeErrM = 400.0;
-      final degraded = maxUndergroundErr > preciseWakeErrM;
-      stdout.writeln('  [REAL underground ZUPT] $b: '
+
+      for (final b in realUnderground) {
+        final h = _readHeader(b)!;
+        final windows =
+            ((h['gps_blind_windows_s'] as List?) ?? const [])
+                .map(
+                  (w) => (w as List).map((x) => (x as num).toDouble()).toList(),
+                )
+                .toList();
+        bool inTunnel(double t) => windows.any((w) => t >= w[0] && t <= w[1]);
+
+        final r = runReplay(
+          b,
+        ); // NATURAL run: real GPS + real blind windows + IMU
+
+        var maxUndergroundErr = 0.0;
+        var undergroundStations = 0;
+        final rows = <String>[];
+        for (final s in r.stationScores) {
+          final ug = inTunnel(s.arrivalTs);
+          if (ug) {
+            undergroundStations++;
+            if (s.sErr.abs() > maxUndergroundErr)
+              maxUndergroundErr = s.sErr.abs();
+          }
+          rows.add(
+            '    ${ug ? "TUNNEL" : " gps  "} ${s.name.padRight(30)} '
+            'err=${_f(s.sErr).padLeft(8)}m @${_f(s.arrivalTs)}s',
+          );
+        }
+        // "Precise wake" wants GPS-denied along-track error under a fraction of a
+        // station spacing (~400 m). Above that, the reachability safety net still
+        // guarantees never-late, but the wake is conservative (early), not precise.
+        const preciseWakeErrM = 400.0;
+        final degraded = maxUndergroundErr > preciseWakeErrM;
+        stdout.writeln(
+          '  [REAL underground ZUPT] $b: '
           '$undergroundStations GPS-denied stations, '
           'max along-track err=${_f(maxUndergroundErr)}m, '
           'fire=${_f(r.fireTs)}s late=${r.isLate} margin=${_f(r.secondsMargin)}s'
-          '${degraded ? "  ⚠ UNDERGROUND PRECISION DEGRADED (>${preciseWakeErrM.toStringAsFixed(0)}m — never-late holds via reachability, but wake is conservative)" : "  ✓ precise"}');
-      stdout.writeln(rows.join('\n'));
+          '${degraded ? "  ⚠ UNDERGROUND PRECISION DEGRADED (>${preciseWakeErrM.toStringAsFixed(0)}m — never-late holds via reachability, but wake is conservative)" : "  ✓ precise"}',
+        );
+        stdout.writeln(rows.join('\n'));
 
-      // HARD GATE: the guarantee is never-late. This must ALWAYS hold — and it
-      // does on real underground rides, because the reachability net bounds max
-      // progress even when the EKF along-track estimate has drifted.
-      expect(r.isLate, isFalse,
-          reason: 'Real underground ride $b must fire never-late.');
-      // The estimate must at least be FINITE (NaN => the filter blew up).
-      expect(maxUndergroundErr.isFinite, isTrue,
-          reason: 'Underground along-track estimate for $b is NaN — filter divergence.');
-      // NOTE (characterized limitation, NOT gated): on real Namma rides the
-      // GPS-denied along-track error reaches ~1.3 km (Majestic) to ~3 km
-      // (Nallur) — station-association is NOT reliably re-anchoring at each
-      // in-tunnel stop, so error accumulates instead of resetting. never-late
-      // still holds via reachability, but the underground wake is CONSERVATIVE
-      // (early), not precise. Root-causing why the ZUPT dwell / station snap
-      // doesn't fire at these stops is the #1 underground reliability item —
-      // see docs/business_os/research/underground_validation_execution.md.
-    }
-  }, timeout: const Timeout(Duration(minutes: 15)));
+        // HARD GATE: the guarantee is never-late. This must ALWAYS hold — and it
+        // does on real underground rides, because the reachability net bounds max
+        // progress even when the EKF along-track estimate has drifted.
+        expect(
+          r.isLate,
+          isFalse,
+          reason: 'Real underground ride $b must fire never-late.',
+        );
+        // The estimate must at least be FINITE (NaN => the filter blew up).
+        expect(
+          maxUndergroundErr.isFinite,
+          isTrue,
+          reason:
+              'Underground along-track estimate for $b is NaN — filter divergence.',
+        );
+        // NOTE (characterized limitation, NOT gated): on real Namma rides the
+        // GPS-denied along-track error reaches ~1.3 km (Majestic) to ~3 km
+        // (Nallur) — station-association is NOT reliably re-anchoring at each
+        // in-tunnel stop, so error accumulates instead of resetting. never-late
+        // still holds via reachability, but the underground wake is CONSERVATIVE
+        // (early), not precise. Root-causing why the ZUPT dwell / station snap
+        // doesn't fire at these stops is the #1 underground reliability item —
+        // see docs/business_os/research/underground_validation_execution.md.
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 15)),
+  );
 
   // -------------------------------------------------------------------------
   // TASK 3: MONOTONE SAFETY NET — reachability never fires LATER than the
@@ -1281,34 +1528,46 @@ void main() {
   // only advance the fire, never delay it). This is the core safety property of
   // the integration and it is proven empirically on the real EKF + evaluator.
   // -------------------------------------------------------------------------
-  test('REACHABILITY IS A MONOTONE SAFETY NET — never later than baseline', () {
-    expect(fixtures, isNotEmpty);
-    final rows = <String>[];
-    var violations = 0;
-    for (final b in fixtures) {
-      RunResult on, off;
-      try {
-        on = runReplay(b, useReachability: true);
-        off = runReplay(b, useReachability: false);
-      } catch (_) {
-        continue; // skip fixtures that error to load (e.g. 1-stop edge)
+  test(
+    'REACHABILITY IS A MONOTONE SAFETY NET — never later than baseline',
+    () {
+      expect(fixtures, isNotEmpty);
+      final rows = <String>[];
+      var violations = 0;
+      for (final b in fixtures) {
+        RunResult on, off;
+        try {
+          on = runReplay(b, useReachability: true);
+          off = runReplay(b, useReachability: false);
+        } catch (_) {
+          continue; // skip fixtures that error to load (e.g. 1-stop edge)
+        }
+        // Both fired: reachability fire time must be <= baseline fire time.
+        // Baseline never-fired but reachability fired: strict improvement.
+        final onT = on.fired ? on.fireTs : double.infinity;
+        final offT = off.fired ? off.fireTs : double.infinity;
+        final ok = onT <= offT + 1e-6;
+        if (!ok) violations++;
+        rows.add(
+          '  ${b.padRight(34)} baseline=${off.fired ? "${_f(offT)}s" : "never"}'
+          '  reach=${on.fired ? "${_f(onT)}s" : "never"}  ${ok ? "ok" : "REGRESSION"}',
+        );
       }
-      // Both fired: reachability fire time must be <= baseline fire time.
-      // Baseline never-fired but reachability fired: strict improvement.
-      final onT = on.fired ? on.fireTs : double.infinity;
-      final offT = off.fired ? off.fireTs : double.infinity;
-      final ok = onT <= offT + 1e-6;
-      if (!ok) violations++;
-      rows.add('  ${b.padRight(34)} baseline=${off.fired ? "${_f(offT)}s" : "never"}'
-          '  reach=${on.fired ? "${_f(onT)}s" : "never"}  ${ok ? "ok" : "REGRESSION"}');
-    }
-    stdout.writeln('\n---- REACHABILITY MONOTONICITY (fire time on/off) ----');
-    for (final r in rows) {
-      stdout.writeln(r);
-    }
-    stdout.writeln('------------------------------------------------------');
-    expect(violations, 0,
-        reason: 'Reachability fired LATER than the EKF-only baseline on '
-            '$violations fixture(s) — violates the monotone-safety-net property.');
-  }, timeout: const Timeout(Duration(minutes: 15)));
+      stdout.writeln(
+        '\n---- REACHABILITY MONOTONICITY (fire time on/off) ----',
+      );
+      for (final r in rows) {
+        stdout.writeln(r);
+      }
+      stdout.writeln('------------------------------------------------------');
+      expect(
+        violations,
+        0,
+        reason:
+            'Reachability fired LATER than the EKF-only baseline on '
+            '$violations fixture(s) — violates the monotone-safety-net property.',
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 15)),
+  );
 }

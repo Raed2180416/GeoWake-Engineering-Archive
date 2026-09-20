@@ -6,7 +6,7 @@
 // user's own alarm, tracking, or entitlement in any way.
 //
 // PRIVACY BY CONSTRUCTION:
-//   • The user follows opaque share ids. Only the id (+ optional HMAC token) is
+//   • The user follows opaque share ids. Only the id (+ read capability) is
 //     PERSISTED locally — the coarse coordinates that arrive in a ShareStatusView
 //     are held in memory only and are NEVER written to disk.
 //   • The follower surface renders ROUTE-RELATIVE / time-relative copy only
@@ -33,8 +33,8 @@ class FollowedRide {
   /// The opaque share id (the `/j/{id}` slug).
   final String id;
 
-  /// Optional HMAC token captured from the link (`?t=`), passed to reads so a
-  /// token-gated backend can verify the follower holds a genuine link.
+  /// Per-share read capability captured from the link (`?t=`), passed to reads
+  /// so the backend can verify that the follower holds this journey's link.
   final String? token;
 
   /// When the user started following (epoch ms) — for stable newest-first order.
@@ -323,7 +323,7 @@ class FollowedRidesService {
     final reader = _reader;
     if (reader == null) return; // offline: leave "Waiting…"
     try {
-      final view = await reader.getStatus(id);
+      final view = await reader.getStatus(id, readToken: current.token);
       final now = _byId[id];
       if (now == null) return; // unfollowed mid-flight
       if (view == null) {

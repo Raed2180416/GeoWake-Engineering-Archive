@@ -46,17 +46,39 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:geowake2/services/monetization/monetization_service.dart';
 import 'package:geowake2/services/notification_service.dart';
 
 /// Sensitivity levels for snatch detection. Higher sensitivity = lower
 /// threshold = triggers more easily.
 enum AntiTheftSensitivity { low, medium, high }
 
+class AntiTheftDenied implements Exception {
+  final String message;
+  const AntiTheftDenied([
+    this.message = 'Anti-theft mode requires GeoWake Pro',
+  ]);
+
+  @override
+  String toString() => 'AntiTheftDenied: $message';
+}
+
 /// Monitors sensors for phone snatch while the user sleeps on transit.
-/// Pro-only feature — the caller is responsible for gating.
+/// Pro-only feature. The service enforces entitlement itself, so a deep link,
+/// stale UI, or direct method call cannot bypass the paid boundary.
 class AntiTheftService {
-  AntiTheftService._();
+  AntiTheftService._({bool Function()? entitlement})
+    : _entitlement =
+          entitlement ??
+          (() =>
+              MonetizationService.instance.premiumOrNull?.canUseAntiTheft ??
+              false);
   static final AntiTheftService instance = AntiTheftService._();
+
+  factory AntiTheftService.forTest({required bool Function() entitlement}) =>
+      AntiTheftService._(entitlement: entitlement);
+
+  final bool Function() _entitlement;
 
   static const String _enabledKey = 'gw_anti_theft_enabled';
   static const String _sensitivityKey = 'gw_anti_theft_sensitivity';
@@ -106,6 +128,7 @@ class AntiTheftService {
   StreamSubscription<UserAccelerometerEvent>? _accelSub;
   StreamSubscription<GyroscopeEvent>? _gyroSub;
   StreamSubscription<BatteryState>? _batterySub;
+  BatteryState? _lastBatteryState;
 
   bool _monitoring = false;
   bool _alarmFired = false;
@@ -131,6 +154,7 @@ class AntiTheftService {
   bool get isMonitoring => _monitoring;
   bool get alarmFired => _alarmFired;
   bool get isCalibrating => _calibrating;
+  bool get isAllowed => _entitlement();
 
   /// Load persisted settings. Call at app start.
   Future<void> load() async {
@@ -139,7 +163,8 @@ class AntiTheftService {
       _enabled = prefs.getBool(_enabledKey) ?? false;
       _chargerDetection = prefs.getBool(_chargerKey) ?? true;
       final sIndex = prefs.getInt(_sensitivityKey) ?? 1;
-      _sensitivity = AntiTheftSensitivity.values.elementAtOrNull(sIndex) ??
+      _sensitivity =
+          AntiTheftSensitivity.values.elementAtOrNull(sIndex) ??
           AntiTheftSensitivity.medium;
     } catch (_) {
       // Fail-open: defaults remain disabled + medium.
@@ -148,33 +173,47 @@ class AntiTheftService {
 
   /// Enable/disable anti-theft mode. Does NOT start monitoring.
   Future<void> setEnabled(bool enabled) async {
+    // Disabling is always allowed so a lapsed/free user can revoke the setting.
+    if (enabled && !isAllowed) throw const AntiTheftDenied();
     _enabled = enabled;
     if (!enabled) await stopMonitoring();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_enabledKey, enabled);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   Future<void> setSensitivity(AntiTheftSensitivity s) async {
+    _requirePro();
     _sensitivity = s;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_sensitivityKey, s.index);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   Future<void> setChargerDetection(bool enabled) async {
+    _requirePro();
     _chargerDetection = enabled;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_chargerKey, enabled);
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   /// Begin sensor monitoring. Called when a tracking session starts and
   /// anti-theft is enabled. No-op if already monitoring or disabled.
   Future<void> startMonitoring() async {
+    if (!isAllowed) {
+      await stopMonitoring();
+      return;
+    }
     if (!_enabled || _monitoring) return;
 
     // Respect cooldown after recent dismissal.
@@ -222,26 +261,37 @@ class AntiTheftService {
     } catch (e) {
       // Gyro is optional — accel-only detection still works with reduced
       // false-positive filtering.
-      dev.log('Anti-theft: gyro unavailable, accel-only mode: $e',
-          name: 'AntiTheft');
+      dev.log(
+        'Anti-theft: gyro unavailable, accel-only mode: $e',
+        name: 'AntiTheft',
+      );
     }
 
     // ── Charger removal detection ──
     if (_chargerDetection) {
       try {
-        _batterySub = Battery().onBatteryStateChanged.listen(
+        final battery = Battery();
+        _lastBatteryState = await battery.batteryState;
+        _batterySub = battery.onBatteryStateChanged.listen(
           _onBatteryStateChanged,
-          onError: (_) {/* fail-open */},
+          onError: (_) {
+            /* fail-open */
+          },
         );
       } catch (e) {
-        dev.log('Anti-theft: battery monitoring unavailable: $e',
-            name: 'AntiTheft');
+        dev.log(
+          'Anti-theft: battery monitoring unavailable: $e',
+          name: 'AntiTheft',
+        );
       }
     }
 
-    dev.log('Anti-theft monitoring started '
-        '(sensitivity: $_sensitivity, gyro: ${_gyroSub != null}, '
-        'charger: $_chargerDetection)', name: 'AntiTheft');
+    dev.log(
+      'Anti-theft monitoring started '
+      '(sensitivity: $_sensitivity, gyro: ${_gyroSub != null}, '
+      'charger: $_chargerDetection)',
+      name: 'AntiTheft',
+    );
   }
 
   /// Stop all monitoring and reset state.
@@ -256,12 +306,17 @@ class AntiTheftService {
     _gyroSub = null;
     await _batterySub?.cancel();
     _batterySub = null;
+    _lastBatteryState = null;
   }
 
   // ── Sensor event handlers ────────────────────────────────────────────────
 
   void _onUserAccelerometerEvent(UserAccelerometerEvent event) {
     if (!_monitoring || _alarmFired) return;
+    if (!isAllowed) {
+      unawaited(stopMonitoring());
+      return;
+    }
 
     final now = DateTime.now();
 
@@ -270,13 +325,17 @@ class AntiTheftService {
       if (_monitorStart != null &&
           now.difference(_monitorStart!) >= _calibrationDuration) {
         _calibrating = false;
-        dev.log('Anti-theft: calibration complete, baseline size=${_baselineWindow.length}',
-            name: 'AntiTheft');
+        dev.log(
+          'Anti-theft: calibration complete, baseline size=${_baselineWindow.length}',
+          name: 'AntiTheft',
+        );
       }
     }
 
     // Linear acceleration magnitude (gravity already removed).
-    final mag = math.sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+    final mag = math.sqrt(
+      event.x * event.x + event.y * event.y + event.z * event.z,
+    );
 
     // Feed rolling baseline (even during calibration — that's the point).
     _baselineWindow.add(mag);
@@ -295,12 +354,17 @@ class AntiTheftService {
       _accelSpikeTime ??= now;
       // Check if gyro confirms within the confirmation window.
       if (_checkGyroConfirmation()) {
-        _onSnatchDetected('accel+gyro fusion (mag: ${mag.toStringAsFixed(1)} m/s²)');
+        _onSnatchDetected(
+          'accel+gyro fusion (mag: ${mag.toStringAsFixed(1)} m/s²)',
+        );
         return;
       }
       // Sustained accel spike without gyro: still fire if it persists.
-      if (now.difference(_accelSpikeTime!) >= const Duration(milliseconds: 300)) {
-        _onSnatchDetected('sustained accel spike (mag: ${mag.toStringAsFixed(1)} m/s²)');
+      if (now.difference(_accelSpikeTime!) >=
+          const Duration(milliseconds: 300)) {
+        _onSnatchDetected(
+          'sustained accel spike (mag: ${mag.toStringAsFixed(1)} m/s²)',
+        );
         return;
       }
       pathATriggered = true;
@@ -328,19 +392,31 @@ class AntiTheftService {
 
   void _onGyroscopeEvent(GyroscopeEvent event) {
     if (!_monitoring || _alarmFired) return;
+    if (!isAllowed) {
+      unawaited(stopMonitoring());
+      return;
+    }
 
     // Angular velocity magnitude (rad/s).
     _recentGyroMag = math.sqrt(
-        event.x * event.x + event.y * event.y + event.z * event.z);
+      event.x * event.x + event.y * event.y + event.z * event.z,
+    );
     _gyroTimestamp = DateTime.now();
   }
 
   void _onBatteryStateChanged(BatteryState state) {
     if (!_monitoring || _alarmFired || !_chargerDetection) return;
+    if (!isAllowed) {
+      unawaited(stopMonitoring());
+      return;
+    }
     if (_calibrating) return; // Don't fire during calibration.
 
-    // Charger removal: charging → discharging transition.
-    if (state == BatteryState.discharging) {
+    final previous = _lastBatteryState;
+    _lastBatteryState = state;
+    // Charger removal is a transition, not merely a discharging sample.
+    if ((previous == BatteryState.charging || previous == BatteryState.full) &&
+        state == BatteryState.discharging) {
       _onSnatchDetected('charger removed while monitoring');
     }
   }
@@ -391,13 +467,16 @@ class AntiTheftService {
     await _batterySub?.cancel();
     _batterySub = null;
 
-    dev.log('ANTI-THEFT: Snatch detected ($reason). Firing alarm.',
-        name: 'AntiTheft');
+    dev.log(
+      'ANTI-THEFT: Snatch detected ($reason). Firing alarm.',
+      name: 'AntiTheft',
+    );
 
     try {
       await NotificationService().showWakeUpAlarm(
         title: '🚨 Anti-theft alarm!',
-        body: 'Your phone was moved while you were sleeping. '
+        body:
+            'Your phone was moved while you were sleeping. '
             'Stop the alarm if you have your phone.',
         allowContinueTracking: false,
         playSound: true,
@@ -417,7 +496,9 @@ class AntiTheftService {
     _lastDismissed = DateTime.now();
     try {
       await NotificationService().cancelAlarm();
-    } catch (_) {/* best-effort */}
+    } catch (_) {
+      /* best-effort */
+    }
   }
 
   /// Reset alarm state after dismissal (called from UI).
@@ -428,5 +509,9 @@ class AntiTheftService {
 
   Future<void> dispose() async {
     await stopMonitoring();
+  }
+
+  void _requirePro() {
+    if (!isAllowed) throw const AntiTheftDenied();
   }
 }

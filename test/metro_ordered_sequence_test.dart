@@ -33,91 +33,110 @@ void _enc(int v, StringBuffer s) {
 }
 
 void main() {
-  test('ordered hardcoded sequence is used and correctly ordered (Bengaluru Purple)',
-      () async {
-    final seq = kMetroLineSequences['bengaluru']?['purple'];
-    expect(seq, isNotNull, reason: 'Bengaluru Purple must be a confident line');
-    expect(seq!.length, greaterThan(12));
+  test(
+    'ordered hardcoded sequence is used and correctly ordered (Bengaluru Purple)',
+    () async {
+      final seq = kMetroLineSequences['bengaluru']?['purple'];
+      expect(
+        seq,
+        isNotNull,
+        reason: 'Bengaluru Purple must be a confident line',
+      );
+      expect(seq!.length, greaterThan(12));
 
-    // Take a mid-line window of the REAL sequence and build a polyline through it.
-    const lo = 6, hi = 15; // inclusive-ish window
-    final window = seq.sublist(lo, hi + 1);
-    final polyPts = window.map((s) => LatLng(s.lat, s.lng)).toList();
+      // Take a mid-line window of the REAL sequence and build a polyline through it.
+      const lo = 6, hi = 15; // inclusive-ish window
+      final window = seq.sublist(lo, hi + 1);
+      final polyPts = window.map((s) => LatLng(s.lat, s.lng)).toList();
 
-    // stopsOverride carries Bengaluru stops on the polyline so the enhancer
-    // derives city='bengaluru' from the OSM match; the ordered path then keys
-    // (bengaluru, purple) into the hardcoded sequence.
-    final stopsOverride = window
-        .map((s) => {
-              'id': 'osm_${s.name}',
-              'city': 'bengaluru',
-              'name': s.name,
-              'lat': s.lat,
-              'lng': s.lng,
-              'line': 'Purple Line',
-              'status': 'active',
-            })
-        .toList();
+      // stopsOverride supplies the station corpus while the leg carries city
+      // provenance already established from both provider endpoints.
+      final stopsOverride =
+          window
+              .map(
+                (s) => {
+                  'id': 'osm_${s.name}',
+                  'city': 'bengaluru',
+                  'name': s.name,
+                  'lat': s.lat,
+                  'lng': s.lng,
+                  'line': 'Purple Line',
+                  'status': 'active',
+                },
+              )
+              .toList();
 
-    final leg = TransitLegStops(
-      legStartMeters: 0.0,
-      legEndMeters: 10000.0,
-      numStops: window.length - 2,
-      stopPositions: polyPts,
-      stopMeters: List.generate(polyPts.length, (i) => i * 1000.0),
-      lineName: 'Purple',
-      isMetro: true,
-    );
+      final leg = TransitLegStops(
+        legStartMeters: 0.0,
+        legEndMeters: 10000.0,
+        numStops: window.length - 2,
+        stopPositions: polyPts,
+        stopMeters: List.generate(polyPts.length, (i) => i * 1000.0),
+        lineName: 'Purple',
+        isMetro: true,
+        cityKey: 'bengaluru',
+      );
 
-    final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
-      [leg],
-      {
-        'routes': [
-          {
-            'legs': [
-              {
-                'steps': [
-                  {
-                    'travel_mode': 'TRANSIT',
-                    'polyline': {'points': encodePolyline(polyPts)},
-                    'transit_details': {
-                      'line': {
-                        'short_name': 'Purple',
-                        'vehicle': {'type': 'SUBWAY'},
+      final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
+        [leg],
+        {
+          'routes': [
+            {
+              'legs': [
+                {
+                  'steps': [
+                    {
+                      'travel_mode': 'TRANSIT',
+                      'polyline': {'points': encodePolyline(polyPts)},
+                      'transit_details': {
+                        'line': {
+                          'short_name': 'Purple',
+                          'vehicle': {'type': 'SUBWAY'},
+                        },
+                        'num_stops': window.length - 2,
                       },
-                      'num_stops': window.length - 2,
                     },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      stopsOverride: stopsOverride,
-    );
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        stopsOverride: stopsOverride,
+      );
 
-    final names = enhanced.first.stopNames;
-    expect(names, isNotEmpty);
+      final names = enhanced.first.stopNames;
+      expect(names, isNotEmpty);
 
-    // Every returned stop must belong to the real Purple sequence...
-    final seqNames = seq.map((s) => s.name).toList();
-    for (final n in names) {
-      expect(seqNames, contains(n), reason: '"$n" is not a real Purple station');
-    }
-    // ...and appear in strictly increasing along-line order (the key property).
-    final idxs = names.map((n) => seqNames.indexOf(n)).toList();
-    for (var i = 0; i < idxs.length - 1; i++) {
-      expect(idxs[i] < idxs[i + 1], isTrue,
-          reason: 'stops must be in along-line order: $names');
-    }
-    // ...and be a CONTIGUOUS run of the sequence (correct slice, no gaps).
-    for (var i = 0; i < idxs.length - 1; i++) {
-      expect(idxs[i + 1] - idxs[i], equals(1),
-          reason: 'sliced stops must be contiguous on the line: $idxs');
-    }
-    expect(names.length, greaterThanOrEqualTo(4));
-  });
+      // Every returned stop must belong to the real Purple sequence...
+      final seqNames = seq.map((s) => s.name).toList();
+      for (final n in names) {
+        expect(
+          seqNames,
+          contains(n),
+          reason: '"$n" is not a real Purple station',
+        );
+      }
+      // ...and appear in strictly increasing along-line order (the key property).
+      final idxs = names.map((n) => seqNames.indexOf(n)).toList();
+      for (var i = 0; i < idxs.length - 1; i++) {
+        expect(
+          idxs[i] < idxs[i + 1],
+          isTrue,
+          reason: 'stops must be in along-line order: $names',
+        );
+      }
+      // ...and be a CONTIGUOUS run of the sequence (correct slice, no gaps).
+      for (var i = 0; i < idxs.length - 1; i++) {
+        expect(
+          idxs[i + 1] - idxs[i],
+          equals(1),
+          reason: 'sliced stops must be contiguous on the line: $idxs',
+        );
+      }
+      expect(names.length, greaterThanOrEqualTo(4));
+    },
+  );
 
   // Pan-India sweep: the ordered-sequence path must produce a correctly-ordered,
   // contiguous, own-line slice for a confident line in EVERY major city.
@@ -133,22 +152,48 @@ void main() {
   ]) {
     test('pan-India ordered slice is correct: ${probe[0]}/${probe[1]}', () async {
       final seq = kMetroLineSequences[probe[0]]?[probe[1]];
-      if (seq == null || seq.length < 8) return; // skip if not a confident line here
+      if (seq == null || seq.length < 8)
+        return; // skip if not a confident line here
       final lo = 2;
       final hi = (seq.length - 3).clamp(lo + 4, seq.length - 1);
       final window = seq.sublist(lo, hi + 1);
       final polyPts = window.map((s) => LatLng(s.lat, s.lng)).toList();
-      final stopsOverride = window
-          .map((s) => {
-                'id': 'osm_${s.name}',
+      final stopsOverride =
+          window
+              .map(
+                (s) => {
+                  'id': 'osm_${s.name}',
+                  'city': probe[0],
+                  'name': s.name,
+                  'lat': s.lat,
+                  'lng': s.lng,
+                  'line': probe[1],
+                  'status': 'active',
+                },
+              )
+              .toList()
+            ..addAll([
+              // Exact-on-polyline decoys exercise the strongest adversarial case:
+              // proximity alone must never make either one part of this route.
+              {
+                'id': 'decoy_wrong_line',
                 'city': probe[0],
-                'name': s.name,
-                'lat': s.lat,
-                'lng': s.lng,
+                'name': 'DECOY WRONG LINE',
+                'lat': window[window.length ~/ 2].lat,
+                'lng': window[window.length ~/ 2].lng,
+                'line': 'Definitely Other Line',
+                'status': 'active',
+              },
+              {
+                'id': 'decoy_wrong_city',
+                'city': 'not_${probe[0]}',
+                'name': 'DECOY WRONG CITY',
+                'lat': window[(window.length ~/ 2) + 1].lat,
+                'lng': window[(window.length ~/ 2) + 1].lng,
                 'line': probe[1],
                 'status': 'active',
-              })
-          .toList();
+              },
+            ]);
       final leg = TransitLegStops(
         legStartMeters: 0.0,
         legEndMeters: 20000.0,
@@ -157,6 +202,7 @@ void main() {
         stopMeters: List.generate(polyPts.length, (i) => i * 1000.0),
         lineName: probe[1],
         isMetro: true,
+        cityKey: probe[0],
       );
       final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
         [leg],
@@ -186,40 +232,112 @@ void main() {
         stopsOverride: stopsOverride,
       );
       final names = enhanced.first.stopNames;
-      expect(names, isNotEmpty, reason: '${probe[0]}/${probe[1]} produced no stops');
+      expect(
+        names,
+        isNotEmpty,
+        reason: '${probe[0]}/${probe[1]} produced no stops',
+      );
+      expect(names, isNot(contains('DECOY WRONG LINE')));
+      expect(names, isNot(contains('DECOY WRONG CITY')));
+      expect(enhanced.first.isActualPositions, isTrue);
+      expect(enhanced.first.stopCountConfidence, equals(1.0));
       final seqNames = seq.map((s) => s.name).toList();
       final idxs = names.map((n) => seqNames.indexOf(n)).toList();
       for (final ix in idxs) {
         expect(ix, greaterThanOrEqualTo(0), reason: 'stop not on line: $names');
       }
       for (var i = 0; i < idxs.length - 1; i++) {
-        expect(idxs[i + 1] - idxs[i], equals(1),
-            reason: '${probe[0]}/${probe[1]} not contiguous/ordered: $idxs');
+        expect(
+          idxs[i + 1] - idxs[i],
+          equals(1),
+          reason: '${probe[0]}/${probe[1]} not contiguous/ordered: $idxs',
+        );
       }
     });
   }
 
-  test('a line NOT in the hardcoded set still yields stops (fallback path)',
-      () async {
-    // canonicalizes to a token no confident sequence carries -> ordered path
-    // is skipped, the OSM line-filter/fallback still produces stops.
-    final stopsOverride = [
-      {'id': 'a', 'city': 'testville', 'name': 'A', 'lat': 0.0, 'lng': 0.0, 'line': 'Zeta Line', 'status': 'active'},
-      {'id': 'b', 'city': 'testville', 'name': 'B', 'lat': 0.01, 'lng': 0.0, 'line': 'Zeta Line', 'status': 'active'},
-      {'id': 'c', 'city': 'testville', 'name': 'C', 'lat': 0.015, 'lng': 0.0, 'line': 'Zeta Line', 'status': 'active'},
-    ];
-    final leg = TransitLegStops(
-      legStartMeters: 0.0, legEndMeters: 2000.0, numStops: 3,
-      stopPositions: const [LatLng(0.005, 0.0), LatLng(0.01, 0.0), LatLng(0.015, 0.0)],
-      stopMeters: const [500, 1000, 1500], lineName: 'Zeta', isMetro: true,
-    );
-    final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
-      [leg],
-      {'routes': [{'legs': [{'steps': [{'travel_mode': 'TRANSIT',
-        'polyline': {'points': encodePolyline(const [LatLng(0.0, 0.0), LatLng(0.02, 0.0)])},
-        'transit_details': {'line': {'short_name': 'Zeta', 'vehicle': {'type': 'SUBWAY'}}, 'num_stops': 3}}]}]}]},
-      stopsOverride: stopsOverride,
-    );
-    expect(enhanced.first.stopNames, isNotEmpty);
-  });
+  test(
+    'a line NOT in the hardcoded set still yields stops (fallback path)',
+    () async {
+      // canonicalizes to a token no confident sequence carries -> ordered path
+      // is skipped, the OSM line-filter/fallback still produces stops.
+      final stopsOverride = [
+        {
+          'id': 'a',
+          'city': 'testville',
+          'name': 'A',
+          'lat': 0.0,
+          'lng': 0.0,
+          'line': 'Zeta Line',
+          'status': 'active',
+        },
+        {
+          'id': 'b',
+          'city': 'testville',
+          'name': 'B',
+          'lat': 0.01,
+          'lng': 0.0,
+          'line': 'Zeta Line',
+          'status': 'active',
+        },
+        {
+          'id': 'c',
+          'city': 'testville',
+          'name': 'C',
+          'lat': 0.015,
+          'lng': 0.0,
+          'line': 'Zeta Line',
+          'status': 'active',
+        },
+      ];
+      final leg = TransitLegStops(
+        legStartMeters: 0.0,
+        legEndMeters: 2000.0,
+        numStops: 3,
+        stopPositions: const [
+          LatLng(0.005, 0.0),
+          LatLng(0.01, 0.0),
+          LatLng(0.015, 0.0),
+        ],
+        stopMeters: const [500, 1000, 1500],
+        lineName: 'Zeta',
+        isMetro: true,
+      );
+      final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
+        [leg],
+        {
+          'routes': [
+            {
+              'legs': [
+                {
+                  'steps': [
+                    {
+                      'travel_mode': 'TRANSIT',
+                      'polyline': {
+                        'points': encodePolyline(const [
+                          LatLng(0.0, 0.0),
+                          LatLng(0.02, 0.0),
+                        ]),
+                      },
+                      'transit_details': {
+                        'line': {
+                          'short_name': 'Zeta',
+                          'vehicle': {'type': 'SUBWAY'},
+                        },
+                        'num_stops': 3,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        stopsOverride: stopsOverride,
+      );
+      expect(enhanced.first.stopNames, isEmpty);
+      expect(enhanced.first.isActualPositions, isFalse);
+      expect(enhanced.first.stopCountConfidence, lessThan(1.0));
+    },
+  );
 }

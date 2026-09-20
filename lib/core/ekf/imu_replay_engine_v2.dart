@@ -653,7 +653,8 @@ class ImuReplayEngineV2 {
   final _logController = StreamController<ReplayLogEntry>.broadcast();
   final _imuSampleController = StreamController<ImuSample>.broadcast();
   final _gravityController = StreamController<GravitySample>.broadcast();
-  final _orientationController = StreamController<OrientationSample>.broadcast();
+  final _orientationController =
+      StreamController<OrientationSample>.broadcast();
 
   // ─────────────────────────────────────────────────────────────────────────
   // Public Streams
@@ -685,11 +686,16 @@ class ImuReplayEngineV2 {
   void Function()? onFinished;
 
   double get elapsedSeconds => _elapsedSeconds;
-  double get progress =>
-      _route == null
-          ? 0.0
-          : (_elapsedSeconds / _route!.totalDurationSeconds).clamp(0.0, 1.0);
-  double get progressMeters => progress * (_route?.totalMeters ?? 0);
+  double get progress {
+    final route = _route;
+    if (route == null || route.totalMeters <= 0) return 0.0;
+    return (_progressMetersAtTime(_elapsedSeconds) / route.totalMeters).clamp(
+      0.0,
+      1.0,
+    );
+  }
+
+  double get progressMeters => _progressMetersAtTime(_elapsedSeconds);
   List<ReplayLogEntry> get logs => List.unmodifiable(_logs);
   SimulatedMotionState get motionState => _motionState;
   double get currentSpeed => _currentSpeed;
@@ -783,8 +789,11 @@ class ImuReplayEngineV2 {
     //    path's fixed 10 m interpolation via the same [_interpolatePolyline]).
     final rawCum = _computeCumulativeMeters(polyline);
     final maxSegmentMeters = math.max(1.0, v * dtSeconds);
-    final (interpolated, interpolatedCum) =
-        _interpolatePolyline(polyline, rawCum, maxSegmentMeters);
+    final (interpolated, interpolatedCum) = _interpolatePolyline(
+      polyline,
+      rawCum,
+      maxSegmentMeters,
+    );
 
     final totalMeters = interpolatedCum.isEmpty ? 0.0 : interpolatedCum.last;
 
@@ -798,11 +807,12 @@ class ImuReplayEngineV2 {
 
     final stations = <TestRouteStation>[];
     for (var i = 0; i < stops.length; i++) {
-      final (snapped, _, progressM) =
-          _findClosestPointOnPolyline(stops[i], interpolated);
-      final arrival = totalMeters > 0
-          ? (progressM / totalMeters) * totalDuration
-          : 0.0;
+      final (snapped, _, progressM) = _findClosestPointOnPolyline(
+        stops[i],
+        interpolated,
+      );
+      final arrival =
+          totalMeters > 0 ? (progressM / totalMeters) * totalDuration : 0.0;
       stations.add(
         TestRouteStation(
           id: 'stop_$i',
@@ -1139,7 +1149,8 @@ class ImuReplayEngineV2 {
           hasGpsInTunnel: false,
         ),
       ],
-      fullPolyline: googleRoutePoints.isNotEmpty ? googleRoutePoints : polyPoints,
+      fullPolyline:
+          googleRoutePoints.isNotEmpty ? googleRoutePoints : polyPoints,
       groundTruthPolyline: polyPoints,
       fullCumulativeMeters: cumMeters,
       totalMeters: cumMeters.isNotEmpty ? cumMeters.last : 0,
@@ -1981,8 +1992,7 @@ class ImuReplayEngineV2 {
       return const LatLng(0, 0);
     }
 
-    final progress = (elapsed / route.totalDurationSeconds).clamp(0.0, 1.0);
-    final targetMeters = progress * route.totalMeters;
+    final targetMeters = _progressMetersAtTime(elapsed);
 
     // Find segment in polyline
     int idx = 0;
@@ -2011,12 +2021,65 @@ class ImuReplayEngineV2 {
     );
   }
 
+  /// Ground-truth arc progress for synthesized routes.
+  ///
+  /// Metro assets carry measured station arrival times and dwell durations, so
+  /// `elapsed / totalDuration` must not slide the train through a station while
+  /// the station clock says it is stopped there. Interpolate travel between
+  /// measured arrivals and hold progress during each dwell. Routes without
+  /// station timing retain the original linear fallback.
+  double _progressMetersAtTime(double elapsed) {
+    final route = _route;
+    if (route == null || route.totalMeters <= 0) return 0.0;
+
+    final duration = route.totalDurationSeconds;
+    if (duration <= 0) return 0.0;
+    final now = elapsed.clamp(0.0, duration).toDouble();
+    final stations = route.allStations;
+    if (stations.isEmpty) {
+      return (now / duration) * route.totalMeters;
+    }
+
+    var priorMeters = 0.0;
+    var priorDeparture = 0.0;
+    for (final station in stations) {
+      final stationMeters =
+          station.cumulativeMeters
+              .clamp(priorMeters, route.totalMeters)
+              .toDouble();
+      final arrival =
+          station.arrivalTimeSeconds.clamp(0.0, duration).toDouble();
+
+      if (now < arrival) {
+        final travelSeconds = arrival - priorDeparture;
+        if (travelSeconds <= 0) return stationMeters;
+        final fraction =
+            ((now - priorDeparture) / travelSeconds).clamp(0.0, 1.0).toDouble();
+        return priorMeters + (stationMeters - priorMeters) * fraction;
+      }
+
+      final departure =
+          (arrival + math.max(0.0, station.dwellTimeSeconds))
+              .clamp(arrival, duration)
+              .toDouble();
+      if (now <= departure) return stationMeters;
+
+      priorMeters = stationMeters;
+      priorDeparture = math.max(priorDeparture, departure);
+    }
+
+    final remainingSeconds = duration - priorDeparture;
+    if (remainingSeconds <= 0) return route.totalMeters;
+    final fraction =
+        ((now - priorDeparture) / remainingSeconds).clamp(0.0, 1.0).toDouble();
+    return priorMeters + (route.totalMeters - priorMeters) * fraction;
+  }
+
   double _bearingAtTime(double elapsed) {
     final route = _route;
     if (route == null || route.fullPolyline.length < 2) return 0.0;
 
-    final progress = (elapsed / route.totalDurationSeconds).clamp(0.0, 1.0);
-    final targetMeters = progress * route.totalMeters;
+    final targetMeters = _progressMetersAtTime(elapsed);
 
     int idx = 0;
     for (int i = 0; i < route.fullCumulativeMeters.length - 1; i++) {
@@ -2162,15 +2225,17 @@ class ImuReplayEngineV2 {
 
       case GpsDropoutMode.tunnelSimulation:
         if (isMetro) {
-          // Only emit GPS at stations
-          final (_, next) = _stationsAtTime(_elapsedSeconds);
-          if (next != null) {
-            final metersToNext = next.cumulativeMeters - progressMeters;
-            if (metersToNext < 50 ||
-                metersToNext > (next.cumulativeMeters - 50)) {
-              // Near station - GPS available briefly
-              return (position: truePosition, accuracy: 25.0, shouldEmit: true);
-            }
+          // Use route distance rather than the time-labelled "next" station.
+          // Real station timings are non-linear; mixing them with a linear
+          // position clock caused reverse/slow routes to skip re-anchor windows.
+          final nearStation =
+              _route?.allStations.any(
+                (station) =>
+                    (station.cumulativeMeters - progressMeters).abs() <= 50.0,
+              ) ??
+              false;
+          if (nearStation) {
+            return (position: truePosition, accuracy: 25.0, shouldEmit: true);
           }
           return (position: null, accuracy: 0.0, shouldEmit: false);
         }
@@ -2366,7 +2431,8 @@ class ImuReplayEngineV2 {
       final directions = json['directions'] as Map<String, dynamic>?;
       final routes = directions?['routes'] as List?;
       if (routes == null || routes.isEmpty) return [];
-      final overview = routes.first['overview_polyline'] as Map<String, dynamic>?;
+      final overview =
+          routes.first['overview_polyline'] as Map<String, dynamic>?;
       final points = overview?['points'] as String?;
       if (points == null || points.isEmpty) return [];
       return _decodePolyline(points);
@@ -2857,9 +2923,8 @@ extension ImuReplayEngineExt on ImuReplayEngineV2 {
               isZupt
                   ? SimulatedMotionState.stopped
                   : SimulatedMotionState.cruising,
-          gpsPosition: (!tick.isGpsInterpolated && tick.lat != null)
-              ? rawPos
-              : null,
+          gpsPosition:
+              (!tick.isGpsInterpolated && tick.lat != null) ? rawPos : null,
           gpsAccuracy: 10.0,
           gpsAvailable: !tick.isGpsInterpolated && tick.lat != null,
           dropoutMode:

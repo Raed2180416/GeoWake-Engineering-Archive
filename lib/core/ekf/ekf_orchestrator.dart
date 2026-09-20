@@ -13,7 +13,8 @@ import 'zupt_detector.dart';
 import 'degraded_mode.dart';
 
 /// Logging callback for diagnostic output.
-typedef EkfOrchestratorLogCallback = void Function(String tag, String message, Map<String, dynamic>? data);
+typedef EkfOrchestratorLogCallback =
+    void Function(String tag, String message, Map<String, dynamic>? data);
 
 class EkfOrchestrator {
   EkfOrchestrator({
@@ -42,7 +43,7 @@ class EkfOrchestrator {
 
   /// Logging callback for external log collection.
   EkfOrchestratorLogCallback? onLog;
-  
+
   /// Verbosity level: 0=minimal, 1=events, 2=all IMU ticks
   int logVerbosity;
 
@@ -108,18 +109,19 @@ class EkfOrchestrator {
   List<double> _stationMeters = const [];
   bool _isMetroLeg = false;
   int _lastSnappedStationIndex = -1;
+  double _lastSnappedStationMeters = double.negativeInfinity;
 
   /// Callback for station snap confirmed events (§24.2 gated).
   void Function(StationSnapConfirmed)? onStationSnapConfirmed;
 
   bool get gpsDegraded => _gpsDetector.isDegraded;
-  
+
   /// Expose prediction enabled state for debugging.
   bool get predictionEnabled => _predictionEnabled;
-  
+
   /// Expose current motion state for debugging.
   MotionState get currentMotionState => _motionState;
-  
+
   /// Expose current variance values for debugging.
   double get currentAccelVariance => _variance(_accelVarWindow);
   double get currentGyroVariance => _variance(_gyroVarWindow);
@@ -154,7 +156,7 @@ class EkfOrchestrator {
     _motionState = _applyMotionDurationGate(motion, timestampSeconds);
     _pipeline.setMotionState(_motionState);
     _updateMode(sample.timestamp);
-    
+
     // Log motion state changes
     if (_motionState != oldMotion && logVerbosity >= 1) {
       _log('MOTION', 'State changed', {
@@ -164,7 +166,7 @@ class EkfOrchestrator {
         'gyroVar': gyroVariance.toStringAsExponential(2),
       });
     }
-    
+
     _maybeUpdateZupt(
       timestamp: sample.timestamp,
       motion: _motionState,
@@ -199,17 +201,18 @@ class EkfOrchestrator {
 
     final aFwd = _forwardAccel(sample, tiltOutput);
     _pipeline.onForwardAccel(sample.timestamp, aFwd);
-    
+
     // Track recent aFwd for motion classification during GPS dropout
     _recentAFwdWindow.add(aFwd.abs());
     if (_recentAFwdWindow.length > _aFwdWindowSize) {
       _recentAFwdWindow.removeAt(0);
     }
-    
+
     // Log IMU prediction with actual aFwd value
     if (logVerbosity >= 1 && (timestampSeconds * 10).round() % 100 == 0) {
       final state = _pipeline.publicState;
-      final isDegraded = _gpsDetector.isDegraded || state.mode == EkfMode.degraded;
+      final isDegraded =
+          _gpsDetector.isDegraded || state.mode == EkfMode.degraded;
       _log('IMU', isDegraded ? '🔴 DR_TICK' : 'Prediction step', {
         'aFwd': aFwd.toStringAsFixed(4),
         's': state.s.toStringAsFixed(0),
@@ -221,11 +224,21 @@ class EkfOrchestrator {
     }
   }
 
-  void onGpsFix(GpsFix fix, {required double innovationSigma}) {
+  bool onGpsFix(GpsFix fix, {required double innovationSigma}) {
     _anyGpsFixSeen = true;
     final wasPredictionEnabled = _predictionEnabled;
     if (innovationSigma.isFinite) {
       _lastInnovationSigma = innovationSigma;
+    }
+    final accepted = _pipeline.onGpsFix(fix);
+    if (!accepted) {
+      onGpsUnavailable(fix.timestamp);
+      _log('GPS', 'Fix rejected by innovation gate', {
+        'lat': fix.lat.toStringAsFixed(5),
+        'lng': fix.lng.toStringAsFixed(5),
+        'innov_σ': innovationSigma.toStringAsFixed(2),
+      });
+      return false;
     }
     _predictionEnabled = true;
     _ekfInitialized = true; // EKF is now initialized and can do DR
@@ -236,8 +249,7 @@ class EkfOrchestrator {
       accuracyMeters: fix.accuracyMeters,
       innovationSigma: innovationSigma,
     );
-    _pipeline.onGpsFix(fix);
-    
+
     if (logVerbosity >= 1) {
       final state = _pipeline.publicState;
       _log('GPS', 'Fix received', {
@@ -250,21 +262,30 @@ class EkfOrchestrator {
         'pred_enabled': wasPredictionEnabled ? 'already' : 'NOW',
       });
     }
+    return true;
   }
 
-  void onGpsFixAuto(GpsFix fix) {
+  /// Returns true only when the observation was actually fused. On-route
+  /// projection alone is insufficient: frozen phantoms and innovation-gated
+  /// outliers remain unavailable observations for GPS-health accounting.
+  bool onGpsFixAuto(GpsFix fix) {
     // A real GPS fix exists this tick (coordinates present), even if it projects
     // off-route below. This disables the cold-start bootstrap: only a ride that
     // never receives ANY fix should DR from a seeded origin.
     _anyGpsFixSeen = true;
-    final sGps = _route.projectLatLng(fix.lat, fix.lng);
+    final sGps = _route.projectLatLng(
+      fix.lat,
+      fix.lng,
+      previousProgressMeters: _ekfInitialized ? _pipeline.publicState.s : null,
+      enforceForward: _ekfInitialized && _isMetroLeg,
+    );
     if (sGps.isNaN) {
       // Off-route fix (includes off-route phantoms — 138 of them on the real
       // Rajajinagar ride). Treat as GPS-unavailable so dead-reckoning engages,
       // instead of silently discarding the fix while the filter still believes
       // GPS is live and never enters degraded DR.
       onGpsUnavailable(fix.timestamp);
-      return;
+      return false;
     }
 
     // Frozen-phantom rejection: the OS fused-location provider can emit a
@@ -274,18 +295,25 @@ class EkfOrchestrator {
     // rather than anchoring s to a lie and driving v→0 (a late fire). A genuine
     // station stop reads v≈0 and is NOT rejected here, so it still fuses.
     if (_lastFixLat != null && _pipeline.publicState.v.abs() > 2.0) {
-      final movedMeters =
-          _haversineMeters(_lastFixLat!, _lastFixLng!, fix.lat, fix.lng);
+      final movedMeters = _haversineMeters(
+        _lastFixLat!,
+        _lastFixLng!,
+        fix.lat,
+        fix.lng,
+      );
       if (movedMeters < 2.0) {
         onGpsUnavailable(fix.timestamp);
-        return;
+        return false;
       }
     }
-    _lastFixLat = fix.lat;
-    _lastFixLng = fix.lng;
 
     final innovationSigma = _pipeline.innovationSigmaForS(sGps);
-    onGpsFix(fix, innovationSigma: innovationSigma);
+    final accepted = onGpsFix(fix, innovationSigma: innovationSigma);
+    if (accepted) {
+      _lastFixLat = fix.lat;
+      _lastFixLng = fix.lng;
+    }
+    return accepted;
   }
 
   static double _haversineMeters(
@@ -297,14 +325,15 @@ class EkfOrchestrator {
     const r = 6371000.0;
     final dLat = (lat2 - lat1) * math.pi / 180.0;
     final dLon = (lon2 - lon1) * math.pi / 180.0;
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * math.pi / 180.0) *
             math.cos(lat2 * math.pi / 180.0) *
             math.sin(dLon / 2) *
             math.sin(dLon / 2);
     return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
-  
+
   /// Notify the orchestrator that GPS is unavailable for this tick.
   /// This allows the GPS degradation detector to track fix timeout.
   void onGpsUnavailable(Duration timestamp) {
@@ -315,17 +344,17 @@ class EkfOrchestrator {
       accuracyMeters: 999.0, // Indicate very poor accuracy
       innovationSigma: 999.0, // Indicate high innovation
     );
-    
+
     // CRITICAL: Keep predictions enabled during GPS dropout if EKF was initialized!
     // This is essential for dead reckoning to continue tracking position.
     if (_ekfInitialized && !_predictionEnabled) {
       _predictionEnabled = true;
       _log('GPS', 'Enabling DR predictions (EKF initialized)', null);
     }
-    
+
     // Update mode (may transition to degraded)
     _updateMode(timestamp);
-    
+
     if (logVerbosity >= 2) {
       final ts = timestamp.inMicroseconds / 1e6;
       if ((ts * 10).round() % 50 == 0) {
@@ -354,9 +383,11 @@ class EkfOrchestrator {
     _coldStartBootstrapped = true;
     _pipeline.bootstrapColdStart(s0: 0.0);
     _predictionEnabled = true; // begin DR immediately on this tick
-    _log('COLD_START',
-        'No GPS after ${elapsed.toStringAsFixed(0)}s — bootstrapping DR at origin (s=0)',
-        null);
+    _log(
+      'COLD_START',
+      'No GPS after ${elapsed.toStringAsFixed(0)}s — bootstrapping DR at origin (s=0)',
+      null,
+    );
   }
 
   void setFftEnabled(bool enabled) {
@@ -367,6 +398,26 @@ class EkfOrchestrator {
   /// reported position uncertainty honest (wider σs floor).
   void setNoGyro(bool noGyro) {
     _pipeline.setNoGyro(noGyro);
+  }
+
+  /// Carry the last trusted state across a route-geometry refresh or leg
+  /// switch.  The progress value is remapped by the route/session layer; the
+  /// wide covariance makes the first post-refresh observation conservative.
+  void seedFromState(EkfPublicState state, {double? progressMeters}) {
+    _pipeline.seedFromState(
+      progressMeters: progressMeters ?? state.s,
+      velocityMps: state.v,
+      sigmaSMeters: state.sigmaS,
+      sigmaVMps: state.sigmaV,
+      biasA: state.biasA,
+      mode: state.mode,
+      motion: state.motion,
+    );
+    _predictionEnabled = true;
+    _ekfInitialized = true;
+    _hasGpsFix = true;
+    _anyGpsFixSeen = true;
+    _motionState = state.motion;
   }
 
   void setStationContext({
@@ -404,6 +455,7 @@ class EkfOrchestrator {
     _lastFixLat = null;
     _lastFixLng = null;
     _lastSnappedStationIndex = -1;
+    _lastSnappedStationMeters = double.negativeInfinity;
     // Reset bias initialization state
     _biasInitWindow.clear();
     _biasInitialized = false;
@@ -445,20 +497,20 @@ class EkfOrchestrator {
   }) {
     // Log ZUPT detection inputs periodically
     final ts = timestamp.inMicroseconds / 1e6;
-    
+
     // Log every 2 seconds to track ZUPT conditions
     if (logVerbosity >= 1 && (ts * 10).round() % 20 == 0) {
       // Use relaxed thresholds matching ZuptDetector
-      final meetsAccel = accelVariance < 0.1;   // Relaxed threshold 
-      final meetsGyro = gyroVariance < 0.01;    // Relaxed threshold
+      final meetsAccel = accelVariance < 0.1; // Relaxed threshold
+      final meetsGyro = gyroVariance < 0.01; // Relaxed threshold
       final imuQuiet = meetsAccel && meetsGyro;
       final meetsMotion = motion == MotionState.stationary;
-      final meetsV = publicState.v.abs() < 2.0;  // Relaxed threshold
+      final meetsV = publicState.v.abs() < 2.0; // Relaxed threshold
       final wouldMeet = imuQuiet || (meetsMotion && meetsV);
       _log('ZUPT', 'Check', {
         'motion': motion.name,
         'v': publicState.v.toStringAsFixed(2),
-        'sigmaS': publicState.sigmaS.toStringAsFixed(1),  // Track covariance!
+        'sigmaS': publicState.sigmaS.toStringAsFixed(1), // Track covariance!
         'accelVar': accelVariance.toStringAsExponential(2),
         'gyroVar': gyroVariance.toStringAsExponential(2),
         'imuQuiet': imuQuiet,
@@ -467,15 +519,16 @@ class EkfOrchestrator {
         'wouldMeet': wouldMeet,
       });
     }
-    
-    final isDegraded = _gpsDetector.isDegraded || publicState.mode == EkfMode.degraded;
+
+    final isDegraded =
+        _gpsDetector.isDegraded || publicState.mode == EkfMode.degraded;
     final confirmed = _zuptDetector.update(
       timestamp: timestamp,
       motion: motion,
       velocityMps: publicState.v,
       accelVariance: accelVariance,
       gyroVariance: gyroVariance,
-      isDegraded: isDegraded,  // Allow IMU-only ZUPT during GPS dropout
+      isDegraded: isDegraded, // Allow IMU-only ZUPT during GPS dropout
     );
     if (confirmed) {
       _handleZuptConfirmed(timestamp, source: 'detector');
@@ -534,6 +587,18 @@ class EkfOrchestrator {
         'sigmaS': _pipeline.publicState.sigmaS.toStringAsFixed(1),
       });
 
+      // Station indices restart at each transit leg; route-arc meters do not.
+      // Gate before applying the measurement so a rejected leg-local index can
+      // never silently pull the EKF backwards or onto a previous station.
+      final isMonotonic = assoc.stationMeters > _lastSnappedStationMeters + 1.0;
+      if (!isMonotonic) {
+        _log('STATION', 'Snap REJECTED (non-monotonic route arc)', {
+          'stationMeters': assoc.stationMeters.toStringAsFixed(1),
+          'lastSnappedMeters': _lastSnappedStationMeters.toStringAsFixed(1),
+        });
+        return;
+      }
+
       _pipeline.onStationCandidates([StationCandidate(assoc.stationMeters)]);
 
       // §24.2 confidence gate for ARM update:
@@ -542,8 +607,6 @@ class EkfOrchestrator {
       // - Monotonic station index
       final sigmaAfterSnap = _pipeline.publicState.sigmaS;
       final sigmaGate = isDegraded ? 60.0 : 30.0;
-      final isMonotonic = assoc.stationIndex > _lastSnappedStationIndex;
-
       if (sigmaAfterSnap <= sigmaGate && isMonotonic) {
         _log('STATION', '*** SNAP CONFIRMED ***', {
           'stationIndex': assoc.stationIndex,
@@ -552,6 +615,7 @@ class EkfOrchestrator {
         });
 
         _lastSnappedStationIndex = assoc.stationIndex;
+        _lastSnappedStationMeters = assoc.stationMeters;
         onStationSnapConfirmed?.call(
           StationSnapConfirmed(
             stationIndex: assoc.stationIndex,
@@ -580,7 +644,7 @@ class EkfOrchestrator {
 
   void _updateMode(Duration timestamp) {
     final oldMode = _pipeline.publicState.mode;
-    
+
     if (!_hasGpsFix) {
       _pipeline.setMode(EkfMode.degraded);
       if (logVerbosity >= 1 && oldMode != EkfMode.degraded) {
@@ -588,10 +652,10 @@ class EkfOrchestrator {
       }
       return;
     }
-    
+
     final sigmaS = publicState.sigmaS;
     final gpsDegraded = _gpsDetector.isDegraded;
-    
+
     _degradedMode.update(
       timestamp: timestamp,
       sigmaS: sigmaS,
@@ -618,7 +682,7 @@ class EkfOrchestrator {
 
     final newMode = _isMetroLeg ? EkfMode.metro : EkfMode.surface;
     _pipeline.setMode(newMode);
-    
+
     if (logVerbosity >= 1 && oldMode != newMode) {
       _log('MODE', '🟢 Exiting to ${newMode.name}', {
         'sigmaS': sigmaS.toStringAsFixed(1),
@@ -702,13 +766,15 @@ class EkfOrchestrator {
     final fftWalkEnergy = features?.fftWalkEnergy ?? 0.0;
     final fftTrainEnergy = features?.fftTrainEnergy ?? 0.0;
 
-    final isDegraded = _gpsDetector.isDegraded || publicState.mode == EkfMode.degraded;
-    
+    final isDegraded =
+        _gpsDetector.isDegraded || publicState.mode == EkfMode.degraded;
+
     // Compute recent max aFwd for breaking false stationary during GPS dropout
-    final recentMaxAFwd = _recentAFwdWindow.isEmpty 
-        ? null 
-        : _recentAFwdWindow.reduce((a, b) => a > b ? a : b);
-    
+    final recentMaxAFwd =
+        _recentAFwdWindow.isEmpty
+            ? null
+            : _recentAFwdWindow.reduce((a, b) => a > b ? a : b);
+
     final result = _motionClassifier.classify(
       accelVariance: accelVariance,
       gyroVariance: gyroVariance,
@@ -720,11 +786,11 @@ class EkfOrchestrator {
       innovationHighSeconds: _innovationHighSeconds,
       ekfWeight: 0.3,
       fftEnabled: fftEnabled,
-      ekfVelocity: publicState.v,  // Pass EKF velocity for hard gate
-      isDegraded: isDegraded,  // Skip velocity gate when velocity is unreliable
-      recentMaxAFwd: recentMaxAFwd,  // For detecting movement during GPS dropout
+      ekfVelocity: publicState.v, // Pass EKF velocity for hard gate
+      isDegraded: isDegraded, // Skip velocity gate when velocity is unreliable
+      recentMaxAFwd: recentMaxAFwd, // For detecting movement during GPS dropout
     );
-    
+
     // Debug: log when motion classification happens during degraded mode
     if (isDegraded && logVerbosity >= 1) {
       _log('MOTION', 'Classification during GPS dropout', {
@@ -735,7 +801,7 @@ class EkfOrchestrator {
         'v': publicState.v.toStringAsFixed(3),
       });
     }
-    
+
     return result;
   }
 
@@ -797,7 +863,7 @@ class EkfOrchestrator {
     final s = publicState.s;
     final tangent = _route.tangentAt(s.isNaN ? 0.0 : s);
     final aFwd = world[0] * tangent[0] + world[1] * tangent[1];
-    
+
     // Static bias initialization: collect aFwd samples when stationary pre-GPS.
     // This estimates the device's accelerometer bias before DR begins.
     // The bias is subtracted from future aFwd values during DR.
@@ -810,10 +876,11 @@ class EkfOrchestrator {
         if (_biasInitWindow.length > _biasInitMaxSamples) {
           _biasInitWindow.removeAt(0);
         }
-        
+
         // Estimate bias when we have enough samples
         if (_biasInitWindow.length >= _biasInitMinSamples) {
-          final mean = _biasInitWindow.reduce((a, b) => a + b) / _biasInitWindow.length;
+          final mean =
+              _biasInitWindow.reduce((a, b) => a + b) / _biasInitWindow.length;
           // Only accept bias if it's reasonable (< 0.5 m/s²)
           if (mean.abs() < 0.5) {
             _estimatedInitialBias = mean;
@@ -828,19 +895,25 @@ class EkfOrchestrator {
     }
 
     if (_pipeline.publicState.mode == EkfMode.degraded) {
-       _log('PHYSICS', 'Degraded Accel Debug', {
-         'raw': '[${sample.ax.toStringAsFixed(2)}, ${sample.ay.toStringAsFixed(2)}, ${sample.az.toStringAsFixed(2)}]',
-         'g_dev': '[${g[0].toStringAsFixed(2)}, ${g[1].toStringAsFixed(2)}, ${g[2].toStringAsFixed(2)}]',
-         'world': '[${world[0].toStringAsFixed(2)}, ${world[1].toStringAsFixed(2)}, ${world[2].toStringAsFixed(2)}]',
-         'tangent': '[${tangent[0].toStringAsFixed(2)}, ${tangent[1].toStringAsFixed(2)}]',
-         'aFwd': aFwd.toStringAsFixed(3),
-         if (_estimatedInitialBias != null) 'initBias': _estimatedInitialBias!.toStringAsFixed(4),
-       });
+      _log('PHYSICS', 'Degraded Accel Debug', {
+        'raw':
+            '[${sample.ax.toStringAsFixed(2)}, ${sample.ay.toStringAsFixed(2)}, ${sample.az.toStringAsFixed(2)}]',
+        'g_dev':
+            '[${g[0].toStringAsFixed(2)}, ${g[1].toStringAsFixed(2)}, ${g[2].toStringAsFixed(2)}]',
+        'world':
+            '[${world[0].toStringAsFixed(2)}, ${world[1].toStringAsFixed(2)}, ${world[2].toStringAsFixed(2)}]',
+        'tangent':
+            '[${tangent[0].toStringAsFixed(2)}, ${tangent[1].toStringAsFixed(2)}]',
+        'aFwd': aFwd.toStringAsFixed(3),
+        if (_estimatedInitialBias != null)
+          'initBias': _estimatedInitialBias!.toStringAsFixed(4),
+      });
     }
 
     // Apply estimated initial bias correction during DR
     // This compensates for device-specific accelerometer offset
-    if (_estimatedInitialBias != null && _pipeline.publicState.mode == EkfMode.degraded) {
+    if (_estimatedInitialBias != null &&
+        _pipeline.publicState.mode == EkfMode.degraded) {
       return aFwd - _estimatedInitialBias!;
     }
 

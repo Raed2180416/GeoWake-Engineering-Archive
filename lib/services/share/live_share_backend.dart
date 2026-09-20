@@ -36,14 +36,18 @@ abstract class ShareBackend {
   Future<String?> createShare(ShareSession session);
 
   /// Push the LATEST coarse position for [shareId]. No history is sent or kept.
-  Future<void> pushLocation(String shareId, ShareSnapshot snapshot);
+  Future<void> pushLocation(
+    String shareId,
+    ShareSnapshot snapshot, {
+    String? writeToken,
+  });
 
   /// Mark the journey arrived — the trigger the server turns into the
   /// recipient's "arrived safely" notification (FCM / SMS).
-  Future<void> markArrived(String shareId);
+  Future<void> markArrived(String shareId, {String? writeToken});
 
   /// Revoke a share immediately (stop resolving the link, drop server state).
-  Future<void> revoke(String shareId);
+  Future<void> revoke(String shareId, {String? writeToken});
 }
 
 /// The READ side of the contract (the follower / "Friends' rides" surface).
@@ -63,7 +67,7 @@ abstract class ShareBackend {
 abstract class ShareStatusReader {
   /// Fetch the latest coarse status for [id], or null if unavailable/unknown.
   /// A 410 returns a [ShareStatusView.gone] so the follower can retire the row.
-  Future<ShareStatusView?> getStatus(String id);
+  Future<ShareStatusView?> getStatus(String id, {String? readToken});
 }
 
 /// DEFAULT backend. Everything is a no-op; basic share works fully offline.
@@ -77,13 +81,17 @@ class NoopShareBackend implements ShareBackend {
   Future<String?> createShare(ShareSession session) async => null;
 
   @override
-  Future<void> pushLocation(String shareId, ShareSnapshot snapshot) async {}
+  Future<void> pushLocation(
+    String shareId,
+    ShareSnapshot snapshot, {
+    String? writeToken,
+  }) async {}
 
   @override
-  Future<void> markArrived(String shareId) async {}
+  Future<void> markArrived(String shareId, {String? writeToken}) async {}
 
   @override
-  Future<void> revoke(String shareId) async {}
+  Future<void> revoke(String shareId, {String? writeToken}) async {}
 }
 
 /// Skeleton HTTP backend for the founder's Railway server. Enabled only when a
@@ -112,13 +120,18 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
   @override
   bool get supportsLive => true;
 
-  Map<String, String> get _headers => {
-        'content-type': 'application/json',
-        if (authToken != null) 'authorization': 'Bearer $authToken',
-      };
+  Map<String, String> _headers({String? capability}) => {
+    'content-type': 'application/json',
+    if (capability != null && capability.isNotEmpty)
+      'authorization': 'Bearer $capability'
+    else if (authToken != null && authToken!.isNotEmpty)
+      'authorization': 'Bearer $authToken',
+  };
 
   String get _base =>
-      baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+      baseUrl.endsWith('/')
+          ? baseUrl.substring(0, baseUrl.length - 1)
+          : baseUrl;
 
   /// Sanitize a share id for use in a URL path segment. Prevents path
   /// traversal (e.g. `../../admin`) from a malicious deep link.
@@ -130,13 +143,15 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
       final res = await _client
           .post(
             Uri.parse('$_base/v1/share'),
-            headers: _headers,
+            headers: _headers(),
             body: jsonEncode({
               'id': session.id,
               'mode': session.mode.name,
               'destLabel': session.destLabel,
               'etaEpochMs': session.etaEpochMs,
               'expiresAtMs': session.expiresAtMs,
+              'readToken': session.readToken,
+              'writeToken': session.writeToken,
             }),
           )
           .timeout(timeout);
@@ -149,45 +164,62 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
   }
 
   @override
-  Future<void> pushLocation(String shareId, ShareSnapshot snapshot) async {
+  Future<void> pushLocation(
+    String shareId,
+    ShareSnapshot snapshot, {
+    String? writeToken,
+  }) async {
     try {
       await _client
           .post(
             Uri.parse('$_base/v1/share/${_safeId(shareId)}/ping'),
-            headers: _headers,
+            headers: _headers(capability: writeToken),
             body: jsonEncode(snapshot.toJson()),
           )
           .timeout(timeout);
-    } catch (_) {/* best effort */}
+    } catch (_) {
+      /* best effort */
+    }
   }
 
   @override
-  Future<void> markArrived(String shareId) async {
+  Future<void> markArrived(String shareId, {String? writeToken}) async {
     try {
       await _client
-          .post(Uri.parse('$_base/v1/share/${_safeId(shareId)}/arrived'),
-              headers: _headers)
+          .post(
+            Uri.parse('$_base/v1/share/${_safeId(shareId)}/arrived'),
+            headers: _headers(capability: writeToken),
+          )
           .timeout(timeout);
-    } catch (_) {/* best effort */}
+    } catch (_) {
+      /* best effort */
+    }
   }
 
   @override
-  Future<void> revoke(String shareId) async {
+  Future<void> revoke(String shareId, {String? writeToken}) async {
     try {
       await _client
-          .delete(Uri.parse('$_base/v1/share/${_safeId(shareId)}'), headers: _headers)
+          .delete(
+            Uri.parse('$_base/v1/share/${_safeId(shareId)}'),
+            headers: _headers(capability: writeToken),
+          )
           .timeout(timeout);
-    } catch (_) {/* best effort */}
+    } catch (_) {
+      /* best effort */
+    }
   }
 
   /// READ side (follower). Backend addition: GET {base}/v1/share/{id}/status.
   /// 410 -> a gone view; 404 / non-2xx / transport error -> null (fail-safe).
   @override
-  Future<ShareStatusView?> getStatus(String id) async {
+  Future<ShareStatusView?> getStatus(String id, {String? readToken}) async {
     try {
-      final res = await _client
-          .get(Uri.parse('$_base/v1/share/${_safeId(id)}/status'), headers: _headers)
-          .timeout(timeout);
+      var uri = Uri.parse('$_base/v1/share/${_safeId(id)}/status');
+      if (readToken != null && readToken.isNotEmpty) {
+        uri = uri.replace(queryParameters: <String, String>{'t': readToken});
+      }
+      final res = await _client.get(uri, headers: _headers()).timeout(timeout);
       if (res.statusCode == 410) return ShareStatusView.gone(id);
       if (res.statusCode == 404) return null;
       if (res.statusCode ~/ 100 != 2) return null;

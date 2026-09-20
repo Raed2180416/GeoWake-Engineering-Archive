@@ -26,6 +26,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geowake2/core/ekf/ekf_orchestrator.dart';
+import 'package:geowake2/core/ekf/ekf_logger.dart';
 import 'package:geowake2/core/ekf/ekf_types.dart';
 import 'package:geowake2/core/ekf/route_geometry.dart';
 import 'package:geowake2/services/transfer_utils.dart';
@@ -65,6 +66,9 @@ class SensorFusionManager {
   /// Accept an optional gyroscope stream (for testing).
   final Stream<GyroscopeEvent>? gyroscopeStream;
 
+  /// Optional raw field-validation capture. Null in normal production builds.
+  final EkfLogger? diagnosticLogger;
+
   /// Optional EKF route geometry (enables EKF path when provided).
   RouteGeometry? _routeGeometry;
 
@@ -86,6 +90,7 @@ class SensorFusionManager {
     required LatLng initialPosition,
     this.accelerometerStream,
     this.gyroscopeStream,
+    this.diagnosticLogger,
     RouteGeometry? routeGeometry,
     bool enableEkf = false,
   }) : _routeGeometry = routeGeometry,
@@ -112,7 +117,11 @@ class SensorFusionManager {
     _ekfOrchestrator?.setFftEnabled(enabled);
   }
 
-  void updateRouteGeometry(RouteGeometry? geometry) {
+  void updateRouteGeometry(
+    RouteGeometry? geometry, {
+    double? preserveProgressMeters,
+  }) {
+    final previousState = _ekfOrchestrator?.publicState ?? _lastEkfState;
     _routeGeometry = geometry;
     _enableEkf = geometry != null;
     if (!_enableEkf || _routeGeometry == null) {
@@ -123,41 +132,56 @@ class SensorFusionManager {
 
     _ekfOrchestrator = EkfOrchestrator(route: _routeGeometry!);
     _ekfOrchestrator!.setFftEnabled(_fftEnabled);
+    if (previousState != null) {
+      _ekfOrchestrator!.seedFromState(
+        previousState,
+        progressMeters: preserveProgressMeters,
+      );
+    }
     _ekfOrchestrator!.onStationSnapConfirmed = _handleStationSnapConfirmed;
-    _lastEkfState = null;
+    _lastEkfState = _ekfOrchestrator!.publicState;
   }
 
   void updateGps(Position position) {
-    final ekf = _ekfOrchestrator;
-    if (ekf == null) return;
+    _lastGpsAccepted = false;
     final timestamp = Duration(
       microseconds:
           _imuClock?.elapsedMicroseconds ??
           DateTime.now().millisecondsSinceEpoch * 1000,
     );
+    final ekf = _ekfOrchestrator;
+    if (ekf == null) {
+      diagnosticLogger?.logGps(
+        timestamp: timestamp,
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracy: position.accuracy,
+      );
+      return;
+    }
+    final priorState = _lastEkfState;
     final sGps = _routeGeometry?.projectLatLng(
       position.latitude,
       position.longitude,
+      previousProgressMeters:
+          _lastGpsFixTs == null ? null : priorState?.s,
+      headingDegrees:
+          position.heading.isFinite && position.heading >= 0
+              ? position.heading
+              : null,
     );
     if (sGps != null && sGps.isFinite) {
-      // E1: only a VALID on-route fix marks GPS "alive". An off-route/phantom
-      // fix (projection NaN) must NOT refresh this clock — otherwise a burst of
-      // off-route fixes keeps the EKF out of degraded dead-reckoning even though
-      // none of them ever update the filter (it discards NaN projections).
-      // Frozen-phantom + off-route rejection itself lives in
-      // EkfOrchestrator.onGpsFixAuto so production and the replay harness share it.
-      _lastGpsFixTs = timestamp;
       final leg = _legForProgress(sGps);
       if (leg != null) {
         ekf.setStationContext(
-          stationMeters: leg.stopMeters,
+          stationMeters: trustedStationMetersForLeg(leg),
           isMetroLeg: leg.isMetro,
         );
       } else {
         ekf.setStationContext(stationMeters: const [], isMetroLeg: false);
       }
     }
-    ekf.onGpsFixAuto(
+    final accepted = ekf.onGpsFixAuto(
       GpsFix(
         lat: position.latitude,
         lng: position.longitude,
@@ -166,6 +190,50 @@ class SensorFusionManager {
         timestamp: timestamp,
       ),
     );
+    diagnosticLogger?.logGps(
+      timestamp: timestamp,
+      lat: position.latitude,
+      lng: position.longitude,
+      accuracy: position.accuracy,
+      ekfState: ekf.publicState,
+      mode: ekf.publicState.mode,
+    );
+    if (accepted) {
+      // Only a fix actually fused by the EKF marks GPS alive. Merely projecting
+      // onto the route is insufficient: a frozen phantom or innovation-gated
+      // outlier must let the no-fix timer continue into degraded DR.
+      _lastGpsFixTs = timestamp;
+      _lastGpsAccepted = true;
+    }
+  }
+
+  /// Station anchors are a high-trust correction, not a generic stop-count
+  /// hint. Estimated/unverified positions may still support conservative alarm
+  /// timing, but must never pull the EKF onto a station that is not demonstrably
+  /// part of the active route segment.
+  static List<double> trustedStationMetersForLeg(TransitLegStops? leg) {
+    if (leg == null ||
+        !leg.isMetro ||
+        !leg.isActualPositions ||
+        leg.stopCountConfidence < 0.999 ||
+        leg.numStops <= 0 ||
+        leg.stopMeters.length != leg.numStops ||
+        leg.stopPositions.length != leg.numStops ||
+        leg.stopNames.length != leg.numStops) {
+      return const [];
+    }
+
+    var previous = leg.legStartMeters;
+    for (final meters in leg.stopMeters) {
+      if (!meters.isFinite ||
+          meters <= previous ||
+          meters <= leg.legStartMeters ||
+          meters >= leg.legEndMeters) {
+        return const [];
+      }
+      previous = meters;
+    }
+    return List<double>.unmodifiable(leg.stopMeters);
   }
 
   void updateTransitLegStops(List<TransitLegStops> stops) {
@@ -184,27 +252,35 @@ class SensorFusionManager {
   // EKF to DEGRADED mode when GPS goes silent (tunnels) — without this the
   // orchestrator never enters degraded DR in production.
   Duration? _lastGpsFixTs;
+  bool _lastGpsAccepted = false;
+
+  /// Exposes acceptance timing only for deterministic regression tests.
+  Duration? get lastAcceptedGpsTimestampForTest => _lastGpsFixTs;
+  bool get lastGpsAccepted => _lastGpsAccepted;
   static const Duration _noFixDegradeThreshold = Duration(seconds: 3);
   Duration? _lastGpsUnavailableTs;
 
   /// Starts sensor fusion by listening to accelerometer events.
   void startFusion() {
     try {
+      if (diagnosticLogger != null && !diagnosticLogger!.isActive) {
+        unawaited(diagnosticLogger!.startSession());
+      }
       _imuClock ??= Stopwatch()..start();
       _lastGyro = null;
       _accelSampleCount = 0; // G21: restart no-gyro detection each session
       _noGyroDeclared = false;
       _lastGpsFixTs = null; // E1: restart GPS-silence tracking each session
+      _lastGpsAccepted = false;
       _lastGpsUnavailableTs = null;
 
       // Lazily resolve the default sensors stream so unit/widget tests that
       // don't have the plugin registered don't throw during construction.
-      final Stream<AccelerometerEvent> stream =
-          (accelerometerStream ??
-                  accelerometerEventStream(
-                    samplingPeriod: SensorInterval.gameInterval,
-                  ))
-              .handleError((_) {});
+      final Stream<AccelerometerEvent> stream = (accelerometerStream ??
+              accelerometerEventStream(
+                samplingPeriod: SensorInterval.gameInterval,
+              ))
+          .handleError((_) {});
 
       _accelerometerSubscription = stream.listen(
         (AccelerometerEvent event) {
@@ -243,6 +319,14 @@ class SensorFusionManager {
           _positionController.add(LatLng(fusedLat, fusedLon));
 
           final ekf = _ekfOrchestrator;
+          final timestamp = Duration(
+            microseconds:
+                _imuClock?.elapsedMicroseconds ??
+                now.millisecondsSinceEpoch * 1000,
+          );
+          final gx = _lastGyro?.x ?? 0.0;
+          final gy = _lastGyro?.y ?? 0.0;
+          final gz = _lastGyro?.z ?? 0.0;
           if (ekf != null) {
             // G21: detect a gyroscope-less device. If no gyro sample has arrived
             // after a ~2s warm-up (100 accel samples @ ~50Hz), the device has no
@@ -258,14 +342,6 @@ class SensorFusionManager {
                 ekf.setNoGyro(true);
               }
             }
-            final timestamp = Duration(
-              microseconds:
-                  _imuClock?.elapsedMicroseconds ??
-                  now.millisecondsSinceEpoch * 1000,
-            );
-            final gx = _lastGyro?.x ?? 0.0;
-            final gy = _lastGyro?.y ?? 0.0;
-            final gz = _lastGyro?.z ?? 0.0;
             // E1: if GPS has gone silent past the threshold, notify the EKF so
             // it enters DEGRADED mode (honest σ growth + DR damping). Throttled
             // so we don't re-notify on every 50Hz sample.
@@ -291,6 +367,21 @@ class SensorFusionManager {
             _lastEkfState = ekf.publicState;
             _ekfStateController.add(_lastEkfState!);
           }
+          // Capture the physical sample even when there is no route geometry
+          // (and therefore no EKF).  This is the evidence needed to diagnose
+          // sensor behaviour before/after a route refresh or a GPS blackout.
+          diagnosticLogger?.logImu(
+            timestamp: timestamp,
+            ax: event.x,
+            ay: event.y,
+            az: event.z,
+            gx: gx,
+            gy: gy,
+            gz: gz,
+            ekfState: _lastEkfState,
+            motionState: _lastEkfState?.motion.name,
+            mode: _lastEkfState?.mode,
+          );
         },
         onError: (_) {
           // If the platform stream errors (e.g., MissingPluginException), disable fusion.
@@ -331,6 +422,9 @@ class SensorFusionManager {
     _gyroscopeSubscription = null;
     _imuClock = null;
     _lastGyro = null;
+    if (diagnosticLogger?.isActive ?? false) {
+      unawaited(diagnosticLogger!.endSession());
+    }
   }
 
   /// Resets the fusion manager with a new initial position.

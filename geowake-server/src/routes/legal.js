@@ -21,8 +21,8 @@
 const express = require('express');
 const router = express.Router();
 
-const CONTACT_EMAIL = process.env.LEGAL_CONTACT_EMAIL || 'support@geowake.app';
-const EFFECTIVE_DATE = process.env.LEGAL_EFFECTIVE_DATE || '2026-07-24';
+const CONTACT_EMAIL = process.env.LEGAL_CONTACT_EMAIL || 'geowakeapp@gmail.com';
+const EFFECTIVE_DATE = process.env.LEGAL_EFFECTIVE_DATE || '2026-08-07';
 
 const shell = (title, body) => `<!doctype html>
 <html lang="en"><head>
@@ -67,10 +67,12 @@ least it can to wake you before your stop, and shares nothing by default.</p>
 </ul>
 
 <h2>Journey sharing &amp; Guardian (optional)</h2>
-<p>If you start a live journey share, or enable Guardian mode, GeoWake sends your
-live journey location to our share backend so the contact you chose can follow
-your trip. This happens only when you turn it on, and stops when the journey
-ends. If you never use these features, no location leaves your device for them.</p>
+<p>If you start a live journey share, or enable Guardian mode, GeoWake creates a
+live-share link and may open your SMS or WhatsApp composer with that link
+prefilled. <strong>You choose whether to press Send.</strong> While the share is
+active, GeoWake sends live journey location to our share backend so a recipient
+who receives the link can follow the trip. It stops when the journey ends. If
+you never use these features, no location leaves your device for them.</p>
 
 <h2>Anonymous mobility statistics (off by default)</h2>
 <p>GeoWake includes an optional, opt-in feature to contribute anonymous,
@@ -85,7 +87,8 @@ coordinates. You can withdraw at any time, which erases the local statistics.</p
   does not see or store your payment details.</li>
   <li><strong>Ads</strong> on the free tier are served by Google AdMob, which
   may collect device/advertising identifiers per Google's policies. Pro removes
-  ads. Ads are never shown on the tracking or alarm screen.</li>
+  ads. A small banner may appear below the map during free-tier tracking. Ads
+  are never placed over the wake-alarm screen.</li>
 </ul>
 
 <h2>Diagnostics</h2>
@@ -129,8 +132,12 @@ a guarantee.</strong> Keep your own judgement, especially for critical trips.</p
 </ul>
 
 <h2>Purchases</h2>
-<p>Pro is a one-time purchase via Google Play. Refunds are handled under Google
-Play's refund policy.</p>
+<p>GeoWake Pro is sold through Google Play as non-renewing prepaid passes: ₹7
+for 24 hours, ₹35 for 7 days, ₹99 for 30 days, or ₹899 for 365 days. Every
+active pass unlocks the same Pro features for its stated duration. Passes do
+not auto-renew; access expires unless you buy another pass. Purchase processing
+and refunds are handled under Google Play's applicable policies. A lifetime
+purchase is not part of the current release.</p>
 
 <h2>Disclaimer &amp; liability</h2>
 <p>GeoWake is provided "as is", without warranties of any kind. To the maximum

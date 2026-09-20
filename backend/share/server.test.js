@@ -3,7 +3,7 @@
 //
 // Covers the privacy-critical invariants from docs/share/BACKEND_CONTRACT.md:
 //   create -> ping -> latest-only, TTL 410, revoke hard-delete, auth rejects,
-//   coord rounding, plus assetlinks + HMAC `?t=` verification.
+//   coord rounding, capability separation, plus legacy HMAC verification.
 
 'use strict';
 
@@ -14,6 +14,8 @@ const { createServer, mintToken } = require('./server');
 
 const AUTH = 'test-bearer-token';
 const HMAC = 'test-hmac-secret';
+const READ_CAP = 'read_capability_abcdefghijklmnopqrstuvwxyz123456';
+const WRITE_CAP = 'write_capability_abcdefghijklmnopqrstuvwxyz12345';
 
 // A test harness: a server with an injectable clock, started on an ephemeral port.
 async function withServer(run, extra = {}) {
@@ -68,6 +70,24 @@ async function createShare(base, overrides = {}) {
   return res;
 }
 
+async function createCapabilityShare(base, overrides = {}) {
+  const body = {
+    id: 'cap-share-123',
+    mode: 'guardian',
+    destLabel: 'MG Road',
+    etaEpochMs: null,
+    expiresAtMs: 1_000_000_000_000 + 60 * 60 * 1000,
+    readToken: READ_CAP,
+    writeToken: WRITE_CAP,
+    ...overrides,
+  };
+  return fetch(`${base}/v1/share`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
 // ---------------------------------------------------------------------------
 
 test('health endpoint is open and reports ok', async () => {
@@ -106,8 +126,8 @@ test('create -> ping -> ping keeps ONLY the latest coarse point (no history)', a
     // The stored record holds a SINGLE point equal to the latest ping — and no
     // array/history field of any kind exists on it.
     const rec = store.getLive(serverId);
-    assert.equal(rec.lat, 12.99999);
-    assert.equal(rec.lng, 77.88888);
+    assert.equal(rec.lat, 13);
+    assert.equal(rec.lng, 77.889);
     for (const [k, v] of Object.entries(rec)) {
       assert.ok(!Array.isArray(v), `record field "${k}" must not be an array (no trajectory)`);
     }
@@ -116,14 +136,14 @@ test('create -> ping -> ping keeps ONLY the latest coarse point (no history)', a
     const page = await fetch(`${base}/j/${serverId}`);
     assert.equal(page.status, 200);
     const html = await page.text();
-    assert.ok(html.includes('12.99999'), 'page shows latest lat');
-    assert.ok(html.includes('77.88888'), 'page shows latest lng');
+    assert.ok(html.includes('13.000'), 'page shows latest approximate lat');
+    assert.ok(html.includes('77.889'), 'page shows latest approximate lng');
     assert.ok(!html.includes('12.34567'), 'page must not show the superseded point');
     assert.ok(html.includes('Central Station'));
   });
 });
 
-test('coordinates are rounded to 5 dp on ingest and on read', async () => {
+test('coordinates are rounded to 3 dp on ingest and on read', async () => {
   await withServer(async ({ base, store }) => {
     const { serverId } = await (await createShare(base)).json();
     const p = await fetch(`${base}/v1/share/${serverId}/ping`, {
@@ -134,12 +154,12 @@ test('coordinates are rounded to 5 dp on ingest and on read', async () => {
     });
     assert.equal(p.status, 204);
     const rec = store.getLive(serverId);
-    assert.equal(rec.lat, 12.34568); // rounded to 5 dp
-    assert.equal(rec.lng, 77.98765);
+    assert.equal(rec.lat, 12.346); // rounded to 3 dp
+    assert.equal(rec.lng, 77.988);
 
     const html = await (await fetch(`${base}/j/${serverId}`)).text();
-    assert.ok(html.includes('12.34568'));
-    assert.ok(html.includes('77.98765'));
+    assert.ok(html.includes('12.346'));
+    assert.ok(html.includes('77.988'));
     assert.ok(!html.includes('12.3456789'));
   });
 });
@@ -234,6 +254,105 @@ test('auth: /v1 rejects missing or wrong bearer token with 401', async () => {
       body: JSON.stringify({ lat: 1, lng: 2 }),
     });
     assert.equal(res.status, 401);
+  });
+});
+
+test('missing founder token never opens capability-protected routes', async () => {
+  await withServer(
+    async ({ base }) => {
+      let response = await fetch(`${base}/v1/share`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: 'tokenless-share',
+          expiresAtMs: 1_000_000_000_000 + 60_000,
+        }),
+      });
+      assert.equal(response.status, 401);
+
+      response = await createCapabilityShare(base);
+      assert.equal(response.status, 200);
+      const { serverId } = await response.json();
+
+      response = await fetch(`${base}/v1/share/${serverId}/ping`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ lat: 12.97, lng: 77.59 }),
+      });
+      assert.equal(response.status, 401);
+
+      response = await fetch(`${base}/v1/share/${serverId}/ping`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${WRITE_CAP}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ lat: 12.97, lng: 77.59 }),
+      });
+      assert.equal(response.status, 204);
+    },
+    { authToken: '' }
+  );
+});
+
+test('per-share capabilities create, read, update, and never persist raw tokens', async () => {
+  await withServer(async ({ base, store }) => {
+    const created = await createCapabilityShare(base);
+    assert.equal(created.status, 200);
+    const { serverId } = await created.json();
+    const rec = store.getLive(serverId);
+    assert.ok(rec.readTokenHash);
+    assert.ok(rec.writeTokenHash);
+    assert.equal('readToken' in rec, false);
+    assert.equal('writeToken' in rec, false);
+    assert.equal(JSON.stringify(rec).includes(READ_CAP), false);
+    assert.equal(JSON.stringify(rec).includes(WRITE_CAP), false);
+
+    assert.equal((await fetch(`${base}/j/${serverId}`)).status, 403);
+    assert.equal((await fetch(`${base}/j/${serverId}?t=wrong`)).status, 403);
+    assert.equal(
+      (await fetch(`${base}/j/${serverId}?t=${encodeURIComponent(READ_CAP)}`)).status,
+      200
+    );
+
+    let response = await fetch(`${base}/v1/share/${serverId}/ping`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${WRITE_CAP}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ lat: 12.97, lng: 77.59 }),
+    });
+    assert.equal(response.status, 204);
+
+    response = await fetch(
+      `${base}/v1/share/${serverId}/status?t=${encodeURIComponent(READ_CAP)}`
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).destLabel, 'MG Road');
+
+    response = await fetch(
+      `${base}/v1/share/${serverId}/status?t=${encodeURIComponent(WRITE_CAP)}`
+    );
+    assert.equal(response.status, 401, 'write capability must not grant recipient read');
+
+    response = await fetch(`${base}/v1/share/${serverId}/arrived`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${WRITE_CAP}` },
+    });
+    assert.equal(response.status, 204);
+  });
+});
+
+test('capability create rejects weak or incomplete tokens', async () => {
+  await withServer(async ({ base }) => {
+    let response = await createCapabilityShare(base, { readToken: 'short' });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, 'bad_capabilities');
+
+    response = await createCapabilityShare(base, { writeToken: null });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).error, 'bad_capabilities');
   });
 });
 

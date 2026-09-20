@@ -20,6 +20,7 @@ enum PaywallSource {
   widget,
   postArrival,
   antiTheft,
+  sponsorGate,
 }
 
 /// The one gate every premium tap goes through.

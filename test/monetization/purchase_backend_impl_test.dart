@@ -19,7 +19,8 @@
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show debugDefaultTargetPlatformOverride;
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart' show TargetPlatform;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase_platform_interface/in_app_purchase_platform_interface.dart';
@@ -34,6 +35,7 @@ class _FakeIapPlatform extends InAppPurchasePlatform {
       StreamController<List<PurchaseDetails>>.broadcast();
 
   int restoreCalls = 0;
+  int completeCalls = 0;
 
   @override
   Stream<List<PurchaseDetails>> get purchaseStream => _ctrl.stream;
@@ -49,7 +51,9 @@ class _FakeIapPlatform extends InAppPurchasePlatform {
   }
 
   @override
-  Future<void> completePurchase(PurchaseDetails purchase) async {}
+  Future<void> completePurchase(PurchaseDetails purchase) async {
+    completeCalls++;
+  }
 
   void emit(List<PurchaseDetails> purchases) => _ctrl.add(purchases);
 
@@ -57,15 +61,27 @@ class _FakeIapPlatform extends InAppPurchasePlatform {
 }
 
 PurchaseDetails _restored(String productId) => PurchaseDetails(
+  productID: productId,
+  verificationData: PurchaseVerificationData(
+    localVerificationData: 'local',
+    serverVerificationData: 'server',
+    source: 'test',
+  ),
+  transactionDate: DateTime.now().millisecondsSinceEpoch.toString(),
+  status: PurchaseStatus.restored,
+);
+
+PurchaseDetails _restoredPass(String productId, String token) =>
+    PurchaseDetails(
       productID: productId,
       verificationData: PurchaseVerificationData(
         localVerificationData: 'local',
-        serverVerificationData: 'server',
-        source: 'test',
+        serverVerificationData: token,
+        source: 'google_play',
       ),
       transactionDate: DateTime.now().millisecondsSinceEpoch.toString(),
       status: PurchaseStatus.restored,
-    );
+    )..pendingCompletePurchase = true;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -92,8 +108,7 @@ void main() {
   });
 
   group('IapPurchaseBackend — restore()/queryPastPurchases() concurrency', () {
-    test(
-        'a concurrent restore() and queryPastPurchases() BOTH resolve '
+    test('a concurrent restore() and queryPastPurchases() BOTH resolve '
         'IMMEDIATELY from a single stream event (no clobbered completer, no '
         'fall-through to the multi-second timeout fallback)', () async {
       final backend = IapPurchaseBackend();
@@ -122,8 +137,11 @@ void main() {
       final restoreResult = await restoreFuture;
       stopwatch.stop();
 
-      expect(restoreResult, contains('gw_pro_onetime'),
-          reason: 'restore() must observe the restored purchase');
+      expect(
+        restoreResult,
+        contains('gw_pro_onetime'),
+        reason: 'restore() must observe the restored purchase',
+      );
       // The regression this guards: with a SHARED completer field, one of
       // the two calls ends up awaiting an orphaned/wrong completer that
       // `_onPurchases` never completes, so it only resolves via its own
@@ -131,45 +149,137 @@ void main() {
       // restore()) — multiple seconds later than the immediate stream
       // signal. A generous 1s bound comfortably separates "resolved via the
       // stream" from "fell through to a multi-second timeout fallback".
-      expect(stopwatch.elapsedMilliseconds, lessThan(1000),
-          reason: 'both calls must resolve immediately from the single '
-              'stream event, not fall through to a multi-second timeout '
-              'fallback (a symptom of a clobbered/orphaned completer)');
+      expect(
+        stopwatch.elapsedMilliseconds,
+        lessThan(1000),
+        reason:
+            'both calls must resolve immediately from the single '
+            'stream event, not fall through to a multi-second timeout '
+            'fallback (a symptom of a clobbered/orphaned completer)',
+      );
     });
 
     test(
-        'restore() started AFTER queryPastPurchases() already completed still '
-        'resolves correctly (no leftover state from the earlier call)',
-        () async {
-      final backend = IapPurchaseBackend();
-      await backend.init();
+      'restore() started AFTER queryPastPurchases() already completed still '
+      'resolves correctly (no leftover state from the earlier call)',
+      () async {
+        final backend = IapPurchaseBackend();
+        await backend.init();
 
-      final queryFuture = backend.queryPastPurchases();
-      fake.emit([_restored('gw_pro_onetime')]);
-      await queryFuture;
+        final queryFuture = backend.queryPastPurchases();
+        fake.emit([_restored('gw_pro_onetime')]);
+        await queryFuture;
 
-      // A second, later restore() (e.g. the user taps the button afterwards)
-      // must not be affected by the first call's now-removed completer.
-      final restoreFuture = backend.restore();
-      await Future<void>.delayed(Duration.zero);
-      fake.emit([_restored('gw_daypass')]);
+        // A second, later restore() (e.g. the user taps the button afterwards)
+        // must not be affected by the first call's now-removed completer.
+        final restoreFuture = backend.restore();
+        await Future<void>.delayed(Duration.zero);
+        fake.emit([_restored('gw_daypass')]);
 
-      final restored = await restoreFuture.timeout(const Duration(seconds: 2));
-      expect(restored, containsAll(<String>{'gw_pro_onetime', 'gw_daypass'}));
-    });
+        final restored = await restoreFuture.timeout(
+          const Duration(seconds: 2),
+        );
+        expect(restored, containsAll(<String>{'gw_pro_onetime', 'gw_daypass'}));
+      },
+    );
 
-    test('a plain single restore() with no concurrent call still works',
-        () async {
-      final backend = IapPurchaseBackend();
-      await backend.init();
+    test(
+      'a plain single restore() with no concurrent call still works',
+      () async {
+        final backend = IapPurchaseBackend();
+        await backend.init();
 
-      final restoreFuture = backend.restore();
-      await Future<void>.delayed(Duration.zero);
-      fake.emit([_restored('gw_pro_onetime')]);
+        final restoreFuture = backend.restore();
+        await Future<void>.delayed(Duration.zero);
+        fake.emit([_restored('gw_pro_onetime')]);
 
-      final restored = await restoreFuture.timeout(const Duration(seconds: 2));
-      expect(restored, {'gw_pro_onetime'});
-      expect(fake.restoreCalls, 1);
-    });
+        final restored = await restoreFuture.timeout(
+          const Duration(seconds: 2),
+        );
+        expect(restored, {'gw_pro_onetime'});
+        expect(fake.restoreCalls, 1);
+      },
+    );
+  });
+
+  group('IapPurchaseBackend — prepaid pass verification boundary', () {
+    test(
+      'verified Play token exposes server expiry before grant and acknowledgement',
+      () async {
+        final expiry =
+            DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch;
+        final backend = IapPurchaseBackend(
+          verifyPlayPurchase: (productId, token) async {
+            expect(productId, 'geowake_pro_monthly');
+            expect(token, 'play-token-valid-1234567890');
+            return expiry;
+          },
+        );
+        await backend.init();
+        final granted = Completer<Set<String>>();
+        backend.onEntitlementChanged = granted.complete;
+
+        fake.emit([
+          _restoredPass('geowake_pro_monthly', 'play-token-valid-1234567890'),
+        ]);
+        final owned = await granted.future.timeout(const Duration(seconds: 1));
+
+        expect(owned, contains('geowake_pro_monthly'));
+        expect(backend.verifiedPassExpiries['geowake_pro_monthly'], expiry);
+        expect(
+          fake.completeCalls,
+          1,
+          reason: 'only a server-verified pass may be acknowledged',
+        );
+        expect(backend.pendingProductIds, isEmpty);
+      },
+    );
+
+    test(
+      'verification failure is not granted or acknowledged and can recover',
+      () async {
+        var attempts = 0;
+        final expiry =
+            DateTime.now().add(const Duration(days: 7)).millisecondsSinceEpoch;
+        final backend = IapPurchaseBackend(
+          verifyPlayPurchase: (productId, token) async {
+            attempts++;
+            return attempts == 1 ? null : expiry;
+          },
+        );
+        await backend.init();
+        final becamePending = Completer<Set<String>>();
+        final granted = Completer<Set<String>>();
+        backend.onPendingChanged = (ids) {
+          if (ids.isNotEmpty && !becamePending.isCompleted) {
+            becamePending.complete(ids);
+          }
+        };
+        backend.onEntitlementChanged = granted.complete;
+        final purchase = _restoredPass(
+          'geowake_pro_weekly',
+          'play-token-retry-1234567890',
+        );
+
+        fake.emit([purchase]);
+        expect(
+          await becamePending.future.timeout(const Duration(seconds: 1)),
+          contains('geowake_pro_weekly'),
+        );
+        expect(backend.verifiedPassExpiries, isEmpty);
+        expect(fake.completeCalls, 0);
+
+        // Play redelivers the still-unacknowledged purchase after the verifier
+        // recovers; the second attempt grants and then acknowledges exactly once.
+        fake.emit([purchase]);
+        expect(
+          await granted.future.timeout(const Duration(seconds: 1)),
+          contains('geowake_pro_weekly'),
+        );
+        expect(backend.verifiedPassExpiries['geowake_pro_weekly'], expiry);
+        expect(fake.completeCalls, 1);
+        expect(backend.pendingProductIds, isEmpty);
+      },
+    );
   });
 }

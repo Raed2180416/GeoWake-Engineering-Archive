@@ -27,7 +27,7 @@ describe('Maps API', () => {
   beforeAll(async () => {
     const response = await request(app)
       .post('/api/auth/token')
-      .send({ bundleId: 'com.yourcompany.geowake2' });
+      .send({ bundleId: 'com.geowake.app' });
 
     validToken = response.body.token;
   });
@@ -282,8 +282,8 @@ describe('Maps API', () => {
     });
   });
 
-  describe('Caching Behavior', () => {
-    test('should cache directions requests', async () => {
+  describe('Google content storage policy', () => {
+    test('should not server-cache directions content', async () => {
       const params = {
         origin: '40.7128,-74.0060',
         destination: '40.7580,-73.9855',
@@ -305,13 +305,10 @@ describe('Maps API', () => {
       // Both should have same status
       expect(response1.status).toBe(response2.status);
 
-      // If successful, responses should be identical (from cache)
-      if (response1.status === 200) {
-        expect(JSON.stringify(response1.body)).toBe(JSON.stringify(response2.body));
-      }
+      expect(axios.get).toHaveBeenCalledTimes(2);
     });
 
-    test('should cache autocomplete requests', async () => {
+    test('should not server-cache autocomplete content', async () => {
       const params = {
         input: 'Central Park',
         sessiontoken: 'cache-test-session'
@@ -330,6 +327,7 @@ describe('Maps API', () => {
         .send(params);
 
       expect(response1.status).toBe(response2.status);
+      expect(axios.get).toHaveBeenCalledTimes(2);
     });
   });
 

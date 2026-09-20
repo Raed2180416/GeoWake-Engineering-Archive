@@ -16,8 +16,8 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * [HomeWidgetBridge] (Dart) mirrors into the widget SharedPreferences and wires
  * a single LAUNCH pending intent — carrying the gw_widget_deeplink URI — onto
  * the whole card. Tapping it just brings MainActivity to the foreground, where
- * the Dart side (WidgetArmHandler / HomeScreen) runs the normal one-tap arm
- * through the unchanged permission + reliability preflight + startTracking flow.
+ * the Dart side (WidgetArmHandler / HomeScreen) selects the recent destination.
+ * The rider still chooses the current mode/threshold and explicitly arms.
  *
  * It NEVER starts tracking, computes ETA, or touches the arm→track→alarm spine.
  * If any field is missing it degrades to a neutral "Open GeoWake" card — a

@@ -60,6 +60,10 @@ class TrackingSnapshot {
   static TrackingSnapshot? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;
     try {
+      final rawCreatedAt = json['createdAt'];
+      if (rawCreatedAt is! String) return null;
+      final parsedCreatedAt = DateTime.tryParse(rawCreatedAt);
+      if (parsedCreatedAt == null) return null;
       return TrackingSnapshot(
         destinationName: json['destinationName'] as String? ?? 'Destination',
         destinationLat: (json['destinationLat'] as num).toDouble(),
@@ -69,9 +73,7 @@ class TrackingSnapshot {
         metroMode: json['metroMode'] as bool? ?? false,
         userLat: (json['userLat'] as num).toDouble(),
         userLng: (json['userLng'] as num).toDouble(),
-        createdAt:
-            DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-            DateTime.now(),
+        createdAt: parsedCreatedAt,
         directions:
             json['directions'] == null
                 ? null
@@ -278,6 +280,7 @@ class TrackingStateStore {
   static const _progressPayloadKey = 'gw_progress_payload_v1';
   static const _pausedKey = 'tracking_paused_v1';
   static const _cleanShutdownKey = 'tracking_clean_shutdown_v1';
+  static const _armPendingSinceKey = 'tracking_arm_pending_since_v1';
   static const _preboardingEnabledKey = 'gw_preboarding_enabled_v1';
   static const _destinationOnlyMetroTimeKey =
       'gw_destination_only_metro_time_v1';
@@ -313,12 +316,45 @@ class TrackingStateStore {
   /// False on OS-kill recovery => reliability telemetry can flag it.
   static Future<bool> wasCleanShutdown() async {
     final prefs = await _prefs();
+    await prefs.reload();
     return prefs.getBool(_cleanShutdownKey) ?? true;
   }
 
   static Future<bool> isActive() async {
     final prefs = await _prefs();
+    await prefs.reload();
     return prefs.getBool(_activeKey) ?? false;
+  }
+
+  /// Marks the narrow transaction window between persisting a fresh arm and
+  /// receiving the background isolate's acknowledged start. A freshly started
+  /// service must wait for that command instead of independently restoring the
+  /// same snapshot and creating two competing location sessions.
+  static Future<void> setArmPending(bool pending, {DateTime? now}) async {
+    final prefs = await _prefs();
+    if (pending) {
+      await prefs.setInt(
+        _armPendingSinceKey,
+        (now ?? DateTime.now()).millisecondsSinceEpoch,
+      );
+    } else {
+      await prefs.remove(_armPendingSinceKey);
+    }
+  }
+
+  /// True only for a recent in-flight arm. Old markers are treated as a
+  /// process-death recovery, so a crash inside the handshake cannot strand the
+  /// rider forever in a pending state.
+  static Future<bool> hasFreshArmPending({
+    DateTime? now,
+    Duration maxAge = const Duration(seconds: 30),
+  }) async {
+    final prefs = await _prefs();
+    await prefs.reload();
+    final sinceMs = prefs.getInt(_armPendingSinceKey);
+    if (sinceMs == null) return false;
+    final ageMs = (now ?? DateTime.now()).millisecondsSinceEpoch - sinceMs;
+    return ageMs >= 0 && ageMs <= maxAge.inMilliseconds;
   }
 
   static Future<void> setPaused(bool paused) async {
@@ -328,6 +364,7 @@ class TrackingStateStore {
 
   static Future<bool> isPaused() async {
     final prefs = await _prefs();
+    await prefs.reload();
     return prefs.getBool(_pausedKey) ?? false;
   }
 
@@ -403,6 +440,7 @@ class TrackingStateStore {
 
   static Future<TrackingSnapshot?> loadSnapshot() async {
     final prefs = await _prefs();
+    await prefs.reload();
     final raw = prefs.getString(_snapshotKey);
     if (raw == null || raw.isEmpty) return null;
     try {
@@ -464,6 +502,7 @@ class TrackingStateStore {
 
   static Future<TrackingProgressPayload?> loadProgressPayload() async {
     final prefs = await _prefs();
+    await prefs.reload();
     final raw = prefs.getString(_progressPayloadKey);
     if (raw == null || raw.isEmpty) return null;
     try {
@@ -495,6 +534,7 @@ class TrackingStateStore {
 
   static Future<bool> isAlarmFired() async {
     final prefs = await _prefs();
+    await prefs.reload();
     return prefs.getBool(_alarmFiredKey) ?? false;
   }
 
@@ -556,6 +596,7 @@ class TrackingStateStore {
   static Future<Map<String, dynamic>> _loadAllTransitLegStops(
     SharedPreferences prefs,
   ) async {
+    await prefs.reload();
     final raw = prefs.getString(_transitLegStopsKey);
     if (raw == null || raw.isEmpty) return {};
     try {

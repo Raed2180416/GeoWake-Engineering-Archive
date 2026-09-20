@@ -88,6 +88,51 @@ class EkfPipeline {
     _noGyro = noGyro;
   }
 
+  /// Seed a newly-created route filter from the last trusted state.
+  ///
+  /// Route refreshes and deliberate leg switches replace [RouteGeometry], but
+  /// a geometry replacement is not a reason to forget progress during a GPS
+  /// blackout.  The seed is intentionally conservative: uncertainty is never
+  /// narrower than 50 m, and the caller may provide a remapped progress on the
+  /// new route domain.
+  void seedFromState({
+    required double progressMeters,
+    required double velocityMps,
+    required double sigmaSMeters,
+    required double sigmaVMps,
+    required double biasA,
+    required EkfMode mode,
+    required MotionState motion,
+  }) {
+    _s = progressMeters.isFinite ? progressMeters : 0.0;
+    _v = velocityMps.isFinite
+        ? velocityMps.clamp(-25.0, 25.0).toDouble()
+        : 0.0;
+    _b = biasA.isFinite ? biasA.clamp(-1.0, 1.0).toDouble() : 0.0;
+    final sigmaS = (sigmaSMeters.isFinite ? sigmaSMeters : 50.0)
+        .clamp(50.0, 10000.0)
+        .toDouble();
+    final sigmaV = (sigmaVMps.isFinite ? sigmaVMps : 5.0)
+        .clamp(0.1, 25.0)
+        .toDouble();
+    _p = [
+      [sigmaS * sigmaS, 0.0, 0.0],
+      [0.0, sigmaV * sigmaV, 0.0],
+      [0.0, 0.0, 0.1 * 0.1],
+    ];
+    _mode = mode;
+    _motion = motion;
+    _initialized = true;
+    _sPub = _s;
+    _lastImuTs = null;
+    _lastGpsV = null;
+    _lastGpsTick = null;
+    _recentAccels.clear();
+    _applyStateBounds();
+    _applyCovarianceFloors();
+    _updatePublicProgress();
+  }
+
   void onImuSample(ImuSample sample) {
     onForwardAccel(sample.timestamp, sample.ax);
   }
@@ -289,13 +334,21 @@ class EkfPipeline {
   /// Note: GPS updates and station snaps are separate triggers:
   /// GPS updates happen immediately on fix; station snaps happen on ZUPT
   /// confirmation (via IMU tick). They cannot collide in the same tick.
-  void onGpsFix(GpsFix fix) {
-    final sGps = _route.projectLatLng(fix.lat, fix.lng);
-    if (sGps.isNaN) return;
+  /// Returns true only when the fix initialized, reset, or updated the filter.
+  /// A projected-but-soft-rejected fix is not an accepted observation and must
+  /// not keep higher layers' GPS-health clocks alive.
+  bool onGpsFix(GpsFix fix) {
+    final sGps = _route.projectLatLng(
+      fix.lat,
+      fix.lng,
+      previousProgressMeters: _initialized ? _s : null,
+      enforceForward: _initialized && !_allowReverse,
+    );
+    if (sGps.isNaN) return false;
 
     if (!_initialized) {
       _initializeFromGps(sGps, fix.speedMps);
-      return;
+      return true;
     }
 
     // Repair covariance consistency before any gain is computed (see
@@ -314,7 +367,7 @@ class EkfPipeline {
         'GPS: Extreme outlier (${normalizedInnovation.toStringAsFixed(1)}σ), hard reset',
       );
       _initializeFromGps(sGps, fix.speedMps);
-      return;
+      return true;
     }
 
     // Huber robust weighting for innovation
@@ -328,7 +381,7 @@ class EkfPipeline {
         'GPS: High innovation (${normalizedInnovation.toStringAsFixed(1)}σ), soft reject',
       );
       _inflateCovariance(1.2);
-      return;
+      return false;
     }
 
     // Apply weighted measurement noise (inflate R inversely with weight)
@@ -339,7 +392,7 @@ class EkfPipeline {
     final r = baseR / weight; // Inflate R for outliers
 
     final s = _p[0][0] + r;
-    if (s <= 0) return;
+    if (s <= 0) return false;
 
     final k0 = _p[0][0] / s;
     final k1 = _p[1][0] / s;
@@ -401,9 +454,7 @@ class EkfPipeline {
     // - Need sufficient IMU samples in buffer for averaging
     // - Use low gain (0.05) since GPS-derived accel is noisy
     // ─────────────────────────────────────────────────────────────────────────
-    if (_lastGpsV != null &&
-        _lastGpsTick != null &&
-        _recentAccels.isNotEmpty) {
+    if (_lastGpsV != null && _lastGpsTick != null && _recentAccels.isNotEmpty) {
       final dtGps = (fix.timestamp - _lastGpsTick!).inMicroseconds / 1e6;
       if (dtGps > 0.5 && dtGps < 5.0) {
         // GPS-derived acceleration
@@ -444,6 +495,7 @@ class EkfPipeline {
     _applyStateBounds();
     _applyCovarianceFloors();
     _updatePublicProgress();
+    return true;
   }
 
   /// ZUPT (Zero-velocity Update) handler.

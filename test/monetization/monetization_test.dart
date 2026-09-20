@@ -52,26 +52,26 @@ void main() {
       );
     });
 
-    test('post-arrival interstitial respects the every-3-rides cap', () {
+    test('pre-trip sponsor respects the three-completed-trips cap', () {
       // Below the cap: suppressed.
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.preTripSponsor,
             isPro: false, ridesSinceLastAd: 0),
         isFalse,
       );
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.preTripSponsor,
             isPro: false, ridesSinceLastAd: 2),
         isFalse,
       );
       // At/above the cap: allowed.
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.preTripSponsor,
             isPro: false, ridesSinceLastAd: 3),
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.preTripSponsor,
             isPro: false, ridesSinceLastAd: 7),
         isTrue,
       );
@@ -80,12 +80,12 @@ void main() {
     test('custom frequency cap is honoured', () {
       const strict = AdPolicy(frequencyCapRides: 5);
       expect(
-        strict.canShow(AdPlacement.postArrival,
+        strict.canShow(AdPlacement.preTripSponsor,
             isPro: false, ridesSinceLastAd: 4),
         isFalse,
       );
       expect(
-        strict.canShow(AdPlacement.postArrival,
+        strict.canShow(AdPlacement.preTripSponsor,
             isPro: false, ridesSinceLastAd: 5),
         isTrue,
       );

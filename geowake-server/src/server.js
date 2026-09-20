@@ -15,6 +15,7 @@ const authRoutes = require('./routes/auth');
 const mapsRoutes = require('./routes/maps');
 const aggregateRoutes = require('./routes/aggregate');
 const legalRoutes = require('./routes/legal');
+const billingRoutes = require('./routes/billing');
 
 const app = express();
 
@@ -103,6 +104,10 @@ app.use('/api/maps', killSwitch, authenticateDevice, perTokenQuotaGuard, mapsRou
 
 // Aggregate data routes (ingest requires auth, dashboard endpoints are public)
 app.use('/api/aggregate', aggregateRoutes);
+
+// Paid access is granted only after the backend verifies the Play purchase
+// token and authoritative subscription expiry. Device JWT alone grants none.
+app.use('/api/billing', authenticateDevice, billingRoutes);
 
 // Public legal pages (privacy policy + terms) — the app links these and Play
 // requires a reachable privacy policy. No auth; served as static HTML.

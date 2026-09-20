@@ -86,4 +86,43 @@ void main() {
     expect(r2!.eventType, equals(AlarmEventType.preBoarding));
     expect(r2.message, equals('Approaching metro station: Board Green Line'));
   });
+
+  for (final mode in [AlarmMode.stops, AlarmMode.time]) {
+    test('$mode suppresses preBoarding when route starts only 200m away', () {
+      final approach = TransitLegStops(
+        legStartMeters: 0,
+        legEndMeters: 200,
+        numStops: 0,
+        stopPositions: const [],
+        stopMeters: const [],
+        lineName: 'Walk to Station X',
+        isMetro: false,
+      );
+      final metro = TransitLegStops(
+        legStartMeters: 200,
+        legEndMeters: 3000,
+        numStops: 3,
+        stopPositions: const [],
+        stopMeters: const [800, 1500, 2200],
+        lineName: 'Purple',
+        isMetro: true,
+      );
+
+      final trigger = AlarmEvaluator.evaluateCoinciding(
+        mode: mode,
+        userValue: 1,
+        progressMeters: 150,
+        allEvents: const [],
+        firedEventIndexes: const {},
+        firedLegIds: const {},
+        isMetroLeg: false,
+        transitLegs: [approach, metro],
+        currentLegIndex: 0,
+        isFinalLeg: false,
+        currentSpeedMps: 2,
+      );
+
+      expect(trigger, isNull);
+    });
+  }
 }

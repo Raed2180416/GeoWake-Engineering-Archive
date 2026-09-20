@@ -1,18 +1,13 @@
 const axios = require('axios');
 const config = require('../config/config');
-const cache = require('../utils/cache');
 
 /**
  * A generic function to proxy requests to the Google Maps API.
- * It handles caching and adds the API key securely on the server-side.
+ * It adds the API key securely on the server-side. Google Maps Platform
+ * content is deliberately not cached: only place IDs are exempt from Google's
+ * caching restrictions, and this proxy returns much richer content.
  */
 const googleApiProxy = async (req, res, { url, params, type }) => {
-  // Check cache first using structured type+params
-  const cachedData = cache.get(type, params);
-  if (cachedData) {
-    return res.json(cachedData);
-  }
-
   try {
     const response = await axios.get(url, {
       params: {
@@ -24,14 +19,10 @@ const googleApiProxy = async (req, res, { url, params, type }) => {
     // Google returns HTTP 200 even when the request failed, signalling the real
     // outcome via response.data.status (e.g. OVER_QUERY_LIMIT, REQUEST_DENIED,
     // INVALID_REQUEST). axios does not throw on these, so we must inspect the
-    // body: only OK / ZERO_RESULTS are genuine results that are safe to cache and
-    // serve. Anything else must NOT be cached — otherwise the error body would be
-    // served to every caller for the whole TTL, leaving riders with no route —
-    // and must surface as a non-2xx so the client knows to retry.
+    // body: only OK / ZERO_RESULTS are genuine results. Any other status must
+    // surface as non-2xx so the client knows to retry or fail safely.
     const apiStatus = response.data && response.data.status;
     if (apiStatus === 'OK' || apiStatus === 'ZERO_RESULTS') {
-      // Cache the successful response under type+params (TTL by type)
-      cache.set(type, params, response.data);
       return res.json(response.data);
     }
 

@@ -4,11 +4,10 @@
 // The entitlement LOGIC lives in premium_service.dart (unit-tested against
 // FakePurchaseBackend); this is the store adapter.
 //
-// DESIGN: FAIL-CLOSED. A purchase is reported successful ONLY when the store
-// delivers a `purchased`/`restored` status on the purchase stream — never on a
-// timeout, error, cancellation, or a merely-"started" buy flow. That guarantees
-// we never grant Pro without a real transaction (and we always completePurchase
-// so the store doesn't refund/retry).
+// DESIGN: FAIL-CLOSED. A prepaid pass is reported successful ONLY when the
+// store delivers `purchased`/`restored` AND GeoWake's server verifies the Play
+// purchase token. A verification failure is deliberately left unacknowledged
+// so Play can redeliver it after a transient backend outage.
 //
 // INDIA-SPECIFIC (UPI): UPI payments frequently enter a PENDING state that can
 // take minutes to hours to clear. We track pending purchases and expose a
@@ -36,13 +35,20 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 
+import '../api_client.dart';
+import 'premium_service.dart';
 import 'purchase_backend.dart';
+
+typedef PlayPurchaseVerifier =
+    Future<int?> Function(String productId, String purchaseToken);
 
 class IapPurchaseBackend implements PurchaseBackend {
   final InAppPurchase _iap = InAppPurchase.instance;
+  final PlayPurchaseVerifier _verifyPlayPurchase;
   StreamSubscription<List<PurchaseDetails>>? _sub;
+  Future<void> _purchaseQueue = Future<void>.value();
 
   @override
   void Function(Set<String> owned)? onEntitlementChanged;
@@ -55,6 +61,9 @@ class IapPurchaseBackend implements PurchaseBackend {
   final Set<String> _pendingProductIds = <String>{};
   final Map<String, Completer<bool>> _pendingBuys = <String, Completer<bool>>{};
 
+  @override
+  final Map<String, int> verifiedPassExpiries = <String, int>{};
+
   /// Pending restore-completion waiters. `restore()` (user-triggered) and
   /// `queryPastPurchases()` (launch-time reconciliation, fired unawaited from
   /// MonetizationService.init on every app start) can be in flight
@@ -66,14 +75,27 @@ class IapPurchaseBackend implements PurchaseBackend {
   /// second silently clobbered the first's reference, and the first call's
   /// `finally` could null the field out from under the second). `_onPurchases`
   /// completes and clears every pending waiter on any owned-set change.
-  final List<Completer<Set<String>>> _restoreWaiters = <Completer<Set<String>>>[];
+  final List<Completer<Set<String>>> _restoreWaiters =
+      <Completer<Set<String>>>[];
 
   bool _available = false;
 
-  static const String _tokenKeyPrefix = 'gw_purchase_token_';
+  IapPurchaseBackend({PlayPurchaseVerifier? verifyPlayPurchase})
+    : _verifyPlayPurchase = verifyPlayPurchase ?? _verifyWithBackend;
+
+  static Future<int?> _verifyWithBackend(
+    String productId,
+    String purchaseToken,
+  ) {
+    return ApiClient.instance.verifyGooglePlaySubscription(
+      productId: productId,
+      purchaseToken: purchaseToken,
+    );
+  }
 
   /// Products with a currently PENDING purchase (e.g. UPI payment processing).
-  Set<String> get pendingProductIds => Set<String>.unmodifiable(_pendingProductIds);
+  Set<String> get pendingProductIds =>
+      Set<String>.unmodifiable(_pendingProductIds);
 
   /// Set up the long-lived purchase-stream listener. Call once at app start,
   /// BEFORE reading any entitlement, so late/pending/restored purchases are
@@ -83,47 +105,78 @@ class IapPurchaseBackend implements PurchaseBackend {
       _available = await _iap.isAvailable();
       if (!_available) return;
       _sub = _iap.purchaseStream.listen(
-        _onPurchases,
-        onError: (_) {/* keep listening; individual buys will time out closed */},
+        _queuePurchases,
+        onError: (_) {
+          /* keep listening; individual buys will time out closed */
+        },
       );
     } catch (_) {
       _available = false;
     }
   }
 
-  void _onPurchases(List<PurchaseDetails> purchases) {
+  void _queuePurchases(List<PurchaseDetails> purchases) {
+    // Preserve store event order even though pass verification is asynchronous.
+    _purchaseQueue = _purchaseQueue
+        .then((_) => _onPurchases(purchases))
+        .catchError((Object error, StackTrace stack) {
+          dev.log(
+            'IAP stream processing failed',
+            name: 'IAP',
+            error: error,
+            stackTrace: stack,
+          );
+        });
+  }
+
+  Future<void> _onPurchases(List<PurchaseDetails> purchases) async {
     bool pendingChanged = false;
     bool ownedChanged = false;
 
     for (final p in purchases) {
+      var shouldComplete = false;
       switch (p.status) {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
+          if (_isPrepaidPass(p.productID)) {
+            final expiry = await _verifyPass(p);
+            if (expiry == null) {
+              // The payment may be genuine while our verifier is temporarily
+              // unavailable. Keep it pending and unacknowledged: Play will
+              // redeliver the purchase and the user can retry Restore.
+              if (_pendingProductIds.add(p.productID)) pendingChanged = true;
+              _completeBuy(p.productID, false);
+              break;
+            }
+            final previous = verifiedPassExpiries[p.productID] ?? 0;
+            if (expiry > previous) {
+              verifiedPassExpiries[p.productID] = expiry;
+              ownedChanged = true;
+            }
+          }
           _owned.add(p.productID);
-          _pendingProductIds.remove(p.productID);
-          pendingChanged = true;
+          if (_pendingProductIds.remove(p.productID)) pendingChanged = true;
           ownedChanged = true;
-          _pendingBuys[p.productID]?.complete(true);
-          // Persist purchase token for server-side verification + support.
-          _persistPurchaseToken(p);
+          _completeBuy(p.productID, true);
+          shouldComplete = true;
           // Notify PremiumService EVEN IF no buy is in flight — this is the path
           // that grants Pro for a UPI/pending purchase that clears minutes after
           // buyOneTime already timed out. Without it, the user is charged but
           // stays Free until a manual restore.
           break;
         case PurchaseStatus.error:
-          _pendingProductIds.remove(p.productID);
-          pendingChanged = true;
-          _pendingBuys[p.productID]?.complete(false);
+          if (_pendingProductIds.remove(p.productID)) pendingChanged = true;
+          _completeBuy(p.productID, false);
           if (p.error != null) {
-            dev.log('IAP purchase error: ${p.error!.code} — ${p.error!.message}',
-                name: 'IAP');
+            dev.log(
+              'IAP purchase error: ${p.error!.code} — ${p.error!.message}',
+              name: 'IAP',
+            );
           }
           break;
         case PurchaseStatus.canceled:
-          _pendingProductIds.remove(p.productID);
-          pendingChanged = true;
-          _pendingBuys[p.productID]?.complete(false);
+          if (_pendingProductIds.remove(p.productID)) pendingChanged = true;
+          _completeBuy(p.productID, false);
           break;
         case PurchaseStatus.pending:
           // UPI / bank transfer — payment initiated but not yet confirmed.
@@ -133,13 +186,16 @@ class IapPurchaseBackend implements PurchaseBackend {
             _pendingProductIds.add(p.productID);
             pendingChanged = true;
           }
-          dev.log('IAP purchase pending for ${p.productID} — likely UPI/bank transfer',
-              name: 'IAP');
+          dev.log(
+            'IAP purchase pending for ${p.productID} — likely UPI/bank transfer',
+            name: 'IAP',
+          );
           break;
       }
-      // Always acknowledge so the store finalises the transaction.
-      if (p.pendingCompletePurchase) {
-        _iap.completePurchase(p);
+      // A verified purchase (or a legacy non-pass purchase) is safe to
+      // acknowledge. Never acknowledge a prepaid pass before verification.
+      if (shouldComplete && p.pendingCompletePurchase) {
+        await _iap.completePurchase(p);
       }
     }
 
@@ -162,13 +218,32 @@ class IapPurchaseBackend implements PurchaseBackend {
     }
   }
 
-  /// Persist the purchase token for server-side verification and support/refund
-  /// tracking. Best-effort — never blocks the purchase flow.
-  Future<void> _persistPurchaseToken(PurchaseDetails p) async {
+  bool _isPrepaidPass(String productId) =>
+      PremiumProducts.passLadder.contains(productId);
+
+  void _completeBuy(String productId, bool result) {
+    final completer = _pendingBuys[productId];
+    if (completer != null && !completer.isCompleted) completer.complete(result);
+  }
+
+  Future<int?> _verifyPass(PurchaseDetails purchase) async {
+    final token = purchase.verificationData.serverVerificationData.trim();
+    if (token.length < 16 || token.length > 4096) return null;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('$_tokenKeyPrefix${p.productID}', p.purchaseID ?? '');
-    } catch (_) {/* best-effort */}
+      final expiry = await _verifyPlayPurchase(purchase.productID, token);
+      if (expiry == null || expiry <= DateTime.now().millisecondsSinceEpoch) {
+        return null;
+      }
+      return expiry;
+    } catch (error, stack) {
+      dev.log(
+        'Play purchase verification unavailable for ${purchase.productID}',
+        name: 'IAP',
+        error: error,
+        stackTrace: stack,
+      );
+      return null;
+    }
   }
 
   @override
@@ -202,7 +277,7 @@ class IapPurchaseBackend implements PurchaseBackend {
   }
 
   @override
-  Future<bool> buyConsumable(String productId) async {
+  Future<bool> buyPrepaidSubscription(String productId) async {
     if (!_available) return false;
     Completer<bool>? completer;
     try {
@@ -214,13 +289,16 @@ class IapPurchaseBackend implements PurchaseBackend {
       );
       completer = Completer<bool>();
       _pendingBuys[productId] = completer;
-      // autoConsume so the pass is consumed on the store side and can be
-      // re-bought next period (prepaid repurchase). Same fail-closed handshake
-      // as buyOneTime: resolve only on a real stream event, time out to false.
-      final started = await _iap.buyConsumable(
-        purchaseParam: PurchaseParam(productDetails: product),
-        autoConsume: true,
-      );
+      final purchaseParam =
+          product is GooglePlayProductDetails
+              ? GooglePlayPurchaseParam(
+                productDetails: product,
+                offerToken: product.offerToken,
+              )
+              : PurchaseParam(productDetails: product);
+      // Prepaid plans are subscriptions, not consumable in-app products. They
+      // stay restorable and their expiry is owned by Google Play.
+      final started = await _iap.buyNonConsumable(purchaseParam: purchaseParam);
       if (!started) return false;
       return await completer.future.timeout(
         const Duration(minutes: 5),

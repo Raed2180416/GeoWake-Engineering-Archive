@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -15,6 +16,7 @@ import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.ContactsContract
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import io.flutter.embedding.android.FlutterActivity
@@ -23,6 +25,9 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val alarmHapticsChannelName = "geowake/alarm_haptics"
+    private val guardianContactPickerChannelName = "geowake/guardian_contact_picker"
+    private val guardianContactRequestCode = 21804
+    private var pendingGuardianContactResult: MethodChannel.Result? = null
 
     // G8: bridge that lets native tell Dart a routed headset just disconnected
     // (Android AudioManager.ACTION_AUDIO_BECOMING_NOISY) so the alarm audio can
@@ -81,6 +86,34 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
+        // Guardian: select exactly one phone row through Android's system
+        // contact picker. ACTION_PICK grants temporary access to only the
+        // selected row, so GeoWake does not request READ_CONTACTS.
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            guardianContactPickerChannelName
+        ).setMethodCallHandler { call, result ->
+            if (call.method != "pickPhoneContact") {
+                result.notImplemented()
+                return@setMethodCallHandler
+            }
+            if (pendingGuardianContactResult != null) {
+                result.error("CONTACT_PICK_IN_PROGRESS", "A contact picker is already open", null)
+                return@setMethodCallHandler
+            }
+            try {
+                pendingGuardianContactResult = result
+                val intent = Intent(
+                    Intent.ACTION_PICK,
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI
+                )
+                startActivityForResult(intent, guardianContactRequestCode)
+            } catch (t: Throwable) {
+                pendingGuardianContactResult = null
+                result.error("CONTACT_PICK_FAILED", t.message, null)
+            }
+        }
+
         // G8: register the audio-route bridge + system receiver.
         audioRouteChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -98,6 +131,12 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        pendingGuardianContactResult?.error(
+            "CONTACT_PICK_CANCELLED",
+            "Activity closed while contact picker was open",
+            null
+        )
+        pendingGuardianContactResult = null
         if (noisyReceiverRegistered) {
             try {
                 unregisterReceiver(becomingNoisyReceiver)
@@ -107,6 +146,58 @@ class MainActivity : FlutterActivity() {
             noisyReceiverRegistered = false
         }
         super.onDestroy()
+    }
+
+    @Deprecated("Android activity-result callback used for Flutter method-channel compatibility")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode != guardianContactRequestCode) {
+            super.onActivityResult(requestCode, resultCode, data)
+            return
+        }
+
+        val pending = pendingGuardianContactResult
+        pendingGuardianContactResult = null
+        if (pending == null) return
+        if (resultCode != Activity.RESULT_OK || data?.data == null) {
+            pending.success(null)
+            return
+        }
+
+        try {
+            contentResolver.query(
+                data.data!!,
+                arrayOf(
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+                ),
+                null,
+                null,
+                null
+            ).use { cursor ->
+                if (cursor == null || !cursor.moveToFirst()) {
+                    pending.success(null)
+                    return
+                }
+                val nameIndex = cursor.getColumnIndex(
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
+                )
+                val numberIndex = cursor.getColumnIndex(
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+                )
+                if (numberIndex < 0) {
+                    pending.success(null)
+                    return
+                }
+                pending.success(
+                    mapOf(
+                        "displayName" to if (nameIndex >= 0) cursor.getString(nameIndex) else "",
+                        "phoneNumber" to cursor.getString(numberIndex)
+                    )
+                )
+            }
+        } catch (t: Throwable) {
+            pending.error("CONTACT_READ_FAILED", t.message, null)
+        }
     }
 
     private fun getVibrator(): Vibrator {

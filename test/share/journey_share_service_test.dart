@@ -22,6 +22,7 @@ class _RecordingBackend implements ShareBackend {
   int pings = 0;
   int arrived = 0;
   int revoked = 0;
+  String? lastWriteToken;
 
   @override
   Future<String?> createShare(ShareSession session) async {
@@ -30,15 +31,26 @@ class _RecordingBackend implements ShareBackend {
   }
 
   @override
-  Future<void> pushLocation(String shareId, ShareSnapshot snapshot) async {
+  Future<void> pushLocation(
+    String shareId,
+    ShareSnapshot snapshot, {
+    String? writeToken,
+  }) async {
     pings++;
+    lastWriteToken = writeToken;
   }
 
   @override
-  Future<void> markArrived(String shareId) async => arrived++;
+  Future<void> markArrived(String shareId, {String? writeToken}) async {
+    arrived++;
+    lastWriteToken = writeToken;
+  }
 
   @override
-  Future<void> revoke(String shareId) async => revoked++;
+  Future<void> revoke(String shareId, {String? writeToken}) async {
+    revoked++;
+    lastWriteToken = writeToken;
+  }
 }
 
 void main() {
@@ -84,24 +96,30 @@ void main() {
     expect(backend.created, 1);
     final stored = (await svc.allSessions()).first;
     expect(stored.backendId, 'srv-${started.session.id}');
+    expect(stored.readToken, isNotEmpty);
+    expect(stored.writeToken, isNotEmpty);
+    expect(Uri.parse(started.url).queryParameters['t'], stored.readToken);
   });
 
-  test('ingestLocation throttles to 15 s and only with a live backend',
-      () async {
-    var now = 1000000;
-    final svc = JourneyShareService.forTest(nowMs: () => now);
-    final backend = _RecordingBackend();
-    svc.backend = backend;
-    await svc.startBasicShare(mode: ShareMode.live);
+  test(
+    'ingestLocation throttles to 15 s and only with a live backend',
+    () async {
+      var now = 1000000;
+      final svc = JourneyShareService.forTest(nowMs: () => now);
+      final backend = _RecordingBackend();
+      svc.backend = backend;
+      await svc.startBasicShare(mode: ShareMode.live);
 
-    await svc.ingestLocation(12.9, 77.5); // first ping
-    await svc.ingestLocation(12.9, 77.5); // within throttle → dropped
-    expect(backend.pings, 1);
+      await svc.ingestLocation(12.9, 77.5); // first ping
+      await svc.ingestLocation(12.9, 77.5); // within throttle → dropped
+      expect(backend.pings, 1);
+      expect(backend.lastWriteToken, isNotEmpty);
 
-    now += 15001; // past throttle
-    await svc.ingestLocation(12.9, 77.5);
-    expect(backend.pings, 2);
-  });
+      now += 15001; // past throttle
+      await svc.ingestLocation(12.9, 77.5);
+      expect(backend.pings, 2);
+    },
+  );
 
   test('ingestLocation is a no-op when backend is not live', () async {
     final svc = JourneyShareService.forTest();

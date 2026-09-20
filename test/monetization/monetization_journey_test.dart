@@ -70,7 +70,7 @@ void main() {
   // low-intrusion banners are ALWAYS eligible; the alarm path is NEVER eligible.
   // ===========================================================================
   group('Journey 1 — free rider hits the frequency cap', () {
-    test('3 rides make post-arrival eligible; banners always; alarm never',
+    test('3 rides make the pre-trip sponsor eligible; banners always; alarm never',
         () async {
       final svc = MonetizationService.instance;
       // Drive the real facade assembly (one-shot; free-user assertions hold
@@ -96,25 +96,25 @@ void main() {
         }
       }
 
-      // Counter 0: below the cap → post-arrival interstitial suppressed; banners on; alarm off.
+      // Counter 0: below the cap → pre-trip sponsor suppressed; banners on; alarm off.
       expect(svc.ridesSinceLastAd, 0);
-      expect(eligible(AdPlacement.postArrival), isFalse);
+      expect(eligible(AdPlacement.preTripSponsor), isFalse);
       assertBannersOnAlarmNever();
 
       // Rides 1 and 2: still under the cap.
       await svc.recordRide();
       expect(svc.ridesSinceLastAd, 1);
-      expect(eligible(AdPlacement.postArrival), isFalse);
+      expect(eligible(AdPlacement.preTripSponsor), isFalse);
       assertBannersOnAlarmNever();
 
       await svc.recordRide();
       expect(svc.ridesSinceLastAd, 2);
-      expect(eligible(AdPlacement.postArrival), isFalse);
+      expect(eligible(AdPlacement.preTripSponsor), isFalse);
 
-      // Ride 3: hits the cap → the post-arrival interstitial becomes eligible.
+      // Ride 3: hits the cap → the pre-trip sponsor becomes eligible.
       await svc.recordRide();
       expect(svc.ridesSinceLastAd, 3);
-      expect(eligible(AdPlacement.postArrival), isTrue);
+      expect(eligible(AdPlacement.preTripSponsor), isTrue);
       // Crossing the cap must NOT open the alarm path or change banner rules.
       assertBannersOnAlarmNever();
 
@@ -127,8 +127,8 @@ void main() {
         () async {
       final svc = MonetizationService.instance;
       const policy = AdPolicy();
-      bool postArrivalEligible() => policy.canShow(
-            AdPlacement.postArrival,
+      bool preTripSponsorEligible() => policy.canShow(
+            AdPlacement.preTripSponsor,
             isPro: svc.premium.isPro,
             ridesSinceLastAd: svc.ridesSinceLastAd,
           );
@@ -137,21 +137,21 @@ void main() {
       await svc.recordRide();
       await svc.recordRide();
       await svc.recordRide();
-      expect(postArrivalEligible(), isTrue);
+      expect(preTripSponsorEligible(), isTrue);
 
       // The app shows the post-arrival interstitial, then resets the counter.
       await svc.markAdShown();
       expect(svc.ridesSinceLastAd, 0);
       // Immediately suppressed again — no back-to-back interstitials.
-      expect(postArrivalEligible(), isFalse);
+      expect(preTripSponsorEligible(), isFalse);
 
       // Two more rides: still suppressed.
       await svc.recordRide();
       await svc.recordRide();
-      expect(postArrivalEligible(), isFalse);
+      expect(preTripSponsorEligible(), isFalse);
       // The third ride re-opens eligibility.
       await svc.recordRide();
-      expect(postArrivalEligible(), isTrue);
+      expect(preTripSponsorEligible(), isTrue);
     });
   });
 

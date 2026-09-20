@@ -14,7 +14,7 @@
 
 process.env.GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'test-maps-key';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-at-least-32-characters-long';
-process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake2';
+process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.geowake.app';
 process.env.AUTH_TOKEN_RATE_LIMIT_PER_HOUR = '3';
 
 const request = require('supertest');
@@ -32,7 +32,7 @@ describe('Token issuance rate limit (tightened per server-cost-security)', () =>
     // Budget (3/hour) is still fully available since only failures happened.
     const res = await request(app)
       .post('/api/auth/token')
-      .send({ bundleId: 'com.yourcompany.geowake2' });
+      .send({ bundleId: 'com.geowake.app' });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
@@ -45,7 +45,7 @@ describe('Token issuance rate limit (tightened per server-cost-security)', () =>
     for (let i = 0; i < 5; i++) {
       lastRes = await request(app)
         .post('/api/auth/token')
-        .send({ bundleId: 'com.yourcompany.geowake2' });
+        .send({ bundleId: 'com.geowake.app' });
       if (lastRes.status === 429) {
         sawLimitHit = true;
         break;

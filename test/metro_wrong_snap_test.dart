@@ -2,11 +2,10 @@
 //
 // Regression tests for the WRONG-METRO-STATION-SNAP bug.
 //
-// enhanceTransitLegStopsWithOsm used to inject ANY OSM station within 500m of a
-// leg's polyline into that leg's stop list — including a parallel OTHER-line
-// station ~150m away (e.g. Mumbai DN Nagar/Blue vs Andheri West/Yellow). The
-// line filter must keep only stops whose canonical line matches the leg's line,
-// while a safety net guarantees we never emit ZERO stops for an unknown line.
+// enhanceTransitLegStopsWithOsm used to inject ANY stop within 500m of a leg's
+// polyline — including a parallel OTHER-line station ~150m away. A line label
+// and matching count are not enough proof: exact station positions are adopted
+// only from a verified contiguous slice of the route's ordered line sequence.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/services/transfer_utils.dart';
@@ -114,10 +113,7 @@ Map<String, dynamic> _directionsWithBluePolyline(String lineShortName) {
   };
 }
 
-TransitLegStops _blueLeg({
-  required String lineName,
-  required int numStops,
-}) {
+TransitLegStops _blueLeg({required String lineName, required int numStops}) {
   return TransitLegStops(
     legStartMeters: 0.0,
     legEndMeters: 2224.0, // ~length of the polyline
@@ -152,24 +148,24 @@ void main() {
         expect(enhanced.length, equals(1));
         final result = enhanced.first;
 
-        // Non-diverged path: positions came from real (filtered) OSM matches.
+        // This synthetic route cannot be a slice of Mumbai's real Blue Line,
+        // even though three nearby stops have a matching label/count. It must
+        // remain an estimated route and therefore cannot feed EKF station snaps.
         expect(
           result.isActualPositions,
-          isTrue,
-          reason: 'Filtered Blue count (3) matches Google num_stops (3)',
+          isFalse,
+          reason: 'nearby same-line labels do not prove active-route identity',
         );
+        expect(result.stopCountConfidence, lessThan(1.0));
 
         // Only Blue-line stops survive; the Yellow parallel is gone.
-        expect(
-          result.stopNames,
-          containsAll(<String>['Blue Alpha', 'Blue Beta', 'Blue Gamma']),
-        );
+        expect(result.stopNames, isEmpty);
         expect(
           result.stopNames,
           isNot(contains('Yellow Parallel')),
           reason: 'Parallel Yellow-line station must NOT snap into a Blue leg',
         );
-        expect(result.stopNames.length, equals(3));
+        expect(result.stopPositions.length, equals(3));
         expect(result.numStops, equals(3));
       },
     );
@@ -188,10 +184,9 @@ void main() {
         );
 
         final result = enhanced.first;
-        expect(
-          result.stopNames,
-          containsAll(<String>['Blue Alpha', 'Blue Beta', 'Blue Gamma']),
-        );
+        expect(result.isActualPositions, isFalse);
+        expect(result.stopCountConfidence, lessThan(1.0));
+        expect(result.stopNames, isEmpty);
         expect(result.stopNames, isNot(contains('Yellow Parallel')));
       },
     );
@@ -223,6 +218,8 @@ void main() {
         );
         // The API num_stops is preserved (the leg is not emptied).
         expect(result.numStops, equals(4));
+        expect(result.isActualPositions, isFalse);
+        expect(result.stopCountConfidence, lessThan(1.0));
       },
     );
   });

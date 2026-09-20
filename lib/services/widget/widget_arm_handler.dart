@@ -5,21 +5,12 @@
 //
 // The widget's primary button emits a deep-link URI. This file:
 //   1. Parses that URI into a typed [WidgetArmRequest] (scheme-agnostic).
-//   2. Decides — via the PURE [WidgetArmDecision.evaluate] truth table — whether
-//      a tap could be a provably-safe one-tap arm or must instead open the app.
-//   3. Executes safely: it NEVER arms directly from the background isolate and
-//      NEVER double-arms a live journey. The actual arm always runs through the
-//      app's own proven arm flow in the foreground (the never-late spine is
-//      untouched); the handler only hands it a pending route id.
+//   2. Opens the app with that recent destination selected.
+//   3. Never reuses a route/alarm setting and never auto-arms a journey.
 //
-// WHY NOT ARM HEADLESS: Android 12+ forbids starting a location foreground
-// service from the background without a visible activity, so a truly headless
-// arm from the widget isolate would be blocked by the OS — exactly the "silently
-// arm a dead alarm" failure the spec forbids. So the safe design is: bring the
-// app to the foreground and let the normal arm pipeline (permissions, reliability
-// preflight, startTracking) run. [WidgetArmDecision] still classifies the tap so
-// the truth-table contract + tests hold, and a future in-foreground fast-path can
-// consume [WidgetArmMode.headless] without changing this contract.
+// Android 12+ also forbids starting a location foreground service from a
+// background widget. The widget always brings HomeScreen forward; the rider
+// chooses the current mode/threshold and explicitly arms there.
 //
 // HARD CONSTRAINTS honoured: additive, fail-safe (every entry point is wrapped),
 // shares the active-session guard (TrackingStateStore.isActive) so the widget can
@@ -45,14 +36,7 @@ enum WidgetAction { arm, stop, open, unknown }
 
 /// How a tap should be serviced.
 enum WidgetArmMode {
-  /// Provably safe to arm without further user interaction (perms + a cached
-  /// route for the current origin + a clean reliability preflight). Reserved for
-  /// a future in-foreground fast-path; today it still routes through the normal
-  /// foreground arm flow (never a background-isolate arm).
-  headless,
-
-  /// Must open the app and let the user complete arming in the normal flow
-  /// (missing perms, no cached route, or a blocking reliability issue).
+  /// Open HomeScreen for explicit mode/threshold choice and arming.
   launchApp,
 }
 
@@ -62,7 +46,11 @@ enum WidgetPreflightState { ok, warn, block, unknown }
 
 /// A parsed widget deep link.
 class WidgetArmRequest {
-  const WidgetArmRequest({required this.action, this.routeId, this.paywall = false});
+  const WidgetArmRequest({
+    required this.action,
+    this.routeId,
+    this.paywall = false,
+  });
 
   final WidgetAction action;
   final String? routeId;
@@ -80,20 +68,25 @@ class WidgetArmRequest {
   ///   `geowake://open` (optional `?paywall=1`)
   ///   `homeWidget://arm?routeId=<id>` (package default scheme)
   factory WidgetArmRequest.parse(Uri? uri) {
-    if (uri == null) return const WidgetArmRequest(action: WidgetAction.unknown);
+    if (uri == null)
+      return const WidgetArmRequest(action: WidgetAction.unknown);
     try {
       final verb = _extractVerb(uri);
-      final routeId = uri.queryParameters['routeId'];
+      final routeId =
+          uri.queryParameters['destinationId'] ??
+          uri.queryParameters['routeId'];
       switch (verb) {
         case 'arm':
-          final id = (routeId != null && routeId.trim().isNotEmpty)
-              ? routeId.trim()
-              : null;
+          final id =
+              (routeId != null && routeId.trim().isNotEmpty)
+                  ? routeId.trim()
+                  : null;
           return WidgetArmRequest(action: WidgetAction.arm, routeId: id);
         case 'stop':
           return const WidgetArmRequest(action: WidgetAction.stop);
         case 'open':
-          final paywall = uri.queryParameters['paywall'] == '1' ||
+          final paywall =
+              uri.queryParameters['paywall'] == '1' ||
               uri.queryParameters['paywall'] == 'true';
           return WidgetArmRequest(action: WidgetAction.open, paywall: paywall);
         default:
@@ -117,29 +110,19 @@ class WidgetArmRequest {
   }
 }
 
-/// PURE decision core — the §3.6 "one-tap = headless fast-path ONLY when provably
-/// safe" truth table. No I/O, fully unit-testable.
+/// Compatibility decision seam: destination shortcuts always open the app.
 class WidgetArmDecision {
   const WidgetArmDecision._();
 
   /// Decide how an arm tap should be serviced.
   ///
-  /// Headless (fast-path) is permitted ONLY when ALL of:
-  ///   • location/notification permissions are granted,
-  ///   • a route is cached for the current origin (no Directions call needed),
-  ///   • the reliability preflight is clean ([WidgetPreflightState.ok]).
-  /// Anything else — missing perms, no cached route, a warn/block/unknown
-  /// preflight — falls back to opening the app so the user resolves it in the
-  /// normal flow. We never silently arm past a blocking or unknown state.
+  /// Inputs remain for compatibility, but none can authorize an automatic arm.
   static WidgetArmMode evaluate({
     required bool permsGranted,
     required bool hasCachedRouteForOrigin,
     required WidgetPreflightState preflight,
   }) {
-    if (!permsGranted) return WidgetArmMode.launchApp;
-    if (!hasCachedRouteForOrigin) return WidgetArmMode.launchApp;
-    if (preflight != WidgetPreflightState.ok) return WidgetArmMode.launchApp;
-    return WidgetArmMode.headless;
+    return WidgetArmMode.launchApp;
   }
 }
 
@@ -149,20 +132,22 @@ class WidgetArmHandler {
   WidgetArmHandler._();
   static final WidgetArmHandler instance = WidgetArmHandler._();
 
-  /// SharedPreferences key holding a route id the widget asked to arm, waiting
-  /// for the app to reach a foreground state where the normal arm flow can run.
+  /// Legacy-named key holding a recent destination id selected by the widget.
   static const String pendingArmKey = 'gw_widget_pending_arm_v1';
 
   // --- URI builders (used by the bridge to populate button deep links) -------
 
-  static Uri buildArmUri(String routeId) =>
-      Uri(scheme: kWidgetScheme, host: 'arm', queryParameters: {'routeId': routeId});
+  static Uri buildArmUri(String routeId) => Uri(
+    scheme: kWidgetScheme,
+    host: 'arm',
+    queryParameters: {'destinationId': routeId},
+  );
 
   static Uri buildOpenUri({bool paywall = false}) => Uri(
-        scheme: kWidgetScheme,
-        host: 'open',
-        queryParameters: paywall ? const {'paywall': '1'} : null,
-      );
+    scheme: kWidgetScheme,
+    host: 'open',
+    queryParameters: paywall ? const {'paywall': '1'} : null,
+  );
 
   static Uri buildStopUri() => Uri(scheme: kWidgetScheme, host: 'stop');
 
@@ -214,7 +199,9 @@ class WidgetArmHandler {
     bool active = false;
     try {
       active = await TrackingStateStore.isActive();
-    } catch (_) {/* treat as inactive; the arm flow re-checks anyway */}
+    } catch (_) {
+      /* treat as inactive; the arm flow re-checks anyway */
+    }
     if (active) {
       _navigate('/mapTracking');
       return;
@@ -226,9 +213,8 @@ class WidgetArmHandler {
       return;
     }
 
-    // Stash the request and bring home to the foreground; HomeScreen drains it
-    // and runs its normal one-tap arm (permissions + reliability preflight +
-    // startTracking). The never-late spine runs unchanged.
+    // Stash the destination and bring HomeScreen forward. HomeScreen selects it
+    // but deliberately does not arm or restore an old mode/threshold.
     await _setPendingArm(routeId);
     _navigate('/');
   }
@@ -244,9 +230,7 @@ class WidgetArmHandler {
     }
   }
 
-  /// Read and clear a pending widget-arm route id, if any. HomeScreen calls this
-  /// on init/resume and, when non-null, arms the matching remembered route
-  /// through its existing one-tap flow. Returns null when nothing is pending.
+  /// Read and clear a pending widget destination id, if any.
   Future<String?> consumePendingArm() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -262,7 +246,8 @@ class WidgetArmHandler {
   void _navigate(String route, {Object? arg}) {
     try {
       final nav = NavigationService.navigatorKey.currentState;
-      if (nav == null) return; // no UI yet; pending-arm handoff covers cold start
+      if (nav == null)
+        return; // no UI yet; pending-arm handoff covers cold start
       if (route == '/') {
         nav.popUntil((r) => r.isFirst);
       } else {
@@ -286,12 +271,8 @@ class WidgetArmHandler {
 /// in a headless isolate). Must be a top-level, `vm:entry-point`-annotated
 /// function so it survives release tree-shaking.
 ///
-/// SAFETY: this may run process-dead, where we can neither arm (OS foreground
-/// restrictions) nor navigate. So for an `arm` tap it only records the pending
-/// route id under the shared active-session guard — the widget's LAUNCH intent
-/// brings the app foreground where [WidgetArmHandler.handleLaunchUri] /
-/// HomeScreen finish the job. It NEVER starts tracking here, so the never-late
-/// spine can never be touched from the background isolate.
+/// SAFETY: this may run process-dead, so it only records the selected
+/// destination under the active-session guard. It never starts tracking.
 @pragma('vm:entry-point')
 FutureOr<void> widgetInteractivityCallback(Uri? uri) async {
   try {

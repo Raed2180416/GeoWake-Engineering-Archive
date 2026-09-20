@@ -8,7 +8,7 @@
 // every method is fail-safe (swallows its own errors, returns a safe default) so
 // a share failure can never block the app or the alarm.
 //
-// PRIVACY: pings carry only the latest coarse point (5 dp) at a ≥15 s throttle
+// PRIVACY: pings carry only the latest approximate point (3 dp) at a ≥15 s throttle
 // (matching EtaEngine._saveThrottle); there is no trajectory buffer. With the
 // default NoopShareBackend nothing leaves the device at all.
 
@@ -31,13 +31,16 @@ class StartedShare {
   final ShareSession session;
   final String url;
   final String message;
-  const StartedShare(
-      {required this.session, required this.url, required this.message});
+  const StartedShare({
+    required this.session,
+    required this.url,
+    required this.message,
+  });
 }
 
 class JourneyShareService {
   JourneyShareService._({int Function()? nowMs})
-      : _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch);
+    : _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch);
 
   /// Process-wide singleton (wall clock).
   static final JourneyShareService instance = JourneyShareService._();
@@ -95,14 +98,18 @@ class JourneyShareService {
       try {
         _box = await Hive.openBox<String>(boxName);
       } catch (e) {
-        dev.log('share box open failed: $e — recreating',
-            name: 'JourneyShareService');
+        dev.log(
+          'share box open failed: $e — recreating',
+          name: 'JourneyShareService',
+        );
         try {
           await Hive.deleteBoxFromDisk(boxName);
           _box = await Hive.openBox<String>(boxName);
         } catch (e2) {
-          dev.log('share box recreate failed: $e2',
-              name: 'JourneyShareService');
+          dev.log(
+            'share box recreate failed: $e2',
+            name: 'JourneyShareService',
+          );
         }
       }
     }();
@@ -161,6 +168,8 @@ class JourneyShareService {
     final id = _uuid.v4();
     final session = ShareSession(
       id: id,
+      readToken: _randomSecret(),
+      writeToken: _randomSecret(),
       mode: mode,
       status: ShareStatus.enRoute,
       createdAtMs: now,
@@ -175,18 +184,28 @@ class JourneyShareService {
     String? backendId;
     try {
       backendId = await backend.createShare(session);
-    } catch (_) {/* offline is fine */}
+    } catch (_) {
+      /* offline is fine */
+    }
     if (backendId != null && backendId.isNotEmpty) {
       await _put(session.copyWith(backendId: backendId));
     }
 
-    _refreshSharingFlag();
+    // This newly-created session is active by construction; publish immediately
+    // so the UI cannot briefly claim sharing is off while an async box scan runs.
+    isSharing.value = true;
 
-    final secret = await _secret();
-    final token = ShareLinkBuilder.mintToken(id, secret);
-    final url = ShareLinkBuilder.buildShareUrl(id, domain: domain, token: token);
+    final token = session.readToken;
+    final url = ShareLinkBuilder.buildShareUrl(
+      id,
+      domain: domain,
+      token: token,
+    );
     final message = ShareLinkBuilder.buildBasicMessage(
-        url: url, eta: eta, destLabel: destLabel);
+      url: url,
+      eta: eta,
+      destLabel: destLabel,
+    );
     return StartedShare(session: session, url: url, message: message);
   }
 
@@ -194,15 +213,20 @@ class JourneyShareService {
   Future<StartedShare?> messageFor(String id) async {
     final s = await _get(id);
     if (s == null) return null;
-    final secret = await _secret();
-    final token = ShareLinkBuilder.mintToken(id, secret);
-    final url = ShareLinkBuilder.buildShareUrl(id, domain: domain, token: token);
+    final token =
+        s.readToken ?? ShareLinkBuilder.mintToken(id, await _secret());
+    final url = ShareLinkBuilder.buildShareUrl(
+      id,
+      domain: domain,
+      token: token,
+    );
     final message = ShareLinkBuilder.buildBasicMessage(
       url: url,
       destLabel: s.destLabel,
-      eta: s.etaEpochMs != null
-          ? DateTime.fromMillisecondsSinceEpoch(s.etaEpochMs!)
-          : null,
+      eta:
+          s.etaEpochMs != null
+              ? DateTime.fromMillisecondsSinceEpoch(s.etaEpochMs!)
+              : null,
     );
     return StartedShare(session: s, url: url, message: message);
   }
@@ -226,7 +250,13 @@ class JourneyShareService {
       );
       for (final s in active) {
         // Fire-and-forget per session; a slow endpoint never stalls tracking.
-        unawaited(backend.pushLocation(s.backendId ?? s.id, snap));
+        unawaited(
+          backend.pushLocation(
+            s.backendId ?? s.id,
+            snap,
+            writeToken: s.writeToken,
+          ),
+        );
       }
     } catch (e) {
       dev.log('ingestLocation ignored: $e', name: 'JourneyShareService');
@@ -246,7 +276,9 @@ class JourneyShareService {
     _trackingSub = positions.listen((e) {
       try {
         ingestLocation(latOf(e), lngOf(e), eta: etaProvider?.call());
-      } catch (_) {/* never break tracking */}
+      } catch (_) {
+        /* never break tracking */
+      }
     }, onError: (_) {});
   }
 
@@ -262,7 +294,9 @@ class JourneyShareService {
       final active = await _activeSessions();
       for (final s in active) {
         await _put(s.copyWith(status: ShareStatus.arrived));
-        unawaited(backend.markArrived(s.backendId ?? s.id));
+        unawaited(
+          backend.markArrived(s.backendId ?? s.id, writeToken: s.writeToken),
+        );
       }
       _refreshSharingFlag();
     } catch (e) {
@@ -276,7 +310,7 @@ class JourneyShareService {
       final s = await _get(id);
       if (s == null) return;
       await _put(s.copyWith(status: ShareStatus.revoked));
-      unawaited(backend.revoke(s.backendId ?? s.id));
+      unawaited(backend.revoke(s.backendId ?? s.id, writeToken: s.writeToken));
       _refreshSharingFlag();
     } catch (e) {
       dev.log('revoke ignored: $e', name: 'JourneyShareService');
@@ -288,7 +322,9 @@ class JourneyShareService {
     try {
       for (final s in await _activeSessions()) {
         await _put(s.copyWith(status: ShareStatus.revoked));
-        unawaited(backend.revoke(s.backendId ?? s.id));
+        unawaited(
+          backend.revoke(s.backendId ?? s.id, writeToken: s.writeToken),
+        );
       }
       _refreshSharingFlag();
     } catch (e) {
@@ -305,7 +341,9 @@ class JourneyShareService {
     for (final v in box.values) {
       try {
         out.add(ShareSession.decode(v));
-      } catch (_) {/* skip corrupt entry */}
+      } catch (_) {
+        /* skip corrupt entry */
+      }
     }
     out.sort((a, b) => b.createdAtMs.compareTo(a.createdAtMs));
     return out;
@@ -357,10 +395,12 @@ class JourneyShareService {
 
   void _refreshSharingFlag() {
     // Recompute asynchronously; the notifier is advisory UI state.
-    _activeSessions().then((a) {
-      isSharing.value = a.isNotEmpty;
-    }).catchError((_) {
-      isSharing.value = false;
-    });
+    _activeSessions()
+        .then((a) {
+          isSharing.value = a.isNotEmpty;
+        })
+        .catchError((_) {
+          isSharing.value = false;
+        });
   }
 }

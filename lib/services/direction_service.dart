@@ -389,6 +389,7 @@ class DirectionService {
     bool simplify = false,
   }) {
     List<Map<String, dynamic>> segments = [];
+    var nextSegmentId = 0;
     if (directions['routes'] == null || directions['routes'].isEmpty) {
       return segments;
     }
@@ -403,28 +404,51 @@ class DirectionService {
       String?
       currentNonTransitMode; // 'DRIVING' | 'WALKING' | null when transit
       String? currentTransitLine;
+      String? currentTransitLineId;
+      Color? currentTransitLineColor;
       String? currentVehicleType;
 
       // Helper to process a step's mode info
       ModeInfo getModeInfo(dynamic s) {
-        String mode = s['travel_mode'];
+        String mode = s['travel_mode'] as String? ?? 'DRIVING';
         bool isMetro = false;
         String? tLine;
+        String? tLineId;
+        Color? tLineColor;
         String? vType;
         if (mode == 'TRANSIT' && transitMode) {
           if (s.containsKey('transit_details') &&
               s['transit_details'] != null) {
-            var td = s['transit_details'];
-            var vehicle = td['line']['vehicle'];
-            vType = vehicle['type'];
-            isMetro =
-                vType == 'SUBWAY' || vType == 'HEAVY_RAIL' || vType == 'RAIL';
+            final td = (s['transit_details'] as Map).cast<String, dynamic>();
+            final line = (td['line'] as Map?)?.cast<String, dynamic>();
+            final vehicle =
+                (line?['vehicle'] as Map?)?.cast<String, dynamic>();
+            vType = vehicle?['type'] as String?;
+            isMetro = const {
+              'SUBWAY',
+              'HEAVY_RAIL',
+              'RAIL',
+              'LIGHT_RAIL',
+              'COMMUTER_TRAIN',
+              'TRAM',
+            }.contains(vType);
             if (isMetro) {
-              tLine = td['line']['short_name'] ?? td['line']['name'];
+              tLine =
+                  line?['short_name'] as String? ?? line?['name'] as String?;
+              tLineId = line?['id'] as String?;
+              final agency = (line?['agencies'] as List?)?.first;
+              final agencyId =
+                  agency is Map ? agency['id'] as String? : null;
+              if (tLineId == null && (agencyId != null || tLine != null)) {
+                tLineId = [if (agencyId != null) agencyId, tLine]
+                    .whereType<String>()
+                    .join(':');
+              }
+              tLineColor = _parseProviderColor(line?['color']);
             }
           }
         }
-        return ModeInfo(mode, isMetro, tLine, vType);
+        return ModeInfo(mode, isMetro, tLine, vType, tLineId, tLineColor);
       }
 
       // Initialize first step
@@ -434,9 +458,13 @@ class DirectionService {
       if (firstInfo.isMetro) {
         currentGroupType = "transit";
         currentTransitLine = firstInfo.line;
+        currentTransitLineId = firstInfo.lineId;
+        currentTransitLineColor = firstInfo.lineColor;
       } else {
         currentGroupType = "non_transit";
         currentTransitLine = null;
+        currentTransitLineId = null;
+        currentTransitLineColor = null;
       }
       currentNonTransitMode = firstInfo.isMetro ? null : firstInfo.mode;
       currentVehicleType = firstInfo.vehicleType;
@@ -462,7 +490,10 @@ class DirectionService {
           sameGroup = (currentNonTransitMode == stepNonTransitMode);
         } else if (currentGroupType == "transit" &&
             stepGroupType == "transit") {
-          sameGroup = (currentTransitLine == info.line);
+          sameGroup =
+              currentTransitLineId != null && info.lineId != null
+                  ? currentTransitLineId == info.lineId
+                  : currentTransitLine == info.line;
         }
 
         if (sameGroup) {
@@ -474,6 +505,7 @@ class DirectionService {
         } else {
           // Finalize current segment
           segments.add({
+            'segment_id': nextSegmentId++,
             'mode':
                 currentGroupType == 'transit'
                     ? 'transit'
@@ -483,6 +515,8 @@ class DirectionService {
                     .map((p) => {'lat': p.latitude, 'lng': p.longitude})
                     .toList(),
             'transit_line': currentTransitLine,
+            'transit_line_id': currentTransitLineId,
+            'transit_line_color': currentTransitLineColor?.value,
             'vehicle_type': currentVehicleType,
           });
 
@@ -490,6 +524,8 @@ class DirectionService {
           groupPoints = [];
           currentGroupType = stepGroupType;
           currentTransitLine = info.line;
+          currentTransitLineId = info.lineId;
+          currentTransitLineColor = info.lineColor;
           currentNonTransitMode = stepNonTransitMode;
           currentVehicleType = info.vehicleType;
 
@@ -503,6 +539,7 @@ class DirectionService {
 
       if (groupPoints.isNotEmpty) {
         segments.add({
+          'segment_id': nextSegmentId++,
           'mode':
               currentGroupType == 'transit'
                   ? 'transit'
@@ -512,6 +549,8 @@ class DirectionService {
                   .map((p) => {'lat': p.latitude, 'lng': p.longitude})
                   .toList(),
           'transit_line': currentTransitLine,
+          'transit_line_id': currentTransitLineId,
+          'transit_line_color': currentTransitLineColor?.value,
           'vehicle_type': currentVehicleType,
         });
       }
@@ -541,16 +580,13 @@ class DirectionService {
   ) {
     final polylines = <Polyline>[];
 
-    final transitColorMap = <String, Color>{};
-    const transitColors = <Color>[Colors.green, Colors.purple];
-    int transitColorIndex = 0;
-
     for (int i = 0; i < rawSegments.length; i++) {
       final seg = rawSegments[i];
       final mode = seg['mode'] as String? ?? 'driving';
       final pointsData = (seg['points'] as List?) ?? const [];
       final points = pointsData.map((p) => LatLng(p['lat'], p['lng'])).toList();
       final transitLine = seg['transit_line'] as String?;
+      final providerColorValue = seg['transit_line_color'];
 
       Color color;
       List<PatternItem> patterns = [];
@@ -558,7 +594,14 @@ class DirectionService {
 
       if (mode == 'transit') {
         zIndex = 3;
-        if (transitLine != null) {
+        final providerColor = providerColorValue is num
+              ? Color(providerColorValue.toInt())
+              : null;
+        if (providerColor != null) {
+          // Google Transit's line color is authoritative for this route and
+          // avoids ambiguous generic names such as "Blue Line" across cities.
+          color = providerColor;
+        } else if (transitLine != null) {
           // Attempt fast O(1) lookup
           Color? realColor;
           try {
@@ -569,17 +612,14 @@ class DirectionService {
           if (realColor != null) {
             color = realColor;
           } else {
-            // Safe fallback to cycling
-            if (!transitColorMap.containsKey(transitLine)) {
-              transitColorMap[transitLine] =
-                  transitColors[transitColorIndex % transitColors.length];
-              transitColorIndex++;
-            }
-            color = transitColorMap[transitLine]!;
+            // Never invent a line identity by cycling colours.  A generic
+            // "Blue Line" is ambiguous across cities; neutral styling makes
+            // that uncertainty visible instead of misleading the rider.
+            color = Colors.blueGrey;
           }
         } else {
           // Safe fallback
-          color = Colors.blue;
+          color = Colors.blueGrey;
         }
       } else {
         color = Colors.blue;
@@ -590,7 +630,7 @@ class DirectionService {
 
       polylines.add(
         Polyline(
-          polylineId: PolylineId('seg_$i'),
+          polylineId: PolylineId('seg_${seg['segment_id'] ?? i}'),
           points: points,
           color: color,
           width: 5,
@@ -617,8 +657,23 @@ class DirectionService {
     try {
       final normalized = _normalizeLineName(lineName);
 
+      // A bare "Blue Line" (or "Purple Line") is not a city identity.  Do
+      // not silently apply the Delhi palette to a Mumbai/Chennai cached route
+      // when the provider omitted its authoritative colour.  Only qualified
+      // keys (city/operator/numbered metro) and genuinely unique names are
+      // safe for an offline static fallback; otherwise the renderer uses the
+      // neutral unknown-line colour.
+      bool isSafeStaticKey(String key) {
+        final lower = key.toLowerCase();
+        return lower.contains('(') ||
+            lower.contains('metro line') ||
+            lower == 'rapid metro' ||
+            lower == 'airport express';
+      }
+
       // 1. Direct normalized match check
       for (final key in metroLineColors.keys) {
+        if (!isSafeStaticKey(key)) continue;
         if (_normalizeLineName(key) == normalized) {
           return metroLineColors[key]!;
         }
@@ -626,6 +681,7 @@ class DirectionService {
 
       // 2. Fuzzy match (if input is substring of key or vice versa)
       for (final key in metroLineColors.keys) {
+        if (!isSafeStaticKey(key)) continue;
         final normKey = _normalizeLineName(key);
         if (normKey.isNotEmpty &&
             (normKey.contains(normalized) || normalized.contains(normKey))) {
@@ -637,6 +693,15 @@ class DirectionService {
     } catch (e) {
       return Colors.indigo;
     }
+  }
+
+  static Color? _parseProviderColor(Object? value) {
+    if (value is! String) return null;
+    var hex = value.trim().replaceFirst('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    if (hex.length != 8) return null;
+    final parsed = int.tryParse(hex, radix: 16);
+    return parsed == null ? null : Color(parsed);
   }
 
   // Decode an encoded polyline and optionally simplify it.
@@ -696,6 +761,15 @@ class ModeInfo {
   final bool isMetro;
   final String? line;
   final String? vehicleType;
+  final String? lineId;
+  final Color? lineColor;
 
-  ModeInfo(this.mode, this.isMetro, this.line, this.vehicleType);
+  ModeInfo(
+    this.mode,
+    this.isMetro,
+    this.line,
+    this.vehicleType,
+    this.lineId,
+    this.lineColor,
+  );
 }

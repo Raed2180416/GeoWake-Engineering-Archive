@@ -47,6 +47,9 @@ dependencies:
   # Ads & In-app purchases
   google_mobile_ads: ^6.0.0
   in_app_purchase: ^3.3.0
+  # Imported directly for GooglePlayPurchaseParam/offerToken when launching
+  # prepaid subscription base plans. Keep direct dependencies explicit.
+  in_app_purchase_android: ^0.5.2
   # Premium/paywall + share surfaces (Terms/Privacy links, last-mile deep-links,
   # viral journey share). Standard, widely-used, no native config beyond queries.
   url_launcher: ^6.3.0

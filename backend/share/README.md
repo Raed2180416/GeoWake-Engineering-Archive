@@ -15,8 +15,8 @@ It is the server half of `HttpShareBackend`
 | **Latest-only** | One record per id; a ping **overwrites** the single point. No array/history exists anywhere. |
 | **TTL + hard delete** | Every share has `expiresAtMs`; a 30 s sweeper + lazy-read hard-delete expired records. `DELETE` hard-deletes on demand. No archival. |
 | **Never into a data pipeline** | Coordinates are never logged or emitted to analytics. The `arrived` hook is the only side channel and carries **no coordinates**. |
-| **Coarse only** | Coordinates rounded to 5 dp on ingest **and** on read. |
-| **Auth** | Every `/v1` route requires the founder's bearer token (constant-time compared). |
+| **Approximate only** | Coordinates rounded to 3 dp (roughly 100 m) on ingest **and** on read. |
+| **Least-privilege auth** | Each journey has independent read/write capabilities; only SHA-256 hashes are stored. A founder bearer is an optional operations override. |
 
 Also hardened: locked-down CORS (never `*`), a hard per-IP rate limit, an 8 KB
 body cap, TTL clamping, and a strict CSP on the recipient page (fully
@@ -27,11 +27,12 @@ self-contained, zero external requests).
 | Method | Path | Auth | Body | Response |
 |---|---|---|---|---|
 | GET | `/` | — | — | `200 {status:"ok"}` (healthcheck) |
-| POST | `/v1/share` | Bearer | `{id, mode, destLabel, etaEpochMs, expiresAtMs}` | `200 {serverId}` |
-| POST | `/v1/share/{id}/ping` | Bearer | `{lat, lng, etaEpochMs, atMs}` | `204` |
-| POST | `/v1/share/{id}/arrived` | Bearer | — | `204` |
-| DELETE | `/v1/share/{id}` | Bearer | — | `204` |
-| GET | `/j/{id}` | public | — | `200` HTML · `410 Gone` after expiry · `403` bad `?t=` |
+| POST | `/v1/share` | read + write capabilities in body, or founder Bearer | `{id, mode, destLabel, etaEpochMs, expiresAtMs, readToken, writeToken}` | `200 {serverId}` |
+| POST | `/v1/share/{id}/ping` | write capability Bearer | `{lat, lng, etaEpochMs, atMs}` | `204` |
+| POST | `/v1/share/{id}/arrived` | write capability Bearer | — | `204` |
+| DELETE | `/v1/share/{id}` | write capability Bearer | — | `204` |
+| GET | `/v1/share/{id}/status?t=...` | read capability | — | latest approximate point, or `410 Gone` |
+| GET | `/j/{id}?t=...` | read capability | — | `200` HTML · `410 Gone` after expiry · `403` wrong capability |
 | GET | `/.well-known/assetlinks.json` | public | — | `200` App-Links JSON |
 
 `serverId` is the client's own id (the contract accepts it as the path id).
@@ -40,7 +41,7 @@ self-contained, zero external requests).
 
 ```bash
 cd backend/share
-cp .env.example .env          # fill SHARE_AUTH_TOKEN at minimum
+cp .env.example .env          # optional founder override + App Links config
 node server.js                # or: npm start
 npm test                      # node:test suite (no deps)
 ```
@@ -88,28 +89,28 @@ Railway injects `PORT`; `railway.json` sets the start command (`npm start`) and
 uses `/` as the healthcheck. Nixpacks auto-detects Node from `package.json`
 (`engines.node >= 18`).
 
-Put the app's `SHARE_AUTH_TOKEN` into the mobile build config so
-`HttpShareBackend.authToken` matches, and set the app's share domain to the
-Railway (or custom App-Links) domain so `/j/{id}` and `assetlinks.json` resolve.
+Do **not** put `SHARE_AUTH_TOKEN` in the mobile build. The app generates
+independent per-share capabilities on-device. Set only the share base/domain so
+`/j/{id}` and `assetlinks.json` resolve; reserve `SHARE_AUTH_TOKEN` for trusted
+operations tooling.
 
 ## Environment
 
-See `.env.example`. Required for production: `SHARE_AUTH_TOKEN`,
-`ANDROID_CERT_SHA256`. Optional: `HMAC_SECRET`, `HMAC_REQUIRE`, `ALLOWED_ORIGIN`,
+See `.env.example`. Required for verified Android App Links:
+`ANDROID_CERT_SHA256`. Optional: `SHARE_AUTH_TOKEN` (operations override),
+`HMAC_SECRET` / `HMAC_REQUIRE` (legacy records), `ALLOWED_ORIGIN`,
 `RATE_LIMIT_PER_MIN`, `ANDROID_PACKAGE`, `PORT`.
 
-## Link tokens (`?t=`)
+## Link capabilities (`?t=`)
 
-The app appends `?t=<HMAC-SHA256(id)>` to each `/j/{id}` link
-(`ShareLinkBuilder.mintToken`). In the **client-first default**, the app mints
-that token with a **per-device** secret the server does not know, so the server
-treats `?t=` as opaque and relies on the unguessable UUID `id` as the capability
-gate — set nothing and this Just Works.
+Every new journey receives two independent random capabilities. The recipient
+URL contains only the read capability (`?t=`); the device keeps the write
+capability for ping, arrival, and revoke calls. The server stores hashes only,
+so a database snapshot cannot be used directly to follow or mutate journeys.
 
-To activate cryptographic verification: set `HMAC_SECRET` here **and** align the
-app's share secret to the same value (so the app and server derive identical
-tokens). With `HMAC_SECRET` set, a present-but-tampered `?t=` returns `403`; set
-`HMAC_REQUIRE=true` to additionally reject links that omit `?t=`.
+`HMAC_SECRET` and `HMAC_REQUIRE` exist only to read legacy founder-created
+records that predate per-share capabilities. New mobile shares do not depend on
+either setting.
 
 ## Scale path (Redis)
 

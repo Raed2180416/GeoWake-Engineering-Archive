@@ -324,9 +324,10 @@ class NotificationService {
       // hang the caller (this method is awaited by handleNotificationResponse).
       // Navigation itself is fire-and-forget (pushNamedAndRemoveUntil is not
       // awaited), so tests still land on /mapTracking deterministically.
-      final snapshot = NotificationService.isTestMode
-          ? null
-          : await TrackingStateStore.loadSnapshot();
+      final snapshot =
+          NotificationService.isTestMode
+              ? null
+              : await TrackingStateStore.loadSnapshot();
       if (snapshot != null) {
         nav.pushNamedAndRemoveUntil(
           '/mapTracking',
@@ -408,6 +409,7 @@ class NotificationService {
   static const int _alarmNotificationId = 0;
   static const int _progressNotificationId = 888;
   static const int _pausedNotificationId = 889;
+  static const int _trackingEndedNotificationId = 890;
 
   // Flag to prevent duplicate alarm overlays
   bool _alarmCurrentlyShowing = false;
@@ -572,7 +574,10 @@ class NotificationService {
   }
 
   // Initialize the notification service
-  Future<void> initialize() async {
+  Future<void> initialize({
+    bool requestAndroidPermissions = true,
+    bool processAppLaunch = true,
+  }) async {
     dev.log(
       'NotificationService.initialize() start',
       name: 'NotificationService',
@@ -619,44 +624,52 @@ class NotificationService {
     // normal home screen with the backstop still ringing and no way to stop
     // it. Route the launch response through the exact same handler as a warm
     // tap, after the first frame so the navigator exists.
-    try {
-      final launch = await _notificationsPlugin
-          .getNotificationAppLaunchDetails();
-      final resp = launch?.notificationResponse;
-      if ((launch?.didNotificationLaunchApp ?? false) && resp != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          unawaited(handleNotificationResponse(resp));
-        });
+    if (processAppLaunch) {
+      try {
+        final launch =
+            await _notificationsPlugin.getNotificationAppLaunchDetails();
+        final resp = launch?.notificationResponse;
+        if ((launch?.didNotificationLaunchApp ?? false) && resp != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            unawaited(handleNotificationResponse(resp));
+          });
+        }
+      } catch (e) {
+        dev.log(
+          'Notification launch-details check failed: $e',
+          name: 'NotificationService',
+        );
       }
-    } catch (e) {
-      dev.log(
-        'Notification launch-details check failed: $e',
-        name: 'NotificationService',
-      );
     }
 
-    // Explicitly request Android notification permission (Android 13+)
-    try {
-      final androidImpl =
-          _notificationsPlugin
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >();
-      await androidImpl?.requestNotificationsPermission();
-      // G5: exact-alarm permission (Android 12+). Auto-granted when USE_EXACT_ALARM
-      // is declared; on 12/12L it may need the user, so request best-effort.
+    // These calls need an Activity and therefore belong only on the foreground
+    // UI isolate. The background-service FlutterEngine has an application
+    // context but no Activity; invoking requestNotificationsPermission() there
+    // throws in flutter_local_notifications and can leave alarm setup partial.
+    if (requestAndroidPermissions) {
       try {
-        await androidImpl?.requestExactAlarmsPermission();
-      } catch (_) {}
-      // G7: full-screen-intent permission (Android 14+).
-      try {
-        await androidImpl?.requestFullScreenIntentPermission();
-      } catch (_) {}
-    } catch (e) {
-      dev.log(
-        'Android notification permission request failed: $e',
-        name: 'NotificationService',
-      );
+        final androidImpl =
+            _notificationsPlugin
+                .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin
+                >();
+        await androidImpl?.requestNotificationsPermission();
+        // G5: exact-alarm permission (Android 12+). Auto-granted when
+        // USE_EXACT_ALARM is declared; on 12/12L it may need the user, so
+        // request best-effort while an Activity is available.
+        try {
+          await androidImpl?.requestExactAlarmsPermission();
+        } catch (_) {}
+        // G7: full-screen-intent permission (Android 14+).
+        try {
+          await androidImpl?.requestFullScreenIntentPermission();
+        } catch (_) {}
+      } catch (e) {
+        dev.log(
+          'Android notification permission request failed: $e',
+          name: 'NotificationService',
+        );
+      }
     }
 
     // Create/ensure channels exist (alarm + tracking + bg service channel used by flutter_background_service)
@@ -960,7 +973,10 @@ class NotificationService {
     if (!Platform.isAndroid) return;
     try {
       // Build the absolute firing instant in UTC (no local-zone lookup needed).
-      final tz.TZDateTime scheduled = tz.TZDateTime.from(fireAt.toUtc(), tz.UTC);
+      final tz.TZDateTime scheduled = tz.TZDateTime.from(
+        fireAt.toUtc(),
+        tz.UTC,
+      );
       final bool fsi = await WakepointNative.canUseFullScreenIntent();
       // Post on the dedicated BACKSTOP channel, which carries the system alarm
       // tone + vibration at the OS level. The live alarm channel is silent (the
@@ -1129,7 +1145,8 @@ class NotificationService {
       // resurrected notification never falsely implies tracking stopped.
       final payload = await TrackingStateStore.loadProgressPayload();
       final title = payload?.title ?? 'Running in background';
-      final subtitle = payload?.subtitle ?? 'Still watching your trip. Tap to open.';
+      final subtitle =
+          payload?.subtitle ?? 'Still watching your trip. Tap to open.';
 
       final androidDetails = AndroidNotificationDetails(
         'geowake_tracking_channel_v2',
@@ -1419,6 +1436,40 @@ class NotificationService {
     }
   }
 
+  /// Non-alarm explanation for a terminal tracking failure. It is posted only
+  /// after session cleanup, so cleanup cannot immediately erase the reason the
+  /// journey ended and the rider is never startled by alarm audio for an error.
+  Future<void> showTrackingEnded({required String message}) async {
+    const title = 'Tracking ended';
+    if (isTestMode) {
+      testRecordedNotifications.add({
+        'id': _trackingEndedNotificationId,
+        'title': title,
+        'body': message,
+        'payload': 'tracking_ended',
+        'ts': DateTime.now().toIso8601String(),
+      });
+      return;
+    }
+    const android = AndroidNotificationDetails(
+      'geowake_tracking_channel_v2',
+      'GeoWake Tracking',
+      channelDescription: 'Journey tracking status',
+      importance: Importance.high,
+      priority: Priority.high,
+      ongoing: false,
+      autoCancel: true,
+      visibility: NotificationVisibility.public,
+    );
+    await _notificationsPlugin.show(
+      _trackingEndedNotificationId,
+      title,
+      message,
+      const NotificationDetails(android: android),
+      payload: 'tracking_ended',
+    );
+  }
+
   Future<void> cancelTrackingPaused() async {
     if (isTestMode) {
       try {
@@ -1433,6 +1484,7 @@ class NotificationService {
     }
     try {
       await _notificationsPlugin.cancel(_pausedNotificationId);
+      await _notificationsPlugin.cancel(_trackingEndedNotificationId);
     } catch (_) {}
   }
 
@@ -1475,6 +1527,7 @@ class NotificationService {
           _alarmNotificationId,
           _progressNotificationId,
           _pausedNotificationId,
+          _trackingEndedNotificationId,
           _etaBackstopNotificationId,
         ]);
       } catch (_) {}
@@ -1488,6 +1541,7 @@ class NotificationService {
       await _notificationsPlugin.cancel(_alarmNotificationId);
       await _notificationsPlugin.cancel(_progressNotificationId);
       await _notificationsPlugin.cancel(_pausedNotificationId);
+      await _notificationsPlugin.cancel(_trackingEndedNotificationId);
       // #11: also sweep the OS-scheduled ETA backstop (id 991); otherwise it
       // stays armed after End Tracking and fires a spurious wake once the trip
       // is over (cancelEtaBackstop only runs on the live isolate's _onStop).
@@ -1717,7 +1771,10 @@ void notificationTapBackground(NotificationResponse response) async {
         name: 'NotificationService',
       );
     }
-    // Invoke startTracking to resume the background service with stored snapshot
+    // Heartbeat pause is presentation state; alarm evaluation normally remains
+    // alive. Never send a raw startTracking command here—it would reset route,
+    // EKF and alarm state without an ACK. If the service died, starting it lets
+    // its validated snapshot-recovery path restore exactly once.
     try {
       final snapshot = await TrackingStateStore.loadSnapshot();
       dev.log(
@@ -1725,15 +1782,13 @@ void notificationTapBackground(NotificationResponse response) async {
         name: 'NotificationService',
       );
       if (snapshot != null) {
-        FlutterBackgroundService().invoke('startTracking', {
-          'destinationLat': snapshot.destinationLat,
-          'destinationLng': snapshot.destinationLng,
-          'destinationName': snapshot.destinationName,
-          'alarmMode': snapshot.alarmMode,
-          'alarmValue': snapshot.alarmValue,
-        });
+        final background = FlutterBackgroundService();
+        if (!await background.isRunning()) {
+          await background.startService();
+        }
+        background.invoke('foregroundResumed', const {});
         dev.log(
-          'DEBUG: BG_RESUME_TRACKING: Invoked startTracking',
+          'DEBUG: BG_RESUME_TRACKING: signalled validated resume',
           name: 'NotificationService',
         );
       }

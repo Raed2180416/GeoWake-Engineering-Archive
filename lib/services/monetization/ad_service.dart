@@ -6,8 +6,8 @@
 //
 // DEVICE-VERIFY: ad rendering + fill can only be validated on a real device with
 // real AdMob unit IDs. This adapter is deliberately fail-open — any ad error is
-// swallowed; ads NEVER block or delay the alarm. Test unit IDs are used until
-// real ones are supplied via [configure].
+// swallowed; ads NEVER block or delay the alarm. Google's demo IDs are used in
+// debug builds only; a release with no configured unit simply shows no ad.
 
 import 'dart:async';
 import 'dart:io';
@@ -25,16 +25,27 @@ class AdService {
   final AdPolicy _policy = const AdPolicy();
   bool _initialized = false;
 
-  // Google's official TEST ad unit IDs — safe to ship until real IDs are set.
+  // Google's official TEST ad unit IDs — development only, never release.
   // https://developers.google.com/admob/android/test-ads
   static const String _testBanner = 'ca-app-pub-3940256099942544/6300978111';
   static const String _testInterstitial =
       'ca-app-pub-3940256099942544/1033173712';
   static const String _testRewarded = 'ca-app-pub-3940256099942544/5224354917';
 
-  String _bannerUnitId = _testBanner;
-  String _interstitialUnitId = _testInterstitial;
-  String _rewardedUnitId = _testRewarded;
+  static const String _releaseBanner = String.fromEnvironment(
+    'GEOWAKE_ADMOB_BANNER_ID',
+  );
+  static const String _releaseInterstitial = String.fromEnvironment(
+    'GEOWAKE_ADMOB_INTERSTITIAL_ID',
+  );
+  static const String _releaseRewarded = String.fromEnvironment(
+    'GEOWAKE_ADMOB_REWARDED_ID',
+  );
+
+  String _bannerUnitId = kDebugMode ? _testBanner : _releaseBanner;
+  String _interstitialUnitId =
+      kDebugMode ? _testInterstitial : _releaseInterstitial;
+  String _rewardedUnitId = kDebugMode ? _testRewarded : _releaseRewarded;
 
   /// Supply real AdMob unit IDs (from remote config / build) before going live.
   void configure({String? banner, String? interstitial, String? rewarded}) {
@@ -69,7 +80,10 @@ class AdService {
     void Function()? onLoaded,
     void Function()? onFailed,
   }) {
-    if (!_gate(placement, premium, ridesSinceLastAd: 0)) return null;
+    if (_bannerUnitId.isEmpty ||
+        !_gate(placement, premium, ridesSinceLastAd: 0)) {
+      return null;
+    }
     try {
       final ad = BannerAd(
         adUnitId: _bannerUnitId,
@@ -100,6 +114,13 @@ class AdService {
     required PremiumService premium,
     required int ridesSinceLastAd,
   }) async {
+    // Full-screen ads have exactly one production surface. Keeping this check
+    // here prevents a future call site from accidentally monetizing arrival or
+    // the wake flow even if it passes an otherwise ad-eligible placement.
+    if (_interstitialUnitId.isEmpty ||
+        placement != AdPlacement.preTripSponsor) {
+      return false;
+    }
     if (!_gate(placement, premium, ridesSinceLastAd: ridesSinceLastAd)) {
       return false;
     }
@@ -110,8 +131,22 @@ class AdService {
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (ad) {
-            ad.show();
-            completer.complete(true);
+            ad.fullScreenContentCallback = FullScreenContentCallback(
+              onAdDismissedFullScreenContent: (shownAd) {
+                shownAd.dispose();
+                completer.complete(true);
+              },
+              onAdFailedToShowFullScreenContent: (failedAd, _) {
+                failedAd.dispose();
+                completer.complete(false);
+              },
+            );
+            try {
+              ad.show();
+            } catch (_) {
+              ad.dispose();
+              completer.complete(false);
+            }
           },
           onAdFailedToLoad: (_) => completer.complete(false),
         ),
@@ -128,7 +163,8 @@ class AdService {
     required PremiumService premium,
     required VoidCallback onReward,
   }) async {
-    if (premium.isPro) return; // already premium
+    if (_rewardedUnitId.isEmpty || premium.isPro)
+      return; // unavailable/already Pro
     try {
       await RewardedAd.load(
         adUnitId: _rewardedUnitId,
@@ -140,11 +176,16 @@ class AdService {
           onAdFailedToLoad: (_) {},
         ),
       );
-    } catch (_) {/* rewarded ads are best-effort */}
+    } catch (_) {
+      /* rewarded ads are best-effort */
+    }
   }
 
-  bool _gate(AdPlacement placement, PremiumService premium,
-      {required int ridesSinceLastAd}) {
+  bool _gate(
+    AdPlacement placement,
+    PremiumService premium, {
+    required int ridesSinceLastAd,
+  }) {
     if (!_initialized) return false;
     if (!Platform.isAndroid && !Platform.isIOS) return false;
     return _policy.canShow(

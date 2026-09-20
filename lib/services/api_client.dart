@@ -483,4 +483,39 @@ class ApiClient {
 
     return null;
   }
+
+  /// Verify a Google Play prepaid-subscription token with GeoWake's backend.
+  ///
+  /// Returns Google's authoritative expiry in epoch milliseconds only when the
+  /// server confirms that [purchaseToken] belongs to [productId] and remains an
+  /// active entitlement. Callers must fail closed on null or on an exception.
+  Future<int?> verifyGooglePlaySubscription({
+    required String productId,
+    required String purchaseToken,
+  }) async {
+    final result = await _makeRequest(
+      'POST',
+      '/billing/verify',
+      body: <String, dynamic>{
+        'productId': productId,
+        'purchaseToken': purchaseToken,
+      },
+    );
+    if (result['success'] != true ||
+        result['verified'] != true ||
+        result['productId'] != productId) {
+      return null;
+    }
+    final rawExpiry = result['expiryTimeMillis'];
+    final expiry = switch (rawExpiry) {
+      int value => value,
+      num value => value.toInt(),
+      String value => int.tryParse(value),
+      _ => null,
+    };
+    if (expiry == null || expiry <= DateTime.now().millisecondsSinceEpoch) {
+      return null;
+    }
+    return expiry;
+  }
 }

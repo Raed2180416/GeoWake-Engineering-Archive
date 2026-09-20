@@ -40,8 +40,15 @@ class _Run {
   /// for this run). Null if truth never reached the target during playback.
   final double? trueTargetArrivalSeconds;
 
-  _Run(this.route, this.dropout, this.reach, this.alarm, this.routeMeters,
-      this.routeDurSeconds, this.trueTargetArrivalSeconds);
+  _Run(
+    this.route,
+    this.dropout,
+    this.reach,
+    this.alarm,
+    this.routeMeters,
+    this.routeDurSeconds,
+    this.trueTargetArrivalSeconds,
+  );
 
   /// Seconds the cone fired BEFORE ground truth reached the wake target.
   /// >= 0 <=> never-late. This is the honest "how early" for the wake alarm.
@@ -53,15 +60,28 @@ class _Run {
   }
 }
 
-Future<_Run> _drive(TestRouteId route, GpsDropoutMode dropout,
-    {ReachabilityConfig? reachConfig}) async {
+const _candidateTightening = ReachabilityConfig(
+  dynamicLeversEnabled: true,
+  curveTrusted: false,
+  dwellMinSeconds: 0.0,
+  aMaxMps2: 2.5,
+  dMaxMps2: 3.5,
+  aLatEffMps2: 7.0,
+);
+
+Future<_Run> _drive(
+  TestRouteId route,
+  GpsDropoutMode dropout, {
+  ReachabilityConfig? reachConfig,
+}) async {
   final c = EkfTestController();
   c.logVerbosity = 0; // keep the test output clean
   c.injectImu = false; // no external TrackingService listener in this harness
   c.injectGps = false;
   c.gpsDropoutMode = dropout;
   c.warpFactor = 200.0; // applied to the engine inside loadRoute
-  c.reachWakeStopsBeforeDestination = 2; // wake before the stop (as the app does)
+  c.reachWakeStopsBeforeDestination =
+      2; // wake before the stop (as the app does)
   if (reachConfig != null) c.reachConfig = reachConfig;
 
   EkfReachResult? reach;
@@ -86,8 +106,15 @@ Future<_Run> _drive(TestRouteId route, GpsDropoutMode dropout,
     c.pause();
   }
 
-  final out = _Run(route, dropout, reach, alarm, r.totalMeters,
-      r.totalDurationSeconds, c.reachTrueTargetArrivalSeconds);
+  final out = _Run(
+    route,
+    dropout,
+    reach,
+    alarm,
+    r.totalMeters,
+    r.totalDurationSeconds,
+    c.reachTrueTargetArrivalSeconds,
+  );
   c.dispose();
   return out;
 }
@@ -117,7 +144,16 @@ void main() {
       final runs = <_Run>[];
       for (final route in routes) {
         for (final dropout in dropouts) {
-          runs.add(await _drive(route, dropout));
+          runs.add(
+            await _drive(
+              route,
+              dropout,
+              reachConfig:
+                  dropout == GpsDropoutMode.tunnelSimulation
+                      ? _candidateTightening
+                      : null,
+            ),
+          );
         }
       }
 
@@ -125,29 +161,39 @@ void main() {
       // truth reached the WAKE target (the honest never-late margin).
       // "earlyMeters" = how far the provable cone was ahead of true progress at
       // fire (the tightness the SOTA tightening work shrinks).
-      stdout.writeln('\nPLAYGROUND reachability (real engine, real Bengaluru Purple Line):');
-      stdout.writeln('route/dropout                             | reachFire '
-          '| earlyVsTarget    | earlyMeters | ekfAlarmLead');
+      stdout.writeln(
+        '\nPLAYGROUND reachability (real engine, real Bengaluru Purple Line):',
+      );
+      stdout.writeln(
+        'route/dropout                             | reachFire '
+        '| earlyVsTarget    | earlyMeters | ekfAlarmLead',
+      );
       for (final r in runs) {
         final tag = '${r.route.name}/${r.dropout.name}'.padRight(41);
         final reach = r.reach;
-        final fire = reach == null
-            ? 'NEVER'
-            : '${reach.fireElapsedSeconds.toStringAsFixed(0)}s';
+        final fire =
+            reach == null
+                ? 'NEVER'
+                : '${reach.fireElapsedSeconds.toStringAsFixed(0)}s';
         final es = r.earlySecondsVsTarget;
-        final early = es == null
-            ? '   -   '
-            : '${es.toStringAsFixed(0)}s (${(es / 60).toStringAsFixed(1)}min)';
-        final earlyM = reach == null
-            ? '   -   '
-            : (reach.earlyMeters.isFinite
-                ? '${reach.earlyMeters.toStringAsFixed(0)}m'
-                : 'inf');
-        final ekf = r.alarm == null
-            ? 'never'
-            : '${r.alarm!.leadSeconds.toStringAsFixed(0)}s';
-        stdout.writeln('$tag | ${fire.padRight(9)} | ${early.padRight(16)} '
-            '| ${earlyM.padRight(11)} | $ekf');
+        final early =
+            es == null
+                ? '   -   '
+                : '${es.toStringAsFixed(0)}s (${(es / 60).toStringAsFixed(1)}min)';
+        final earlyM =
+            reach == null
+                ? '   -   '
+                : (reach.earlyMeters.isFinite
+                    ? '${reach.earlyMeters.toStringAsFixed(0)}m'
+                    : 'inf');
+        final ekf =
+            r.alarm == null
+                ? 'never'
+                : '${r.alarm!.leadSeconds.toStringAsFixed(0)}s';
+        stdout.writeln(
+          '$tag | ${fire.padRight(9)} | ${early.padRight(16)} '
+          '| ${earlyM.padRight(11)} | $ekf',
+        );
       }
       stdout.writeln('');
 
@@ -157,21 +203,44 @@ void main() {
       // engine on real replayed routes.
       for (final r in runs) {
         final label = '${r.route.name}/${r.dropout.name}';
-        expect(r.reach, isNotNull,
-            reason: 'reachability never fired for $label — the never-late '
-                'safety net did not engage');
-        expect(r.trueTargetArrivalSeconds, isNotNull,
-            reason: 'ground truth never reached the wake target for $label');
+        expect(
+          r.reach,
+          isNotNull,
+          reason:
+              'reachability never fired for $label — the never-late '
+              'safety net did not engage',
+        );
+        expect(
+          r.trueTargetArrivalSeconds,
+          isNotNull,
+          reason: 'ground truth never reached the wake target for $label',
+        );
         final early = r.earlySecondsVsTarget!;
         // 2s epsilon absorbs fixed-tick quantization at warp 200.
-        expect(early, greaterThanOrEqualTo(-2.0),
-            reason: 'LATE fire for $label: cone fired '
-                '${r.reach!.fireElapsedSeconds.toStringAsFixed(0)}s but truth '
-                'reached the target at '
-                '${r.trueTargetArrivalSeconds!.toStringAsFixed(0)}s');
+        expect(
+          early,
+          greaterThanOrEqualTo(-2.0),
+          reason:
+              'LATE fire for $label: cone fired '
+              '${r.reach!.fireElapsedSeconds.toStringAsFixed(0)}s but truth '
+              'reached the target at '
+              '${r.trueTargetArrivalSeconds!.toStringAsFixed(0)}s',
+        );
+        if (r.dropout == GpsDropoutMode.tunnelSimulation) {
+          expect(
+            early,
+            lessThanOrEqualTo(240.0),
+            reason:
+                'EARLY fire for $label: station-reanchored journeys must '
+                'wake no more than 4 minutes before the requested target',
+          );
+        }
         // The bound must be a real, finite target crossing (sMax >= target).
-        expect(r.reach!.sMaxMeters, greaterThanOrEqualTo(r.reach!.targetMeters),
-            reason: 'cone fired below target for $label');
+        expect(
+          r.reach!.sMaxMeters,
+          greaterThanOrEqualTo(r.reach!.targetMeters),
+          reason: 'cone fired below target for $label',
+        );
       }
     },
     timeout: const Timeout(Duration(minutes: 12)),
@@ -184,43 +253,52 @@ void main() {
       // Compare the inert free-run cone against the fastest-feasible tightening
       // (dwell + accel + terminal braking + curve) on the SAME real routes,
       // driven end-to-end through the real playground engine.
-      const tight = ReachabilityConfig(
-        dynamicLeversEnabled: true,
-        curveTrusted: true,
-        dwellMinSeconds: 7.0,
-        aMaxMps2: 2.5,
-        dMaxMps2: 3.5,
-        aLatEffMps2: 7.0,
+      stdout.writeln(
+        '\nPLAYGROUND tightening (complete blackout, real engine):',
       );
-      stdout.writeln('\nPLAYGROUND tightening (complete blackout, real engine):');
-      stdout.writeln('route                          | inertFire | tightFire | '
-          'laterBy | trueTargetArr | both never-late');
+      stdout.writeln(
+        'route                          | inertFire | tightFire | '
+        'laterBy | trueTargetArr | both never-late',
+      );
       for (final route in routes) {
         final inert = await _drive(route, GpsDropoutMode.completeDropout);
-        final on = await _drive(route, GpsDropoutMode.completeDropout,
-            reachConfig: tight);
+        final on = await _drive(
+          route,
+          GpsDropoutMode.completeDropout,
+          reachConfig: _candidateTightening,
+        );
         final ti = inert.reach?.fireElapsedSeconds;
         final tt = on.reach?.fireElapsedSeconds;
-        final arr = on.trueTargetArrivalSeconds ?? inert.trueTargetArrivalSeconds;
+        final arr =
+            on.trueTargetArrivalSeconds ?? inert.trueTargetArrivalSeconds;
         final laterBy = (ti != null && tt != null) ? tt - ti : 0.0;
         final okI = (inert.earlySecondsVsTarget ?? 0) >= -2.0;
         final okT = (on.earlySecondsVsTarget ?? 0) >= -2.0;
-        stdout.writeln('${route.name.padRight(30)} '
-            '| ${(ti ?? -1).toStringAsFixed(0).padLeft(8)}s '
-            '| ${(tt ?? -1).toStringAsFixed(0).padLeft(8)}s '
-            '| ${laterBy.toStringAsFixed(0).padLeft(6)}s '
-            '| ${(arr ?? -1).toStringAsFixed(0).padLeft(12)}s '
-            '| ${okI && okT ? "OK" : "LATE!"}');
+        stdout.writeln(
+          '${route.name.padRight(30)} '
+          '| ${(ti ?? -1).toStringAsFixed(0).padLeft(8)}s '
+          '| ${(tt ?? -1).toStringAsFixed(0).padLeft(8)}s '
+          '| ${laterBy.toStringAsFixed(0).padLeft(6)}s '
+          '| ${(arr ?? -1).toStringAsFixed(0).padLeft(12)}s '
+          '| ${okI && okT ? "OK" : "LATE!"}',
+        );
 
         // Both configs must stay never-late; the tightened cone must fire no
         // earlier than the inert cone (it can only tighten).
         expect(inert.reach, isNotNull);
         expect(on.reach, isNotNull);
-        expect(on.earlySecondsVsTarget!, greaterThanOrEqualTo(-2.0),
-            reason: '${route.name}: tightened cone fired LATE');
-        expect(tt!, greaterThanOrEqualTo(ti! - 2.0),
-            reason: '${route.name}: tightening fired EARLIER than inert '
-                '(should only delay/tighten)');
+        expect(
+          on.earlySecondsVsTarget!,
+          greaterThanOrEqualTo(-2.0),
+          reason: '${route.name}: tightened cone fired LATE',
+        );
+        expect(
+          tt!,
+          greaterThanOrEqualTo(ti! - 2.0),
+          reason:
+              '${route.name}: tightening fired EARLIER than inert '
+              '(should only delay/tighten)',
+        );
       }
     },
     timeout: const Timeout(Duration(minutes: 12)),

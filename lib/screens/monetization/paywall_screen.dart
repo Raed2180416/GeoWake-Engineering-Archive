@@ -47,18 +47,36 @@ class _ProItem {
 /// packs", and "recurring auto-arm" don't fit — you must be online + present to
 /// plan/start a route. Transfer/interchange alarms already ship FREE.
 const List<_ProItem> _kItems = [
-  _ProItem(Icons.favorite, 'Guardian mode',
-      'Auto-share your journey with family + an "arrived safely" alert.',
-      PaywallSource.guardian),
-  _ProItem(Icons.shield, 'Anti-theft mode',
-      'Loud alarm if someone snatches your phone while you sleep on transit.',
-      PaywallSource.antiTheft),
-  _ProItem(Icons.music_note, 'Custom & escalating alarm',
-      'Your own sounds, ramping volume that won\'t let you sleep through it.',
-      PaywallSource.customSound),
-  _ProItem(Icons.widgets, 'Home widget',
-      'One-tap arm from your home screen.', PaywallSource.widget),
-  _ProItem(Icons.block, 'Ad-free', 'No ads, anywhere.'),
+  _ProItem(
+    Icons.favorite,
+    'Guardian mode',
+    'Live journey links for family + an "arrived safely" status.',
+    PaywallSource.guardian,
+  ),
+  _ProItem(
+    Icons.shield,
+    'Anti-theft mode',
+    'Loud alarm if someone snatches your phone while you sleep on transit.',
+    PaywallSource.antiTheft,
+  ),
+  _ProItem(
+    Icons.music_note,
+    'Custom & escalating alarm',
+    'Your own sounds, ramping volume that won\'t let you sleep through it.',
+    PaywallSource.customSound,
+  ),
+  _ProItem(
+    Icons.widgets,
+    'Home widget',
+    'One-tap arm from your home screen.',
+    PaywallSource.widget,
+  ),
+  _ProItem(
+    Icons.block,
+    'Ad-free',
+    'No ads, anywhere.',
+    PaywallSource.sponsorGate,
+  ),
 ];
 
 /// A prepaid pass option in the ladder.
@@ -68,8 +86,13 @@ class _Pass {
   final String duration; // "30 days"
   final String fallbackPrice; // shown if store metadata is unavailable
   final String? badge; // "Popular" / "Best value"
-  const _Pass(this.sku, this.label, this.duration, this.fallbackPrice,
-      [this.badge]);
+  const _Pass(
+    this.sku,
+    this.label,
+    this.duration,
+    this.fallbackPrice, [
+    this.badge,
+  ]);
 }
 
 const List<_Pass> _kPasses = [
@@ -127,7 +150,9 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
     } else {
       final pending = _mon.pendingPurchasesListenable.value;
       if (pending.contains(sku)) {
-        _snack('Payment processing — Pro will unlock automatically once it clears.');
+        _snack(
+          'Payment processing — Pro will unlock automatically once it clears.',
+        );
       } else {
         _snack('Purchase didn\'t complete. You can try again anytime.');
       }
@@ -140,11 +165,12 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
     final owned = await _mon.restorePurchases();
     if (!mounted) return;
     setState(() => _restoreBusy = false);
-    // Restore recovers a legacy one-time unlock; prepaid passes are consumed and
-    // not restorable, so a "nothing found" here is expected for pass users.
-    _snack(owned.contains(PremiumService.proProductId)
-        ? 'Pro restored ✓'
-        : 'No restorable purchase found. Passes renew by buying again.');
+    final restoredPass = PremiumProducts.passLadder.any(owned.contains);
+    _snack(
+      owned.contains(PremiumService.proProductId) || restoredPass
+          ? 'Pro access restored ✓'
+          : 'No active purchase found for this Play account.',
+    );
   }
 
   Future<void> _watchForDayPass() async {
@@ -166,13 +192,14 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
   Future<void> _open(String url) async {
     try {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {/* no-op if unopenable */}
+    } catch (_) {
+      /* no-op if unopenable */
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final source =
-        ModalRoute.of(context)?.settings.arguments as PaywallSource?;
+    final source = ModalRoute.of(context)?.settings.arguments as PaywallSource?;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
@@ -187,10 +214,12 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
-              Text('Your commute on autopilot.',
-                  style: text.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  )),
+              Text(
+                'Your commute on autopilot.',
+                style: text.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 'Pick a pass. No auto-renew — it simply ends, and you renew '
@@ -208,17 +237,22 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
                   color: scheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(children: [
-                  Icon(Icons.verified_user, color: scheme.onSecondaryContainer),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Your never-late alarm is free forever. Pro adds '
-                      'convenience, not safety.',
-                      style: TextStyle(color: scheme.onSecondaryContainer),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.verified_user,
+                      color: scheme.onSecondaryContainer,
                     ),
-                  ),
-                ]),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Your never-late alarm is free forever. Pro adds '
+                        'convenience, not safety.',
+                        style: TextStyle(color: scheme.onSecondaryContainer),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -227,8 +261,9 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
               ValueListenableBuilder<Set<String>>(
                 valueListenable: _mon.pendingPurchasesListenable,
                 builder: (context, pending, _) {
-                  final hasPendingPass =
-                      pending.any((id) => _prices.containsKey(id));
+                  final hasPendingPass = pending.any(
+                    (id) => _prices.containsKey(id),
+                  );
                   if (!hasPendingPass) return const SizedBox.shrink();
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
@@ -288,18 +323,20 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
               const SizedBox(height: 20),
 
               // ── Pass ladder ──────────────────────────────────────────────
-              Text('Choose your pass',
-                  style: text.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Choose your pass',
+                style: text.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 8),
               for (final pass in _kPasses)
                 _PassTile(
                   pass: pass,
                   price: _prices[pass.sku] ?? pass.fallbackPrice,
                   selected: pass.sku == _selectedSku,
-                  onTap: _busy
-                      ? null
-                      : () => setState(() => _selectedSku = pass.sku),
+                  onTap:
+                      _busy
+                          ? null
+                          : () => setState(() => _selectedSku = pass.sku),
                 ),
               const SizedBox(height: 16),
 
@@ -312,19 +349,20 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: _busy
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                child:
+                    _busy
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : Text(
+                          'Get ${_selectedLabel()} — ${_prices[_selectedSku] ?? ''}',
+                          style: const TextStyle(fontSize: 16),
                         ),
-                      )
-                    : Text(
-                        'Get ${_selectedLabel()} — ${_prices[_selectedSku] ?? ''}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
               ),
               const SizedBox(height: 8),
 
@@ -333,27 +371,38 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _watchForDayPass,
                   icon: const Icon(Icons.play_circle_outline),
-                  label: const Text('Watch a short video for a free day of Pro'),
+                  label: const Text(
+                    'Watch a short video for a free day of Pro',
+                  ),
                 ),
               const SizedBox(height: 12),
 
               // Restore + legal links
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                TextButton(
-                  onPressed: _restoreBusy ? null : _restore,
-                  child: _restoreBusy
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Restore purchase'),
-                ),
-                const Text('·'),
-                TextButton(onPressed: () => _open(_kTermsUrl),
-                    child: const Text('Terms')),
-                TextButton(onPressed: () => _open(_kPrivacyUrl),
-                    child: const Text('Privacy')),
-              ]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: _restoreBusy ? null : _restore,
+                    child:
+                        _restoreBusy
+                            ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Text('Restore purchase'),
+                  ),
+                  const Text('·'),
+                  TextButton(
+                    onPressed: () => _open(_kTermsUrl),
+                    child: const Text('Terms'),
+                  ),
+                  TextButton(
+                    onPressed: () => _open(_kPrivacyUrl),
+                    child: const Text('Privacy'),
+                  ),
+                ],
+              ),
             ],
           );
         },
@@ -396,55 +445,78 @@ class _PassTile extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: selected
-                ? scheme.primaryContainer
-                : scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            color:
+                selected
+                    ? scheme.primaryContainer
+                    : scheme.surfaceContainerHighest.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected
-                  ? scheme.primary
-                  : scheme.outlineVariant.withValues(alpha: 0.5),
+              color:
+                  selected
+                      ? scheme.primary
+                      : scheme.outlineVariant.withValues(alpha: 0.5),
               width: selected ? 2 : 1,
             ),
           ),
-          child: Row(children: [
-            Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: selected ? scheme.primary : scheme.onSurfaceVariant,
-              size: 22,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Row(children: [
-                Text(pass.label,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 15)),
-                const SizedBox(width: 8),
-                Text('· ${pass.duration}',
-                    style: TextStyle(
-                        fontSize: 12, color: scheme.onSurfaceVariant)),
-                if (pass.badge != null) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: scheme.tertiary,
-                      borderRadius: BorderRadius.circular(100),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      pass.label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
                     ),
-                    child: Text(pass.badge!,
-                        style: TextStyle(
+                    const SizedBox(width: 8),
+                    Text(
+                      '· ${pass.duration}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (pass.badge != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: scheme.tertiary,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          pass.badge!,
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: scheme.onTertiary)),
-                  ),
-                ],
-              ]),
-            ),
-            Text(price,
+                            color: scheme.onTertiary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Text(
+                price,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 15)),
-          ]),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -464,46 +536,63 @@ class _ValueRow extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: highlight ? scheme.primaryContainer : scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color:
+            highlight
+                ? scheme.primaryContainer
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: highlight
-            ? Border.all(color: scheme.primary.withValues(alpha: 0.3), width: 1.5)
-            : null,
+        border:
+            highlight
+                ? Border.all(
+                  color: scheme.primary.withValues(alpha: 0.3),
+                  width: 1.5,
+                )
+                : null,
       ),
-      child: Row(children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: highlight
-                ? scheme.primary.withValues(alpha: 0.15)
-                : scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color:
+                  highlight
+                      ? scheme.primary.withValues(alpha: 0.15)
+                      : scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              item.icon,
+              color: highlight ? scheme.onPrimaryContainer : scheme.primary,
+              size: 22,
+            ),
           ),
-          child: Icon(
-            item.icon,
-            color: highlight ? scheme.onPrimaryContainer : scheme.primary,
-            size: 22,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-              const SizedBox(height: 2),
-              Text(item.subtitle,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
-                  )),
-            ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        if (highlight)
-          Icon(Icons.check_circle, color: scheme.primary, size: 20),
-      ]),
+          if (highlight)
+            Icon(Icons.check_circle, color: scheme.primary, size: 20),
+        ],
+      ),
     );
   }
 }
@@ -518,35 +607,49 @@ class _AlreadyPro extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer,
-              shape: BoxShape.circle,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.verified,
+                size: 40,
+                color: scheme.onPrimaryContainer,
+              ),
             ),
-            child: Icon(Icons.verified, size: 40, color: scheme.onPrimaryContainer),
-          ),
-          const SizedBox(height: 20),
-          Text('You\'re on GeoWake Pro',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              )),
-          const SizedBox(height: 8),
-          Text('Thanks for supporting GeoWake.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              )),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: onDone,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+            const SizedBox(height: 20),
+            Text(
+              'You\'re on GeoWake Pro',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            child: const Text('Done'),
-          ),
-        ]),
+            const SizedBox(height: 8),
+            Text(
+              'Thanks for supporting GeoWake.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: onDone,
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
+              ),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
       ),
     );
   }

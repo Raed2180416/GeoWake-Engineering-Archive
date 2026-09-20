@@ -17,7 +17,7 @@
 
 process.env.GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'test-maps-key';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-at-least-32-characters-long';
-process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake2';
+process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.geowake.app';
 // Family budget kept above the per-token budget so the per-token tests below
 // can isolate the per-token cap without tripping the family budget first.
 // Kept small (rather than realistic thousands) so this file's request count
@@ -46,7 +46,7 @@ const quotaTracker = require('../src/utils/quotaTracker');
 async function mintToken() {
   const res = await request(app)
     .post('/api/auth/token')
-    .send({ bundleId: 'com.yourcompany.geowake2' });
+    .send({ bundleId: 'com.geowake.app' });
   return res.body.token;
 }
 

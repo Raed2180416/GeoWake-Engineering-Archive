@@ -12,22 +12,15 @@
 //      affiliate ids land.
 //   D. An OPTIONAL, dismissible rewarded "free day of Pro" strip — never
 //      forced, never on the alarm, and never shown to Pro.
-//   E. A frequency-capped interstitial (AdPolicy.frequencyCappedPlacements,
-//      every 3 completed rides), attempted once right after this screen
-//      mounts. Never shown to Pro / an active day-pass (AdService's own
-//      gate), and skipped for this visit the moment the user engages the
-//      rewarded flow in D (see _rewardedEngaged) so the two monetization
-//      surfaces never stack on the same arrival.
+//   E. No forced post-arrival interstitial. The daily sponsor checkpoint lives
+//      before trip four, where it is announced before any ad is requested.
 //
 // CORE-SAFETY: this screen is reached only by a pushReplacement AFTER
 // TrackingService.completeEndTracking() has already torn tracking down. Nothing
 // here runs on, blocks, delays, reorders, or gates the never-late fire or the
 // alarm teardown. The routing decision (`decidePostArrival`) is pure and
 // swallows every error so a bad input can only ever fall back to Home — it can
-// never crash the dismiss path. The interstitial attempt (E) is fired from a
-// post-frame callback, strictly AFTER this screen has mounted — i.e. strictly
-// after tracking has fully ended — and is itself fail-open (AdService never
-// throws), so it can never delay or block arriving at this screen.
+// never crash the dismiss path.
 
 import 'dart:async';
 
@@ -99,9 +92,9 @@ class PostArrivalScreen extends StatefulWidget {
     String? stationName,
     String? city,
   }) async {
-    // Count the completed ride for the ad frequency cap. Fire-and-forget: the
-    // in-memory counter bumps synchronously, and we never block navigation on
-    // the persisted write.
+    // This is the single owner of completed-ride counting. ArrivalHooks owns
+    // the independent aggregate/Guardian fan-out and deliberately does not
+    // count, so one physical arrival always increments exactly once.
     try {
       unawaited(MonetizationService.instance.recordRide());
     } catch (_) {/* never matters */}
@@ -137,56 +130,12 @@ class _PostArrivalScreenState extends State<PostArrivalScreen> {
   bool _rewardedDismissed = false;
   bool _sharing = false;
 
-  /// Set the moment the user engages the rewarded "watch a video" flow (D).
-  /// Guards the frequency-capped interstitial (E) from ever firing for this
-  /// visit once the user has chosen the rewarded path instead — the two
-  /// monetization surfaces must never stack on the same arrival.
-  bool _rewardedEngaged = false;
-  bool _interstitialAttempted = false;
-
-  /// Set once the interstitial (E) has actually been shown for this visit.
-  /// Guards the OTHER direction: hides the rewarded strip (D) for the rest
-  /// of this screen's lifetime once the interstitial has fired, so the two
-  /// surfaces never appear together even though they share one counter.
-  bool _interstitialShown = false;
-
   PostArrivalCard? _cachedCard;
 
   @override
   void initState() {
     super.initState();
     _arrivedAt = DateTime.now();
-    // Post-frame: this screen has already fully mounted (i.e. tracking has
-    // already ended) by the time this runs, and it never blocks first paint.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowInterstitial());
-  }
-
-  // --- E. Frequency-capped interstitial (post-arrival only) -----------------
-
-  Future<void> _maybeShowInterstitial() async {
-    if (_interstitialAttempted || _rewardedEngaged) return;
-    _interstitialAttempted = true;
-    if (!_mon.isReady) return;
-    final premium = _mon.premiumOrNull;
-    if (premium == null) return;
-    // Re-check right before actually showing anything: engaging the rewarded
-    // flow is synchronous UI, but this stays defensive against a future
-    // change that makes AdService.maybeShowInterstitial genuinely async
-    // before its own internal gate check.
-    if (_rewardedEngaged) return;
-    final shown = await AdService.instance.maybeShowInterstitial(
-      placement: AdPlacement.postArrival,
-      premium: premium,
-      ridesSinceLastAd: _mon.ridesSinceLastAd,
-    );
-    if (shown) {
-      await _mon.markAdShown();
-      // Hide the rewarded strip for the rest of this visit — it may already
-      // be rendered from the first build (ridesSinceLastAd resetting alone
-      // doesn't trigger a rebuild), so this is an explicit belt-and-braces
-      // guard against showing both surfaces on the same arrival.
-      if (mounted) setState(() => _interstitialShown = true);
-    }
   }
 
   /// Resolve the card: explicit constructor arg → route arguments → a safe
@@ -323,8 +272,6 @@ class _PostArrivalScreenState extends State<PostArrivalScreen> {
 
   bool _shouldOfferRewarded() {
     if (_rewardedDismissed) return false;
-    // Never stack with the interstitial (E) on the same visit.
-    if (_interstitialShown) return false;
     if (!_mon.isReady) return false;
     final premium = _mon.premiumOrNull;
     if (premium == null || premium.isPro) return false; // null/loading → hide
@@ -342,17 +289,14 @@ class _PostArrivalScreenState extends State<PostArrivalScreen> {
   }
 
   Future<void> _watchForDayPass() async {
-    // Mark BEFORE the async gap so a not-yet-started interstitial attempt
-    // (see _maybeShowInterstitial's re-check) never fires once the user has
-    // chosen the rewarded path.
-    _rewardedEngaged = true;
     final premium = _mon.premiumOrNull;
     if (premium == null) return;
     await AdService.instance.showRewarded(
       premium: premium,
       onReward: () async {
         await _mon.grantRewardedDayPass();
-        await _mon.markAdShown(); // reset the frequency-cap counter
+        // One opt-in rewarded ad is enough advertising for the local day.
+        await _mon.markPreTripSponsorShown();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Pro unlocked for 24 hours ✓')),

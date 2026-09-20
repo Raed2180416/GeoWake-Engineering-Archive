@@ -1,31 +1,55 @@
-import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:developer' as dev;
 
+import 'package:hive_flutter/hive_flutter.dart';
+
+/// Destination-only recent history.
+///
+/// No origin, route geometry, travel mode, alarm threshold, or frequency data
+/// crosses this storage boundary. Routes are always resolved for the rider's
+/// current position when they arm a new journey.
 class RecentLocationsService {
   static const String boxName = 'recent_locations';
+  static const String legacyRouteMemoryBoxName = 'route_memory_v1';
+  static const int maxItems = 10;
+
   static Box? _box;
   static Future<void>? _opening;
-  static const int _maxItems = 15;
 
-  // This is the gatekeeper function. It ensures the box is open and ready.
-  // It's the most critical part of the fix.
+  static String destinationId(Map<String, dynamic> location) {
+    final placeId = location['place_id'] ?? location['placeId'];
+    if (placeId != null && placeId.toString().trim().isNotEmpty) {
+      return placeId.toString().trim();
+    }
+    return '${location['lat']},${location['lng']}';
+  }
+
+  static Map<String, dynamic> _destinationOnly(Map<dynamic, dynamic> input) {
+    final location = Map<String, dynamic>.from(input);
+    final result = <String, dynamic>{
+      'description': (location['description'] ?? '').toString(),
+      'lat': location['lat'],
+      'lng': location['lng'],
+    };
+    final placeId = location['place_id'] ?? location['placeId'];
+    if (placeId != null && placeId.toString().trim().isNotEmpty) {
+      result['place_id'] = placeId.toString().trim();
+    }
+    return result;
+  }
+
   static Future<void> _ensureBoxIsOpen() async {
     if (_box != null && _box!.isOpen) return;
-    if (_opening != null) return _opening; // Another caller is opening
+    if (_opening != null) return _opening;
     _opening = () async {
       try {
         _box = await Hive.openBox(boxName);
-        dev.log("Hive box '$boxName' opened successfully.", name: "RecentLocationsService");
       } catch (e) {
-        dev.log("Error opening Hive box: $e. This may indicate corruption.", name: "RecentLocationsService");
-        try {
-          await Hive.deleteBoxFromDisk(boxName);
-          _box = await Hive.openBox(boxName);
-          dev.log("Corrupted box deleted and recreated successfully.", name: "RecentLocationsService");
-        } catch (recreateError) {
-          dev.log("Failed to recreate box after corruption: $recreateError", name: "RecentLocationsService");
-          rethrow;
-        }
+        dev.log(
+          'Error opening recent destinations; recreating: $e',
+          name: 'RecentLocationsService',
+        );
+        await Hive.deleteBoxFromDisk(boxName);
+        _box = await Hive.openBox(boxName);
       }
     }();
     try {
@@ -35,52 +59,70 @@ class RecentLocationsService {
     }
   }
 
-  // Retrieve stored recent locations.
   static Future<List<Map<String, dynamic>>> getRecentLocations() async {
     try {
       await _ensureBoxIsOpen();
       final storedData = _box!.get('locations');
-      
-      if (storedData is List) {
-        // Ensure all items in the list are of the correct type.
-        final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.from(
-          storedData.whereType<Map>().map((item) => Map<String, dynamic>.from(item))
-        );
-        dev.log("Retrieved ${result.length} recent locations.", name: "RecentLocationsService");
-        return result;
+      if (storedData is! List) return [];
+
+      final seen = <String>{};
+      final result = <Map<String, dynamic>>[];
+      for (final raw in storedData.whereType<Map>()) {
+        final destination = _destinationOnly(raw);
+        if (destination['lat'] == null || destination['lng'] == null) continue;
+        if (seen.add(destinationId(destination))) result.add(destination);
+        if (result.length == maxItems) break;
       }
-      
-      // If data is null or not a list, return an empty list.
-      return [];
+
+      // Rewrite through the whitelist so legacy extra fields are removed from
+      // disk, not merely hidden from callers.
+      await _box!.put('locations', result);
+      return result;
     } catch (e) {
-      dev.log("Error getting recent locations: $e", name: "RecentLocationsService");
+      dev.log(
+        'Error getting recent destinations: $e',
+        name: 'RecentLocationsService',
+      );
       return [];
     }
   }
 
-  // Persist the list of recent locations.
-  static Future<void> saveRecentLocations(List<Map<String, dynamic>> locations) async {
+  static Future<void> saveRecentLocations(
+    List<Map<String, dynamic>> locations,
+  ) async {
     try {
       await _ensureBoxIsOpen();
-      // Normalize, dedupe, and cap size
       final seen = <String>{};
-      List<Map<String, dynamic>> normalized = locations
-          .map((m) => Map<String, dynamic>.from(m))
-          .where((m) => m.isNotEmpty)
-          .toList();
-      List<Map<String, dynamic>> deduped = [];
-      for (final m in normalized) {
-        final key = (m['placeId'] ?? m['place_id'] ?? '${m['lat']},${m['lng']}').toString();
-        if (seen.add(key)) deduped.add(m);
+      final destinations = <Map<String, dynamic>>[];
+      for (final raw in locations) {
+        final destination = _destinationOnly(raw);
+        if (destination['lat'] == null || destination['lng'] == null) continue;
+        if (seen.add(destinationId(destination))) destinations.add(destination);
+        if (destinations.length == maxItems) break;
       }
-      if (deduped.length > _maxItems) {
-        deduped = deduped.sublist(0, _maxItems);
-      }
-
-      await _box!.put('locations', deduped);
-      dev.log("Saved ${deduped.length} recent locations to storage.", name: "RecentLocationsService");
+      await _box!.put('locations', destinations);
     } catch (e) {
-      dev.log("Error saving recent locations: $e", name: "RecentLocationsService");
+      dev.log(
+        'Error saving recent destinations: $e',
+        name: 'RecentLocationsService',
+      );
+    }
+  }
+
+  /// Earlier builds recorded automatic trip metadata in a separate Hive box.
+  /// Purge it during home initialization now that the product remembers only
+  /// destinations.
+  static Future<void> purgeLegacyRouteMemory() async {
+    try {
+      if (Hive.isBoxOpen(legacyRouteMemoryBoxName)) {
+        await Hive.box(legacyRouteMemoryBoxName).close();
+      }
+      await Hive.deleteBoxFromDisk(legacyRouteMemoryBoxName);
+    } catch (e) {
+      dev.log(
+        'Could not purge legacy route memory: $e',
+        name: 'RecentLocationsService',
+      );
     }
   }
 }

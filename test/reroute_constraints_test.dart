@@ -49,6 +49,29 @@ void main() {
         expect(result.failureReason, contains('stops'));
       });
 
+      test('rejects a multi-leg route when any metro leg is too short', () {
+        final constraints = RerouteConstraints(
+          alarmMode: 'stops',
+          alarmValue: 4,
+          transitMode: true,
+        );
+        final directions = _buildDirectionsWithMultipleTransitLegs(2);
+        final steps =
+            (((directions['routes'] as List).first['legs'] as List)
+                    .first['steps']
+                as List);
+        final lastTransit =
+            steps
+                .cast<Map>()
+                .where((step) => step['travel_mode'] == 'TRANSIT')
+                .last;
+        (lastTransit['transit_details'] as Map)['num_stops'] = 2;
+
+        final result = constraints.validate(directions);
+        expect(result.isValid, isFalse);
+        expect(result.failureReason, contains('stops threshold'));
+      });
+
       test(
         'returns invalid when stops mode but no transit stops available',
         () {

@@ -3,8 +3,8 @@
 // Pure, dependency-light data types for GeoWake journey sharing.
 //
 // PRIVACY BY CONSTRUCTION:
-//   • A ShareSnapshot carries ONLY the latest coarse position (lat/lng rounded
-//     to 5 decimal places) + an optional ETA — there is deliberately NO history
+//   • A ShareSnapshot carries ONLY the latest approximate position (lat/lng
+//     rounded to 3 decimal places) + an optional ETA — there is deliberately NO history
 //     / trajectory array (a test enforces the absence of any such field).
 //   • Coordinates never leave the device except through the pluggable
 //     ShareBackend, and the default backend (NoopShareBackend) is offline.
@@ -30,14 +30,14 @@ enum ShareMode {
 enum ShareStatus { enRoute, arrived, revoked, expired }
 
 ShareMode _modeFromName(String? s) => ShareMode.values.firstWhere(
-      (m) => m.name == s,
-      orElse: () => ShareMode.basicLink,
-    );
+  (m) => m.name == s,
+  orElse: () => ShareMode.basicLink,
+);
 
 ShareStatus _statusFromName(String? s) => ShareStatus.values.firstWhere(
-      (m) => m.name == s,
-      orElse: () => ShareStatus.enRoute,
-    );
+  (m) => m.name == s,
+  orElse: () => ShareStatus.enRoute,
+);
 
 /// A single share the user has started. Persisted locally (Hive) as JSON.
 class ShareSession {
@@ -46,6 +46,14 @@ class ShareSession {
 
   /// Optional server-side id, set once a live backend accepts [createShare].
   final String? backendId;
+
+  /// Per-share read capability carried only in the recipient link (`?t=`).
+  /// The server stores a hash, never this raw token.
+  final String? readToken;
+
+  /// Per-share write capability used by this device for ping/arrive/revoke.
+  /// It is never put in a URL or sent to the recipient.
+  final String? writeToken;
 
   final ShareMode mode;
   final ShareStatus status;
@@ -69,6 +77,8 @@ class ShareSession {
     required this.createdAtMs,
     required this.expiresAtMs,
     this.backendId,
+    this.readToken,
+    this.writeToken,
     this.destLabel,
     this.etaEpochMs,
   });
@@ -80,41 +90,48 @@ class ShareSession {
 
   ShareSession copyWith({
     String? backendId,
+    String? readToken,
+    String? writeToken,
     ShareStatus? status,
     int? etaEpochMs,
-  }) =>
-      ShareSession(
-        id: id,
-        mode: mode,
-        status: status ?? this.status,
-        createdAtMs: createdAtMs,
-        expiresAtMs: expiresAtMs,
-        backendId: backendId ?? this.backendId,
-        destLabel: destLabel,
-        etaEpochMs: etaEpochMs ?? this.etaEpochMs,
-      );
+  }) => ShareSession(
+    id: id,
+    mode: mode,
+    status: status ?? this.status,
+    createdAtMs: createdAtMs,
+    expiresAtMs: expiresAtMs,
+    backendId: backendId ?? this.backendId,
+    readToken: readToken ?? this.readToken,
+    writeToken: writeToken ?? this.writeToken,
+    destLabel: destLabel,
+    etaEpochMs: etaEpochMs ?? this.etaEpochMs,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'backendId': backendId,
-        'mode': mode.name,
-        'status': status.name,
-        'destLabel': destLabel,
-        'etaEpochMs': etaEpochMs,
-        'createdAtMs': createdAtMs,
-        'expiresAtMs': expiresAtMs,
-      };
+    'id': id,
+    'backendId': backendId,
+    'readToken': readToken,
+    'writeToken': writeToken,
+    'mode': mode.name,
+    'status': status.name,
+    'destLabel': destLabel,
+    'etaEpochMs': etaEpochMs,
+    'createdAtMs': createdAtMs,
+    'expiresAtMs': expiresAtMs,
+  };
 
   factory ShareSession.fromJson(Map<String, dynamic> j) => ShareSession(
-        id: j['id'] as String,
-        backendId: j['backendId'] as String?,
-        mode: _modeFromName(j['mode'] as String?),
-        status: _statusFromName(j['status'] as String?),
-        destLabel: j['destLabel'] as String?,
-        etaEpochMs: (j['etaEpochMs'] as num?)?.toInt(),
-        createdAtMs: (j['createdAtMs'] as num).toInt(),
-        expiresAtMs: (j['expiresAtMs'] as num).toInt(),
-      );
+    id: j['id'] as String,
+    backendId: j['backendId'] as String?,
+    readToken: j['readToken'] as String?,
+    writeToken: j['writeToken'] as String?,
+    mode: _modeFromName(j['mode'] as String?),
+    status: _statusFromName(j['status'] as String?),
+    destLabel: j['destLabel'] as String?,
+    etaEpochMs: (j['etaEpochMs'] as num?)?.toInt(),
+    createdAtMs: (j['createdAtMs'] as num).toInt(),
+    expiresAtMs: (j['expiresAtMs'] as num).toInt(),
+  );
 
   String encode() => jsonEncode(toJson());
 
@@ -125,10 +142,10 @@ class ShareSession {
 /// The ONLY position payload that ever leaves the device — the latest coarse
 /// point. NO trajectory / history array by design (enforced by test).
 class ShareSnapshot {
-  /// Latitude rounded to 5 dp (~1.1 m) — coarse, non-identifying.
+  /// Latitude rounded to 3 dp (~111 m north/south at the equator).
   final double lat;
 
-  /// Longitude rounded to 5 dp.
+  /// Longitude rounded to 3 dp (longitude distance varies by latitude).
   final double lng;
 
   /// Optional current ETA (epoch ms).
@@ -142,17 +159,17 @@ class ShareSnapshot {
     required double lng,
     required this.atMs,
     this.etaEpochMs,
-  })  : lat = _round5(lat),
-        lng = _round5(lng);
+  }) : lat = _round3(lat),
+       lng = _round3(lng);
 
-  static double _round5(double v) => (v * 1e5).roundToDouble() / 1e5;
+  static double _round3(double v) => (v * 1e3).roundToDouble() / 1e3;
 
   Map<String, dynamic> toJson() => {
-        'lat': lat,
-        'lng': lng,
-        'etaEpochMs': etaEpochMs,
-        'atMs': atMs,
-      };
+    'lat': lat,
+    'lng': lng,
+    'etaEpochMs': etaEpochMs,
+    'atMs': atMs,
+  };
 }
 
 /// The READ view a follower gets back from the backend for a share id
@@ -160,7 +177,7 @@ class ShareSnapshot {
 /// small amount of share metadata a follower needs to render a ROUTE-RELATIVE
 /// status ("On the way to X — arriving ~8:42").
 ///
-/// PRIVACY: [lat]/[lng] are coarse (5 dp) and are NEVER rendered to the user;
+/// PRIVACY: [lat]/[lng] are approximate (3 dp) and are NEVER rendered to the user;
 /// the follower surface derives only route-relative / time-relative copy from
 /// [destLabel] + [etaEpochMs] + [status]. The follower never persists this view.
 class ShareStatusView {
@@ -177,10 +194,10 @@ class ShareStatusView {
   /// Latest known ETA (epoch ms).
   final int? etaEpochMs;
 
-  /// Coarse latest point (5 dp). DELIVERY-INTERNAL ONLY — never shown raw.
+  /// Approximate latest point (3 dp). DELIVERY-INTERNAL ONLY — never shown raw.
   final double? lat;
 
-  /// Coarse latest point (5 dp). DELIVERY-INTERNAL ONLY — never shown raw.
+  /// Approximate latest point (3 dp). DELIVERY-INTERNAL ONLY — never shown raw.
   final double? lng;
 
   /// When the latest snapshot was taken (epoch ms), for a "updated N min ago".
@@ -224,10 +241,8 @@ class ShareStatusView {
 /// A recipient the user has chosen for Guardian mode. Stored LOCALLY only.
 enum GuardianChannel { app, whatsapp, sms }
 
-GuardianChannel _channelFromName(String? s) => GuardianChannel.values.firstWhere(
-      (m) => m.name == s,
-      orElse: () => GuardianChannel.sms,
-    );
+GuardianChannel _channelFromName(String? s) => GuardianChannel.values
+    .firstWhere((m) => m.name == s, orElse: () => GuardianChannel.sms);
 
 class GuardianContact {
   final String id;
@@ -246,18 +261,18 @@ class GuardianContact {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        'channel': channel.name,
-        'address': address,
-      };
+    'id': id,
+    'displayName': displayName,
+    'channel': channel.name,
+    'address': address,
+  };
 
   factory GuardianContact.fromJson(Map<String, dynamic> j) => GuardianContact(
-        id: j['id'] as String,
-        displayName: j['displayName'] as String? ?? '',
-        channel: _channelFromName(j['channel'] as String?),
-        address: j['address'] as String? ?? '',
-      );
+    id: j['id'] as String,
+    displayName: j['displayName'] as String? ?? '',
+    channel: _channelFromName(j['channel'] as String?),
+    address: j['address'] as String? ?? '',
+  );
 
   String encode() => jsonEncode(toJson());
 

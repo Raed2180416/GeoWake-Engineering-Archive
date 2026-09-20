@@ -4,6 +4,16 @@ import 'dart:developer' as dev;
 import 'package:geowake2/all_india_stops.dart';
 
 class MetroStopService {
+  /// The map pin or typed place remains the routing endpoint in every mode.
+  /// Nearby stations are candidates for provider-generated transit legs, not
+  /// substitutes for the rider's destination. This identity boundary prevents
+  /// a close wrong-line station from silently deleting the last mile.
+  static LatLng routingDestination({
+    required LatLng requestedDestination,
+    Iterable<TransitStop> nearbyStops = const <TransitStop>[],
+  }) {
+    return requestedDestination;
+  }
 
   static List<TransitStop> _getNearbyStopsFromBundledData({
     required LatLng location,
@@ -20,11 +30,13 @@ class MetroStopService {
         lng,
       );
       if (distance <= radius) {
-        nearby.add(TransitStop(
-          name: stop['name'] as String,
-          location: LatLng(lat, lng),
-          placeId: stop['id'] as String,
-        ));
+        nearby.add(
+          TransitStop(
+            name: stop['name'] as String,
+            location: LatLng(lat, lng),
+            placeId: stop['id'] as String,
+          ),
+        );
       }
     }
     return nearby;

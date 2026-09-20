@@ -11,10 +11,56 @@ import 'package:geowake2/services/monetization/purchase_backend.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    // Reset the singleton's readiness by re-initialising with a fresh fake.
-    MonetizationService.instance.premium =
-        PremiumService(backend: FakePurchaseBackend());
+    MonetizationService.instance.resetForTesting();
+    MonetizationService.instance.premium = PremiumService(
+      backend: FakePurchaseBackend(),
+    );
   });
+
+  test(
+    'first-user offer grants every Pro gate for exactly one fixed window',
+    () async {
+      final svc = MonetizationService.instance;
+      await svc.init(
+        backendOverride: FakePurchaseBackend(),
+        enableFirstUserTrial: true,
+      );
+
+      expect(svc.isFirstUserTrialActive, isTrue);
+      expect(svc.premium.isPro, isTrue);
+      expect(svc.premium.isAdFree, isTrue);
+      expect(svc.premium.canUseCustomAlarmSounds, isTrue);
+      expect(svc.premium.canUseWidget, isTrue);
+      expect(svc.premium.canUseGuardianMode, isTrue);
+      expect(svc.premium.canUseAntiTheft, isTrue);
+      expect(svc.premium.canUseCoreAlarm, isTrue);
+
+      final prefs = await SharedPreferences.getInstance();
+      final started = prefs.getInt(
+        MonetizationService.firstUserTrialStartedKey,
+      );
+      expect(started, isNotNull);
+
+      // Reinitialization must not slide/extend the seven-day window.
+      final persisted = <String, Object>{};
+      for (final key in prefs.getKeys()) {
+        final value = prefs.get(key);
+        if (value != null) persisted[key] = value;
+      }
+      svc.resetForTesting();
+      SharedPreferences.setMockInitialValues(persisted);
+      await svc.init(
+        backendOverride: FakePurchaseBackend(),
+        enableFirstUserTrial: true,
+      );
+      expect(
+        (await SharedPreferences.getInstance()).getInt(
+          MonetizationService.firstUserTrialStartedKey,
+        ),
+        started,
+      );
+    },
+  );
 
   test('assembles a free user by default; core alarm always usable', () async {
     final fake = FakePurchaseBackend()..buyShouldSucceed = true;
@@ -52,4 +98,42 @@ void main() {
     // Core reliability is free regardless.
     expect(premium.canUseCoreAlarm, isTrue);
   });
+
+  test(
+    'daily sponsor gate opens before trip four, once per local day',
+    () async {
+      final svc = MonetizationService.instance;
+      svc.resetForTesting();
+      SharedPreferences.setMockInitialValues({});
+      await svc.init(backendOverride: FakePurchaseBackend());
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day, 12);
+      expect(svc.shouldShowPreTripSponsor(now: today), isFalse);
+
+      await svc.recordRide(now: today);
+      await svc.recordRide(now: today);
+      expect(svc.completedRidesToday, 2);
+      expect(svc.shouldShowPreTripSponsor(now: today), isFalse);
+
+      await svc.recordRide(now: today);
+      expect(svc.shouldShowPreTripSponsor(now: today), isTrue);
+      await svc.markPreTripSponsorShown(now: today);
+      expect(svc.shouldShowPreTripSponsor(now: today), isFalse);
+
+      final tomorrow = today.add(const Duration(days: 1));
+      expect(svc.shouldShowPreTripSponsor(now: tomorrow), isFalse);
+      await svc.recordRide(now: tomorrow);
+      await svc.recordRide(now: tomorrow);
+      await svc.recordRide(now: tomorrow);
+      expect(svc.shouldShowPreTripSponsor(now: tomorrow), isTrue);
+
+      await svc.premium.buyPro();
+      expect(
+        svc.shouldShowPreTripSponsor(now: tomorrow),
+        isFalse,
+        reason: 'every paid pass is ad-free',
+      );
+    },
+  );
 }

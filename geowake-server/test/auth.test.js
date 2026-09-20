@@ -5,16 +5,23 @@
  * validation, and error handling.
  */
 
+jest.mock('axios');
+const axios = require('axios');
 const request = require('supertest');
 const app = require('../src/server');
 
 describe('Authentication API', () => {
+  beforeEach(() => {
+    axios.get.mockReset();
+    axios.get.mockResolvedValue({ status: 200, data: { status: 'OK' } });
+  });
+
   describe('POST /api/auth/token', () => {
     test('should generate token with valid bundle ID', async () => {
       const response = await request(app)
         .post('/api/auth/token')
         .send({
-          bundleId: 'com.yourcompany.geowake2'
+          bundleId: 'com.geowake.app'
         })
         .expect('Content-Type', /json/)
         .expect(200);
@@ -69,7 +76,7 @@ describe('Authentication API', () => {
       const requests = Array(5).fill(null).map(() =>
         request(app)
           .post('/api/auth/token')
-          .send({ bundleId: 'com.yourcompany.geowake2' })
+          .send({ bundleId: 'com.geowake.app' })
       );
 
       const responses = await Promise.all(requests);
@@ -88,7 +95,7 @@ describe('Authentication API', () => {
     beforeAll(async () => {
       const response = await request(app)
         .post('/api/auth/token')
-        .send({ bundleId: 'com.yourcompany.geowake2' });
+        .send({ bundleId: 'com.geowake.app' });
       
       validToken = response.body.token;
     });
@@ -103,8 +110,8 @@ describe('Authentication API', () => {
           mode: 'transit'
         });
 
-      // Should not be 401 (unauthorized)
-      expect(response.status).not.toBe(401);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('status', 'OK');
     });
 
     test('should reject requests without token', async () => {

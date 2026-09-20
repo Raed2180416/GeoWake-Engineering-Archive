@@ -4,26 +4,26 @@
  * Google's Maps web-service APIs return HTTP 200 even when the request failed,
  * signalling the real outcome via an in-body `status` field
  * (OVER_QUERY_LIMIT / REQUEST_DENIED / INVALID_REQUEST / ...). axios does not
- * throw on those, so a naive proxy caches the error body and serves it to every
- * caller for the whole TTL — riders then get no route and cannot arm the alarm.
+ * throw on those, so the proxy must inspect the body and return a real HTTP
+ * failure. Google response content is never server-cached.
  *
  * These tests mock axios (no network) and drive the real controller + real
- * cache singleton to prove:
- *   - a 200 OVER_QUERY_LIMIT body is NOT cached and yields HTTP 429
- *   - a 200 REQUEST_DENIED body is NOT cached and yields HTTP 502
- *   - a 200 OK body IS cached and yields HTTP 200
+ * controller to prove:
+ *   - a 200 OVER_QUERY_LIMIT body yields HTTP 429
+ *   - a 200 REQUEST_DENIED body yields HTTP 502
+ *   - a 200 OK body yields HTTP 200
+ *   - identical OK requests both reach upstream (no prohibited content cache)
  */
 
 // Config validates env at require-time (process.exit(1) if missing), so these
 // must be set before any src/* module is required.
 process.env.GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'test-maps-key';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-at-least-32-characters-long';
-process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake2';
+process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.geowake.app';
 
 jest.mock('axios');
 const axios = require('axios');
 
-const cache = require('../src/utils/cache');
 const { getDirections } = require('../src/controllers/mapsController');
 
 // Minimal req/res doubles. `res.json`/`res.status().json()` both terminate the
@@ -60,11 +60,10 @@ async function callDirections(body) {
 
 describe('Maps proxy — Google in-body error statuses (BACKLOG #24)', () => {
   beforeEach(() => {
-    cache.flush();
     axios.get.mockReset();
   });
 
-  test('200 OVER_QUERY_LIMIT is NOT cached and returns 429', async () => {
+  test('200 OVER_QUERY_LIMIT returns 429', async () => {
     axios.get.mockResolvedValue({ status: 200, data: { status: 'OVER_QUERY_LIMIT' } });
 
     const params = { origin: 'A', destination: 'B', mode: 'driving' };
@@ -73,11 +72,9 @@ describe('Maps proxy — Google in-body error statuses (BACKLOG #24)', () => {
     expect(res.statusCode).toBe(429);
     expect(res.body.success).toBe(false);
     expect(res.body.status).toBe('OVER_QUERY_LIMIT');
-    // Error body must not have been cached.
-    expect(cache.get('directions', params)).toBeUndefined();
   });
 
-  test('200 REQUEST_DENIED is NOT cached and returns 502', async () => {
+  test('200 REQUEST_DENIED returns 502', async () => {
     axios.get.mockResolvedValue({
       status: 200,
       data: { status: 'REQUEST_DENIED', error_message: 'API key invalid' },
@@ -89,10 +86,9 @@ describe('Maps proxy — Google in-body error statuses (BACKLOG #24)', () => {
     expect(res.statusCode).toBe(502);
     expect(res.body.success).toBe(false);
     expect(res.body.status).toBe('REQUEST_DENIED');
-    expect(cache.get('directions', params)).toBeUndefined();
   });
 
-  test('200 OK IS cached and returns 200', async () => {
+  test('200 OK returns 200', async () => {
     const okBody = { status: 'OK', routes: [{ summary: 'Main St' }] };
     axios.get.mockResolvedValue({ status: 200, data: okBody });
 
@@ -101,11 +97,9 @@ describe('Maps proxy — Google in-body error statuses (BACKLOG #24)', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual(okBody);
-    // Genuine result must be cached for reuse.
-    expect(cache.get('directions', params)).toEqual(okBody);
   });
 
-  test('second identical OK request is served from cache without a new upstream call', async () => {
+  test('identical OK requests are not server-cached', async () => {
     const okBody = { status: 'OK', routes: [{ summary: 'Second St' }] };
     axios.get.mockResolvedValue({ status: 200, data: okBody });
 
@@ -113,7 +107,6 @@ describe('Maps proxy — Google in-body error statuses (BACKLOG #24)', () => {
     await callDirections(params);
     await callDirections(params);
 
-    // First call hit upstream; second was a cache hit.
-    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledTimes(2);
   });
 });

@@ -271,15 +271,13 @@ class ForegroundBridge {
 
     ensureListenersRegistered();
 
-    // Optimized retry delays: fast initial attempt, escalating backoff
-    final delays = <Duration>[
-      const Duration(milliseconds: 30),
-      const Duration(milliseconds: 80),
-      const Duration(milliseconds: 150),
-      const Duration(milliseconds: 300),
-      const Duration(milliseconds: 500),
-    ];
-    const ackTimeout = Duration(milliseconds: 400);
+    // Route restoration and location-stream initialization can legitimately
+    // take longer than 400 ms on a cold/OEM-throttled device. One 5-second
+    // attempt is used here; TrackingHandshakePolicy owns the outer recovery
+    // attempt. BackgroundHandlers coalesces both attempts by armSessionId, so
+    // retries can never create multiple tracking sessions.
+    final delays = <Duration>[Duration.zero];
+    const ackTimeout = Duration(seconds: 5);
 
     for (var attempt = 0; attempt < delays.length; attempt++) {
       final requestId =

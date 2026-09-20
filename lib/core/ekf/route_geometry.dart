@@ -25,13 +25,35 @@ class RouteGeometry {
   double get totalLengthMeters => _cumMeters.isEmpty ? 0 : _cumMeters.last;
 
   /// Projects lat/lng to route progress meters.
-  /// Returns NaN when the closest lateral error exceeds the configured threshold.
-  double projectLatLng(double lat, double lng) {
+  ///
+  /// When [previousProgressMeters] is supplied, candidates are scored with a
+  /// continuity term instead of blindly selecting the globally nearest arc.
+  /// This matters on loops, station approaches that run in parallel, and
+  /// self-crossings: the two arcs can be equally close in GPS space while only
+  /// one is reachable from the last trusted EKF state.  The continuity term is
+  /// deliberately soft and bounded; after a genuine blackout/re-route, a much
+  /// closer candidate can still recover the filter.
+  ///
+  /// Returns NaN when every candidate exceeds the configured lateral threshold.
+  double projectLatLng(
+    double lat,
+    double lng, {
+    double? previousProgressMeters,
+    double? headingDegrees,
+    bool enforceForward = false,
+  }) {
     if (_points.length < 2) return double.nan;
 
     final p = LatLng(lat, lng);
-    double minDistance = double.infinity;
+    double bestScore = double.infinity;
     double bestS = double.nan;
+    double bestDistance = double.infinity;
+
+    final hasHistory =
+        previousProgressMeters != null && previousProgressMeters.isFinite;
+    final priorS = hasHistory
+        ? previousProgressMeters!.clamp(0.0, totalLengthMeters).toDouble()
+        : double.nan;
 
     for (var i = 0; i < _points.length - 1; i++) {
       final a = _points[i];
@@ -51,17 +73,46 @@ class RouteGeometry {
         proj.longitude,
       );
 
-      if (dist < minDistance) {
-        minDistance = dist;
-        bestS = _cumMeters[i] + t * segLength;
+      if (dist > _maxLateralErrorMeters) continue;
+
+      final candidateS = _cumMeters[i] + t * segLength;
+      // Keep geometry distance dominant.  A 1 m lateral improvement may beat
+      // a continuity preference, while two near-equal crossing candidates are
+      // resolved by the prior route arc.
+      var score = dist;
+      if (hasHistory) {
+        final delta = candidateS - priorS;
+        // Penalise implausibly large progress jumps, but do not hard-reject
+        // them: a real GPS reacquisition after a tunnel can legitimately jump.
+        final jump = delta.abs();
+        score += (jump.clamp(0.0, 1500.0) * 0.035).toDouble();
+        if (enforceForward && delta < -30.0) {
+          score += (-delta - 30.0) * 3.0;
+        }
+
+        if (headingDegrees != null && headingDegrees.isFinite) {
+          final tangent = _tangents[i];
+          final tangentHeading =
+              (math.atan2(tangent[0], tangent[1]) * 180.0 / math.pi + 360.0) %
+              360.0;
+          var diff = (headingDegrees - tangentHeading).abs() % 360.0;
+          if (diff > 180.0) diff = 360.0 - diff;
+          if (diff > 45.0) {
+            score += ((diff - 45.0) / 135.0) * 12.0;
+          }
+        }
+      }
+
+      if (score < bestScore ||
+          (score == bestScore && dist < bestDistance)) {
+        bestScore = score;
+        bestDistance = dist;
+        bestS = candidateS;
       }
     }
 
-    if (minDistance.isInfinite || minDistance > _maxLateralErrorMeters) {
-      return double.nan;
-    }
-
-    return bestS.clamp(0.0, totalLengthMeters);
+    if (!bestS.isFinite) return double.nan;
+    return bestS.clamp(0.0, totalLengthMeters).toDouble();
   }
 
   /// Returns tangent unit vector [x, y] (east, north) at progress s (meters).
@@ -201,10 +252,19 @@ class RouteGeometry {
   }
 
   static double _projectionT(LatLng p, LatLng a, LatLng b) {
-    final dx = b.longitude - a.longitude;
-    final dy = b.latitude - a.latitude;
+    // Project in a local metre frame, not raw degrees.  At Indian latitudes a
+    // longitude degree is ~0.85–0.99 of a latitude degree; raw-degree
+    // projection biases diagonal segments and can move the inferred progress
+    // tens of metres on long provider steps.
+    final midLat = (a.latitude + b.latitude) * 0.5;
+    const metersPerDegLat = 110540.0;
+    final metersPerDegLng =
+        111320.0 * math.cos(midLat * math.pi / 180.0).abs();
+    final dx = (b.longitude - a.longitude) * metersPerDegLng;
+    final dy = (b.latitude - a.latitude) * metersPerDegLat;
     if (dx == 0 && dy == 0) return 0;
-    return ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
-        (dx * dx + dy * dy);
+    final wx = (p.longitude - a.longitude) * metersPerDegLng;
+    final wy = (p.latitude - a.latitude) * metersPerDegLat;
+    return (wx * dx + wy * dy) / (dx * dx + dy * dy);
   }
 }

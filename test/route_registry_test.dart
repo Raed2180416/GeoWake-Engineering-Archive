@@ -29,4 +29,14 @@ void main() {
     expect(near.any((e) => e.key == 'B'), false);
     logPass('Near list contains A and C, excludes distant B');
   });
+
+  test('long route remains a candidate near an endpoint', () {
+    final route = RouteEntry(
+      key: 'long',
+      mode: 'driving',
+      destinationName: 'long',
+      points: const [LatLng(0, 0), LatLng(0, 0.1)],
+    );
+    expect(route.isNear(const LatLng(0, 0.1005), 120), isTrue);
+  });
 }

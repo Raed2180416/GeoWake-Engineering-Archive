@@ -1,9 +1,9 @@
 // lib/services/share/share_link_builder.dart
 //
 // PURE, no-I/O construction of the share text, the App-Links URL, the install
-// fallback URL, and the HMAC token that makes a `/j/{id}` link unguessable /
-// tamper-evident. Every message says "GeoWake" and carries NO PII (no names,
-// no coordinates) — only the opaque session id.
+// fallback URL, and the per-share read capability that makes a `/j/{id}` link
+// unguessable. Every message says "GeoWake" and carries NO PII (no names, no
+// coordinates) — only the opaque session id + its independent read capability.
 //
 // Kept pure so it is exhaustively unit-testable with zero device/network/plugin
 // dependencies.
@@ -28,8 +28,8 @@ class ShareLinkBuilder {
 
   /// The `/j/{id}` share URL a recipient opens.
   ///
-  /// [token] (optional) is appended as `?t=` so the recipient page / backend can
-  /// verify the link was minted by this device and hasn't been altered.
+  /// [token] (optional) is the per-share read capability appended as `?t=`.
+  /// Possession grants access only to this journey; it cannot update the share.
   static String buildShareUrl(
     String id, {
     String domain = defaultDomain,

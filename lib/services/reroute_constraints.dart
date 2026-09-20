@@ -6,7 +6,7 @@
 library;
 
 import 'package:geowake2/services/metro_vehicle_types.dart';
-import 'package:geowake2/services/transfer_utils.dart';
+import 'package:geowake2/services/alarm_threshold_validator.dart';
 
 /// Result of constraint validation with details about any failures.
 class RerouteValidationResult {
@@ -67,70 +67,25 @@ class RerouteConstraints {
         }
       }
 
-      // 2. Check alarm mode compatibility
-      if (alarmMode == 'stops') {
-        final totalStops = _extractTotalStops(newDirections);
-        if (totalStops == 0) {
-          return const RerouteValidationResult.invalid(
-            failureReason:
-                'Stop-based alarm requires transit stops but route has none',
-            userMessage:
-                'Tracking ended: New route has no transit stops for your stops-based alarm',
-          );
-        }
-        // Check if alarm value exceeds available stops
-        if (alarmValue > totalStops) {
-          return RerouteValidationResult.invalid(
-            failureReason:
-                'Alarm value ($alarmValue stops) exceeds available stops ($totalStops)',
-            userMessage:
-                'Tracking ended: New route only has $totalStops stops (alarm set for ${alarmValue.toInt()} stops before arrival)',
-          );
-        }
+      // Initial arming and every reroute must enforce the same promise. The old
+      // reroute-only checks summed stops/duration across the whole journey and
+      // could accept a threshold that was impossible on one short metro leg.
+      final thresholdValidation = AlarmThresholdValidator.validate(
+        directions: newDirections,
+        alarmMode: alarmMode,
+        alarmValue: alarmValue,
+        transitMode: transitMode,
+      );
+      if (!thresholdValidation.isValid) {
+        return RerouteValidationResult.invalid(
+          failureReason:
+              thresholdValidation.reason ?? 'alarm threshold is incompatible',
+          userMessage:
+              'Tracking ended: ${thresholdValidation.userMessage ?? 'The alternate route cannot honor your alarm setting.'}',
+        );
       }
 
-      // 3. Check alarm value feasibility
-      if (alarmMode == 'time') {
-        final totalDurationMin = _getTotalDuration(newDirections) / 60.0;
-        if (totalDurationMin <= 0) {
-          return const RerouteValidationResult.invalid(
-            failureReason: 'Could not determine route duration',
-            userMessage:
-                'Tracking ended: Unable to calculate travel time for new route',
-          );
-        }
-        // If alarm value >= total duration, alarm would fire immediately or never
-        if (alarmValue >= totalDurationMin) {
-          return RerouteValidationResult.invalid(
-            failureReason:
-                'Time alarm ($alarmValue min) exceeds route duration (${totalDurationMin.toStringAsFixed(1)} min)',
-            userMessage:
-                'Tracking ended: New route is only ${totalDurationMin.toStringAsFixed(0)} minutes (your alarm is set for ${alarmValue.toInt()} min before arrival)',
-          );
-        }
-      }
-
-      if (alarmMode == 'distance') {
-        final totalDistanceKm = _getTotalDistance(newDirections) / 1000.0;
-        if (totalDistanceKm <= 0) {
-          return const RerouteValidationResult.invalid(
-            failureReason: 'Could not determine route distance',
-            userMessage:
-                'Tracking ended: Unable to calculate distance for new route',
-          );
-        }
-        // If alarm value >= total distance, alarm would fire immediately or never
-        if (alarmValue >= totalDistanceKm) {
-          return RerouteValidationResult.invalid(
-            failureReason:
-                'Distance alarm ($alarmValue km) exceeds route distance (${totalDistanceKm.toStringAsFixed(1)} km)',
-            userMessage:
-                'Tracking ended: New route is only ${totalDistanceKm.toStringAsFixed(1)} km (your alarm is set for ${alarmValue.toStringAsFixed(1)} km before arrival)',
-          );
-        }
-      }
-
-      // 4. Check transfer count if constrained
+      // 3. Check transfer count if constrained
       if (maxTransfers != null && transitMode) {
         final transfers = _countTransfers(newDirections);
         if (transfers > maxTransfers!) {
@@ -185,68 +140,6 @@ class RerouteConstraints {
       return false;
     } catch (_) {
       return false;
-    }
-  }
-
-  /// Extract total number of transit stops from directions.
-  int _extractTotalStops(Map<String, dynamic> directions) {
-    try {
-      final transitLegs = TransferUtils.extractTransitLegStops(directions);
-      int total = 0;
-      for (final leg in transitLegs) {
-        total += leg.numStops;
-      }
-      return total;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  /// Get total route duration in seconds.
-  double _getTotalDuration(Map<String, dynamic> directions) {
-    try {
-      final routes = directions['routes'] as List?;
-      if (routes == null || routes.isEmpty) return 0;
-
-      final route = routes.first as Map<String, dynamic>;
-      final legs = route['legs'] as List?;
-      if (legs == null) return 0;
-
-      double total = 0;
-      for (final leg in legs) {
-        final duration =
-            (leg as Map<String, dynamic>)['duration'] as Map<String, dynamic>?;
-        if (duration != null) {
-          total += (duration['value'] as num?)?.toDouble() ?? 0;
-        }
-      }
-      return total;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  /// Get total route distance in meters.
-  double _getTotalDistance(Map<String, dynamic> directions) {
-    try {
-      final routes = directions['routes'] as List?;
-      if (routes == null || routes.isEmpty) return 0;
-
-      final route = routes.first as Map<String, dynamic>;
-      final legs = route['legs'] as List?;
-      if (legs == null) return 0;
-
-      double total = 0;
-      for (final leg in legs) {
-        final distance =
-            (leg as Map<String, dynamic>)['distance'] as Map<String, dynamic>?;
-        if (distance != null) {
-          total += (distance['value'] as num?)?.toDouble() ?? 0;
-        }
-      }
-      return total;
-    } catch (_) {
-      return 0;
     }
   }
 

@@ -20,11 +20,15 @@ class _RecBackend implements ShareBackend {
   @override
   Future<String?> createShare(ShareSession session) async => null;
   @override
-  Future<void> pushLocation(String id, ShareSnapshot s) async {}
+  Future<void> pushLocation(
+    String id,
+    ShareSnapshot s, {
+    String? writeToken,
+  }) async {}
   @override
-  Future<void> markArrived(String id) async => arrived++;
+  Future<void> markArrived(String id, {String? writeToken}) async => arrived++;
   @override
-  Future<void> revoke(String id) async {}
+  Future<void> revoke(String id, {String? writeToken}) async {}
 }
 
 Future<void> _pump() async {
@@ -62,27 +66,33 @@ void main() {
     expect(() => g.setEnabled(true), throwsA(isA<GuardianDenied>()));
     expect(
       () => g.setContact(
-          displayName: 'Mom',
-          channel: GuardianChannel.sms,
-          address: '+91123'),
+        displayName: 'Mom',
+        channel: GuardianChannel.sms,
+        address: '+91123',
+      ),
       throwsA(isA<GuardianDenied>()),
     );
     expect(await g.isEnabled(), isFalse);
   });
 
-  test('free user onJourneyArmed is a silent no-op (no share created)',
-      () async {
-    final share = JourneyShareService.forTest();
-    final g = freeGuard(share);
-    await g.onJourneyArmed(destLabel: 'Stop');
-    expect(await share.allSessions(), isEmpty);
-  });
+  test(
+    'free user onJourneyArmed is a silent no-op (no share created)',
+    () async {
+      final share = JourneyShareService.forTest();
+      final g = freeGuard(share);
+      await g.onJourneyArmed(destLabel: 'Stop');
+      expect(await share.allSessions(), isEmpty);
+    },
+  );
 
   test('pro user configures, enables, and defaults are opt-out', () async {
     final g = proGuard(JourneyShareService.forTest());
     expect(await g.isEnabled(), isFalse); // opt-out by default
     await g.setContact(
-        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
+      displayName: 'Mom',
+      channel: GuardianChannel.sms,
+      address: '+9112345678',
+    );
     await g.setEnabled(true);
     expect(await g.isEnabled(), isTrue);
     expect((await g.getContact())!.displayName, 'Mom');
@@ -94,62 +104,74 @@ void main() {
     expect(() => g.setEnabled(true), throwsA(isA<GuardianDenied>()));
   });
 
-  test('pro auto-shares on arm and fires arrived exactly once on wake',
-      () async {
-    final share = JourneyShareService.forTest();
-    final backend = _RecBackend();
-    share.backend = backend;
-    final g = proGuard(share);
+  test(
+    'pro auto-shares on arm and fires arrived exactly once on wake',
+    () async {
+      final share = JourneyShareService.forTest();
+      final backend = _RecBackend();
+      share.backend = backend;
+      final g = proGuard(share);
 
-    await g.setContact(
-        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
-    await g.setEnabled(true);
-    g.registerPostAlarm();
+      await g.setContact(
+        displayName: 'Mom',
+        channel: GuardianChannel.sms,
+        address: '+9112345678',
+      );
+      await g.setEnabled(true);
+      g.registerPostAlarm();
 
-    await g.onJourneyArmed(destLabel: 'Indiranagar');
-    final active = await share.allSessions();
-    expect(active.single.mode, ShareMode.guardian);
-    expect(active.single.status, ShareStatus.enRoute);
+      await g.onJourneyArmed(destLabel: 'Indiranagar');
+      final active = await share.allSessions();
+      expect(active.single.mode, ShareMode.guardian);
+      expect(active.single.status, ShareStatus.enRoute);
 
-    // Wake fires → multicast dispatches.
-    PostAlarmMulticast.instance.dispatch();
-    await _pump();
+      // Wake fires → multicast dispatches.
+      PostAlarmMulticast.instance.dispatch();
+      await _pump();
 
-    final after = await share.allSessions();
-    expect(after.single.status, ShareStatus.arrived);
-    expect(backend.arrived, 1);
+      final after = await share.allSessions();
+      expect(after.single.status, ShareStatus.arrived);
+      expect(backend.arrived, 1);
 
-    // A second dispatch must not re-fire arrived (already terminal).
-    PostAlarmMulticast.instance.dispatch();
-    await _pump();
-    expect(backend.arrived, 1);
-  });
+      // A second dispatch must not re-fire arrived (already terminal).
+      PostAlarmMulticast.instance.dispatch();
+      await _pump();
+      expect(backend.arrived, 1);
+    },
+  );
 
   // --- Delivery MVP: composer deep links + user-mediated send ----------------
 
-  test('composeDeepLink builds an sms: composer URI carrying the message body',
-      () {
-    final uri = GuardianService.composeDeepLink(
-      const GuardianContact(
+  test(
+    'composeDeepLink builds an sms: composer URI carrying the message body',
+    () {
+      final uri = GuardianService.composeDeepLink(
+        const GuardianContact(
           id: 'x',
           displayName: 'Mom',
           channel: GuardianChannel.sms,
-          address: '+91 12345'),
-      'On my way · GeoWake\nhttps://x/j/abc',
-    );
-    expect(uri, isNotNull);
-    expect(uri!.scheme, 'sms');
-    expect(uri.path, '+9112345'); // spaces stripped, leading + kept
-    expect(uri.queryParameters['body'], 'On my way · GeoWake\nhttps://x/j/abc');
-  });
+          address: '+91 12345',
+        ),
+        'On my way · GeoWake\nhttps://x/j/abc',
+      );
+      expect(uri, isNotNull);
+      expect(uri!.scheme, 'sms');
+      expect(uri.path, '+9112345'); // spaces stripped, leading + kept
+      expect(
+        uri.queryParameters['body'],
+        'On my way · GeoWake\nhttps://x/j/abc',
+      );
+    },
+  );
 
   test('composeDeepLink builds a wa.me URL for the WhatsApp channel', () {
     final uri = GuardianService.composeDeepLink(
       const GuardianContact(
-          id: 'x',
-          displayName: 'Mom',
-          channel: GuardianChannel.whatsapp,
-          address: '+91 98765 43210'),
+        id: 'x',
+        displayName: 'Mom',
+        channel: GuardianChannel.whatsapp,
+        address: '+91 98765 43210',
+      ),
       'hi',
     );
     expect(uri, isNotNull);
@@ -159,41 +181,51 @@ void main() {
     expect(uri.queryParameters['text'], 'hi');
   });
 
-  test('composeDeepLink returns null when the address has no usable digits', () {
-    final uri = GuardianService.composeDeepLink(
-      const GuardianContact(
+  test(
+    'composeDeepLink returns null when the address has no usable digits',
+    () {
+      final uri = GuardianService.composeDeepLink(
+        const GuardianContact(
           id: 'x',
           displayName: 'Mom',
           channel: GuardianChannel.whatsapp,
-          address: '   '),
-      'hi',
-    );
-    expect(uri, isNull);
-  });
+          address: '   ',
+        ),
+        'hi',
+      );
+      expect(uri, isNull);
+    },
+  );
 
-  test('pro arm composes the tracking link into the contact composer', () async {
-    final share = JourneyShareService.forTest();
-    final launched = <Uri>[];
-    final g = GuardianService.forTest(
-      entitlement: () => true,
-      share: share,
-      launcher: (uri) async {
-        launched.add(uri);
-        return true;
-      },
-    );
-    await g.setContact(
-        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
-    await g.setEnabled(true);
+  test(
+    'pro arm composes the tracking link into the contact composer',
+    () async {
+      final share = JourneyShareService.forTest();
+      final launched = <Uri>[];
+      final g = GuardianService.forTest(
+        entitlement: () => true,
+        share: share,
+        launcher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      );
+      await g.setContact(
+        displayName: 'Mom',
+        channel: GuardianChannel.sms,
+        address: '+9112345678',
+      );
+      await g.setEnabled(true);
 
-    await g.onJourneyArmed(destLabel: 'Indiranagar');
-    await _pump();
+      await g.onJourneyArmed(destLabel: 'Indiranagar');
+      await _pump();
 
-    expect(launched, hasLength(1));
-    expect(launched.single.scheme, 'sms');
-    // The composer body carries the /j/{id} tracking link.
-    expect(launched.single.queryParameters['body'], contains('/j/'));
-  });
+      expect(launched, hasLength(1));
+      expect(launched.single.scheme, 'sms');
+      // The composer body carries the /j/{id} tracking link.
+      expect(launched.single.queryParameters['body'], contains('/j/'));
+    },
+  );
 
   test('arrived-on-wake never opens a composer over the alarm; auto-sender '
       'delivers the "arrived safely" message when wired', () async {
@@ -210,7 +242,10 @@ void main() {
       autoSender: (contact, msg) async => autoMsgs.add(msg),
     );
     await g.setContact(
-        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
+      displayName: 'Mom',
+      channel: GuardianChannel.sms,
+      address: '+9112345678',
+    );
     await g.setEnabled(true);
     g.registerPostAlarm();
 
@@ -244,7 +279,10 @@ void main() {
       autoSender: (contact, msg) async => autoMsgs.add(msg),
     );
     await g.setContact(
-        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
+      displayName: 'Mom',
+      channel: GuardianChannel.sms,
+      address: '+9112345678',
+    );
     await g.setEnabled(true);
 
     await g.onJourneyArmed(destLabel: 'Stop');
@@ -269,4 +307,27 @@ void main() {
     await _pump();
     expect(launched, isEmpty);
   });
+
+  test(
+    'contact input is normalized and invalid numbers are rejected',
+    () async {
+      final g = proGuard(JourneyShareService.forTest());
+      final saved = await g.setContact(
+        displayName: '  Mom  ',
+        channel: GuardianChannel.sms,
+        address: '+91 (98765) 43210',
+      );
+      expect(saved.displayName, 'Mom');
+      expect(saved.address, '+919876543210');
+
+      await expectLater(
+        g.setContact(
+          displayName: 'Mom',
+          channel: GuardianChannel.sms,
+          address: '123',
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
 }

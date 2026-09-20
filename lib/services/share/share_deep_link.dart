@@ -12,7 +12,7 @@ class ShareDeepLink {
   /// The opaque share session id (the `/j/{id}` slug).
   final String id;
 
-  /// Optional HMAC token (`?t=`) for tamper verification.
+  /// Optional per-share read capability (`?t=`).
   final String? token;
 
   const ShareDeepLink({required this.id, this.token});
@@ -38,7 +38,8 @@ class ShareDeepLinkParser {
         // geowake://j/{id}  → host == 'j', first segment == id
         if (uri.host == 'j' && segments.isNotEmpty) {
           id = segments.first;
-        } else if (segments.length >= 2 && segments[segments.length - 2] == 'j') {
+        } else if (segments.length >= 2 &&
+            segments[segments.length - 2] == 'j') {
           id = segments.last;
         }
       } else {

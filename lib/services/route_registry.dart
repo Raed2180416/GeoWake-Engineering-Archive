@@ -62,12 +62,6 @@ class RouteEntry {
     );
   }
 
-  // P2: Heuristic factor to allow a generous center-distance check after bbox prefilter.
-  // This accounts for irregular shapes where the bbox center may be farther than radius,
-  // while the route still intersects the padded bbox.
-  // TODO(telemetry): Log candidate hit/miss distances to tune this factor with field data.
-  static const double _bboxCenterDistanceFactor = 2.5;
-
   bool isNear(LatLng p, double radiusMeters) {
     // Quick bbox prefilter with padding by approximate degrees.
     const metersPerDegLat = 110540.0;
@@ -90,18 +84,27 @@ class RouteEntry {
         p.longitude > ne.longitude) {
       return false;
     }
-    // Fallback precise distance to bbox center
-    final c = LatLng(
-      (bbox.southwest.latitude + bbox.northeast.latitude) / 2,
-      (bbox.southwest.longitude + bbox.northeast.longitude) / 2,
+    // Use the closest point on the actual bbox, not its centre.  A long route
+    // can be many kilometres from its centre at either endpoint; centre-based
+    // filtering incorrectly discarded exactly the endpoint fixes needed for
+    // boarding and route recovery.
+    final nearest = LatLng(
+      p.latitude.clamp(
+        bbox.southwest.latitude,
+        bbox.northeast.latitude,
+      ).toDouble(),
+      p.longitude.clamp(
+        bbox.southwest.longitude,
+        bbox.northeast.longitude,
+      ).toDouble(),
     );
     final d = Geolocator.distanceBetween(
       p.latitude,
       p.longitude,
-      c.latitude,
-      c.longitude,
+      nearest.latitude,
+      nearest.longitude,
     );
-    return d <= radiusMeters * _bboxCenterDistanceFactor;
+    return d <= radiusMeters;
   }
 
   static double _computeLength(List<LatLng> pts) {
@@ -163,6 +166,7 @@ class RouteRegistry {
   void upsert(RouteEntry entry) {
     final existing = _entries[entry.key];
     if (existing != null) {
+      final geometryUnchanged = _sameGeometry(existing.points, entry.points);
       // Replace geometry/derived metrics when the key is reused to avoid stale routes.
       _entries[entry.key] = RouteEntry(
         key: entry.key,
@@ -172,14 +176,32 @@ class RouteRegistry {
         createdAt: existing.createdAt,
         lastUsed: DateTime.now(),
         usageCount: existing.usageCount + 1,
-        lastSnapIndex: entry.lastSnapIndex ?? existing.lastSnapIndex,
-        lastProgressMeters:
-            entry.lastProgressMeters ?? existing.lastProgressMeters,
+        // A segment index/progress belongs to one geometry revision.  Carry it
+        // only when the replacement is byte-for-byte the same route, unless a
+        // caller explicitly supplies a remapped value for the new geometry.
+        lastSnapIndex: geometryUnchanged
+            ? (entry.lastSnapIndex ?? existing.lastSnapIndex)
+            : entry.lastSnapIndex,
+        lastProgressMeters: geometryUnchanged
+            ? (entry.lastProgressMeters ?? existing.lastProgressMeters)
+            : entry.lastProgressMeters,
       );
     } else {
       _entries[entry.key] = entry;
       _evictIfNeeded();
     }
+  }
+
+  static bool _sameGeometry(List<LatLng> a, List<LatLng> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].latitude != b[i].latitude ||
+          a[i].longitude != b[i].longitude) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void markUsed(String key) {

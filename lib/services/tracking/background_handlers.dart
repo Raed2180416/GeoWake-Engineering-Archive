@@ -24,6 +24,7 @@ class BackgroundHandlerCallbacks {
     required double alarmValue,
     required bool transitMode,
     bool isSimulationMode,
+    required bool Function() isCommandCurrent,
     required ServiceInstance service,
   })
   onStartTracking;
@@ -50,6 +51,8 @@ class BackgroundHandlerCallbacks {
     required LatLng destination,
     required bool transitMode,
     String? destinationName,
+    bool activateRoute,
+    required bool Function() isCommandCurrent,
   })
   onRegisterRouteDirections;
 
@@ -82,6 +85,12 @@ class BackgroundHandlerCallbacks {
 class BackgroundHandlers {
   final ServiceInstance _service;
   final BackgroundHandlerCallbacks _callbacks;
+  int _startGeneration = 0;
+  String? _activeArmId;
+  String? _startedArmId;
+  String? _pendingArmId;
+  Future<void>? _pendingStart;
+  Future<void>? _pendingRouteRegistration;
 
   BackgroundHandlers({
     required ServiceInstance service,
@@ -126,43 +135,101 @@ class BackgroundHandlers {
     });
   }
 
-  void _handleStartTracking(Map<String, dynamic>? data) {
+  Future<void> _handleStartTracking(Map<String, dynamic>? data) async {
     dev.log(
       'Background received startTracking event',
       name: 'BackgroundHandlers',
     );
 
-    final requestId = data?['requestId'] as String?;
-    if (requestId != null) {
+    if (data == null) return;
+    final requestId = data['requestId'] as String?;
+    final armId =
+        data['armSessionId'] as String? ?? requestId ?? 'legacy-arm-command';
+
+    // Every foreground retry for one arm carries the same armSessionId. Join
+    // the in-flight initialization instead of starting another location stream.
+    final existing = _pendingArmId == armId ? _pendingStart : null;
+    if (existing != null) {
       try {
-        _service.invoke('startTrackingAck', {'requestId': requestId});
-      } catch (_) {}
+        await existing;
+        if (_activeArmId == armId && requestId != null) {
+          _service.invoke('startTrackingAck', {'requestId': requestId});
+        }
+      } catch (_) {
+        // The owning handler logs the failure and deliberately withholds ACK.
+      }
+      return;
     }
 
-    if (data == null) return;
+    // A duplicate delivered after successful initialization is idempotent: ACK
+    // it without resetting route/alarm/location state.
+    if (_activeArmId == armId && _startedArmId == armId) {
+      if (requestId != null) {
+        _service.invoke('startTrackingAck', {'requestId': requestId});
+      }
+      return;
+    }
 
-    final destination = LatLng(
-      (data['destinationLat'] as num).toDouble(),
-      (data['destinationLng'] as num).toDouble(),
-    );
-    final destinationName = data['destinationName'] as String;
-    final alarmMode = data['alarmMode'] as String;
-    final alarmValue = (data['alarmValue'] as num).toDouble();
-    final transitMode = data['transitMode'] as bool? ?? false;
-    final isSimulationMode = data['isSimulationMode'] as bool? ?? false;
+    final generation = ++_startGeneration;
+    _activeArmId = armId;
+    bool isCurrent() => generation == _startGeneration && _activeArmId == armId;
 
-    _callbacks.onStartTracking(
-      destination: destination,
-      destinationName: destinationName,
-      alarmMode: alarmMode,
-      alarmValue: alarmValue,
-      transitMode: transitMode,
-      isSimulationMode: isSimulationMode,
-      service: _service,
-    );
+    try {
+      final destination = LatLng(
+        (data['destinationLat'] as num).toDouble(),
+        (data['destinationLng'] as num).toDouble(),
+      );
+      final destinationName = data['destinationName'] as String;
+      final alarmMode = data['alarmMode'] as String;
+      final alarmValue = (data['alarmValue'] as num).toDouble();
+      final transitMode = data['transitMode'] as bool? ?? false;
+      final isSimulationMode = data['isSimulationMode'] as bool? ?? false;
+
+      // ACK means the alarm engine accepted the command, not merely that the
+      // platform channel delivered bytes. Await initialization first so a
+      // callback failure or restarting isolate cannot produce false success.
+      final start = _callbacks.onStartTracking(
+        destination: destination,
+        destinationName: destinationName,
+        alarmMode: alarmMode,
+        alarmValue: alarmValue,
+        transitMode: transitMode,
+        isSimulationMode: isSimulationMode,
+        isCommandCurrent: isCurrent,
+        service: _service,
+      );
+      _pendingArmId = armId;
+      _pendingStart = start;
+      await start;
+
+      if (!isCurrent()) return;
+      _startedArmId = armId;
+      if (requestId != null) {
+        _service.invoke('startTrackingAck', {'requestId': requestId});
+      }
+    } catch (e) {
+      // Deliberately withhold ACK. Foreground retry/rollback owns recovery.
+      dev.log(
+        'Background: startTracking initialization failed: $e',
+        name: 'BackgroundHandlers',
+      );
+    } finally {
+      if (_pendingArmId == armId) {
+        _pendingArmId = null;
+        _pendingStart = null;
+      }
+    }
   }
 
   void _handleStopTracking(Map<String, dynamic>? event) async {
+    // Invalidate before the first await. A delayed start callback can no longer
+    // publish an ACK or begin a stream after foreground rollback.
+    _startGeneration++;
+    _activeArmId = null;
+    _startedArmId = null;
+    final pendingStart = _pendingStart;
+    final pendingRoute = _pendingRouteRegistration;
+
     try {
       await AlarmPlayer.stop();
     } catch (e) {
@@ -170,6 +237,22 @@ class BackgroundHandlers {
     }
 
     await _callbacks.onStopTracking(stopSelf: event?['stopSelf'] == true);
+
+    // If start was inside an await when stop arrived, wait a bounded interval
+    // and clean up once more. This closes the late-write/resurrection race even
+    // when platform delivery overlaps route restoration or stream start.
+    if (pendingStart != null) {
+      try {
+        await pendingStart.timeout(const Duration(seconds: 6));
+      } catch (_) {}
+      await _callbacks.onStopTracking(stopSelf: event?['stopSelf'] == true);
+    }
+    if (pendingRoute != null) {
+      try {
+        await pendingRoute.timeout(const Duration(seconds: 6));
+      } catch (_) {}
+      await _callbacks.onStopTracking(stopSelf: event?['stopSelf'] == true);
+    }
 
     if (event?['stopSelf'] == true) {
       _service.stopSelf();
@@ -257,6 +340,12 @@ class BackgroundHandlers {
     if (data == null) return;
     try {
       final requestId = data['requestId'] as String?;
+      final armId = data['armSessionId'] as String?;
+      if (armId != null && armId != _activeArmId) return;
+      final generation = _startGeneration;
+      bool isCurrent() =>
+          generation == _startGeneration &&
+          (armId == null || armId == _activeArmId);
       final directions = Map<String, dynamic>.from(data['directions'] as Map);
       final originMap = Map<String, dynamic>.from(data['origin'] as Map);
       final destMap = Map<String, dynamic>.from(data['destination'] as Map);
@@ -270,14 +359,20 @@ class BackgroundHandlers {
       );
       final transitMode = (data['transitMode'] as bool?) ?? false;
       final destinationName = data['destinationName'] as String?;
+      final activateRoute = (data['activateRoute'] as bool?) ?? false;
 
-      await _callbacks.onRegisterRouteDirections(
+      final registration = _callbacks.onRegisterRouteDirections(
         directions: directions,
         origin: origin,
         destination: destination,
         transitMode: transitMode,
         destinationName: destinationName,
+        activateRoute: activateRoute,
+        isCommandCurrent: isCurrent,
       );
+      _pendingRouteRegistration = registration;
+      await registration;
+      if (!isCurrent()) return;
 
       if (requestId != null) {
         _service.invoke('registerRouteDirectionsAck', {'requestId': requestId});
@@ -287,6 +382,8 @@ class BackgroundHandlers {
         'Background: Error in registerRouteDirections: $e',
         name: 'BackgroundHandlers',
       );
+    } finally {
+      _pendingRouteRegistration = null;
     }
   }
 

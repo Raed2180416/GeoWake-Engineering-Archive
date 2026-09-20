@@ -11,7 +11,7 @@
 
 process.env.GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'test-maps-key';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-at-least-32-characters-long';
-process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake2';
+process.env.APP_BUNDLE_ID = process.env.APP_BUNDLE_ID || 'com.geowake.app';
 process.env.MAPS_PROXY_DISABLED = 'true';
 
 jest.mock('axios');
@@ -25,7 +25,7 @@ describe('Kill switch — MAPS_PROXY_DISABLED=true', () => {
   beforeAll(async () => {
     const res = await request(app)
       .post('/api/auth/token')
-      .send({ bundleId: 'com.yourcompany.geowake2' });
+      .send({ bundleId: 'com.geowake.app' });
     validToken = res.body.token;
   });
 
@@ -97,7 +97,7 @@ describe('Kill switch — MAPS_PROXY_DISABLED=true', () => {
   test('token issuance (/api/auth/token) is unaffected by the maps kill switch', async () => {
     const res = await request(app)
       .post('/api/auth/token')
-      .send({ bundleId: 'com.yourcompany.geowake2' })
+      .send({ bundleId: 'com.geowake.app' })
       .expect(200);
     expect(res.body.success).toBe(true);
   });

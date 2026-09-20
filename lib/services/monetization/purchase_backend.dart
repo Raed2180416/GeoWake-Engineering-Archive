@@ -5,10 +5,9 @@
 // whole monetization module) NEVER imports the platform SDK, so the entitlement
 // logic stays pure and unit-testable headless.
 //
-// India-first note (MONETIZATION §B, HANDOFF §5): the primary product is a
-// ONE-TIME non-consumable "Pro" unlock (Indians prefer one-time over subs), so
-// the backend only needs a one-time purchase + a restore path. Subscriptions,
-// if ever added, can extend this interface without touching PremiumService.
+// The launch products are Google Play prepaid subscriptions: daily, weekly,
+// monthly, and yearly. A legacy one-time unlock remains restorable for anyone
+// who already owns it, but it is not part of the v1 paywall.
 
 import 'dart:async';
 
@@ -23,6 +22,11 @@ abstract class PurchaseBackend {
   /// leaving a paying user on Free until a manual restore.
   void Function(Set<String> owned)? onEntitlementChanged;
 
+  /// Server-authoritative expiry (epoch ms) for every currently verified
+  /// prepaid subscription. Paid access must be derived from this map, never
+  /// from a locally calculated duration.
+  Map<String, int> get verifiedPassExpiries;
+
   /// Attempt a one-time (non-consumable) purchase of [productId].
   ///
   /// Returns `true` iff the purchase completed and the entitlement is now owned
@@ -30,15 +34,11 @@ abstract class PurchaseBackend {
   /// user-cancel; genuine errors may throw and are handled by the caller.
   Future<bool> buyOneTime(String productId);
 
-  /// Attempt a CONSUMABLE purchase of [productId] — the prepaid pass model
-  /// (daily/weekly/monthly/yearly). The product is purchased AND consumed so the
-  /// same pass can be bought again next period (prepaid repurchase). Because it
-  /// is consumed, a pass is NEVER returned by [restore]; the granted time-based
-  /// entitlement is what persists locally, not store ownership.
-  ///
-  /// Returns `true` iff the purchase completed. Returns `false` (not throw) on
-  /// user-cancel; genuine errors may throw and are handled by the caller.
-  Future<bool> buyConsumable(String productId);
+  /// Buy a Google Play prepaid subscription. Returns true only after the Play
+  /// purchase token has been verified by GeoWake's backend and an authoritative
+  /// expiry has been placed in [verifiedPassExpiries]. The store purchase stays
+  /// restorable; it is never consumed as an in-app product.
+  Future<bool> buyPrepaidSubscription(String productId);
 
   /// Restore previously-owned non-consumable purchases (e.g. after reinstall or
   /// on a new device signed into the same store account).
@@ -60,6 +60,10 @@ class FakePurchaseBackend implements PurchaseBackend {
   void Function(Set<String> owned)? onEntitlementChanged;
 
   final Set<String> _owned;
+  final int Function() _nowMs;
+
+  @override
+  final Map<String, int> verifiedPassExpiries = <String, int>{};
 
   /// When `false`, [buyOneTime] resolves `false` (simulates a user-cancel or a
   /// declined charge) and does NOT grant ownership.
@@ -68,8 +72,11 @@ class FakePurchaseBackend implements PurchaseBackend {
   /// When `true`, [buyOneTime] throws (simulates a billing error).
   bool throwOnBuy;
 
-  /// Call log — product ids passed to [buyConsumable] (prepaid passes), in order.
-  final List<String> consumableBuyCalls = <String>[];
+  /// Call log — product ids passed to [buyPrepaidSubscription], in order.
+  final List<String> subscriptionBuyCalls = <String>[];
+
+  /// Legacy test accessor retained while old receipts are migrated.
+  List<String> get consumableBuyCalls => subscriptionBuyCalls;
 
   /// When `true`, [restore] throws (simulates a restore error).
   bool throwOnRestore;
@@ -90,7 +97,9 @@ class FakePurchaseBackend implements PurchaseBackend {
     this.throwOnBuy = false,
     this.throwOnRestore = false,
     this.priceString = '₹199.00',
-  }) : _owned = <String>{...?initiallyOwned};
+    int Function()? nowMs,
+  }) : _owned = <String>{...?initiallyOwned},
+       _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch);
 
   /// Products currently owned in the fake store (read-only view).
   Set<String> get owned => Set<String>.unmodifiable(_owned);
@@ -108,14 +117,29 @@ class FakePurchaseBackend implements PurchaseBackend {
   }
 
   @override
-  Future<bool> buyConsumable(String productId) async {
-    consumableBuyCalls.add(productId);
+  Future<bool> buyPrepaidSubscription(String productId) async {
+    subscriptionBuyCalls.add(productId);
     if (throwOnBuy) {
-      throw StateError('FakePurchaseBackend: consumable buy failed for $productId');
+      throw StateError(
+        'FakePurchaseBackend: subscription buy failed for $productId',
+      );
     }
-    // A consumable is consumed immediately, so it does NOT persist in [_owned]
-    // (unlike a non-consumable). The caller grants time-based entitlement.
-    return buyShouldSucceed;
+    if (!buyShouldSucceed) return false;
+    final duration = switch (productId) {
+      'geowake_pro_daily' => const Duration(hours: 24),
+      'geowake_pro_weekly' => const Duration(days: 7),
+      'geowake_pro_monthly' => const Duration(days: 30),
+      'geowake_pro_yearly' => const Duration(days: 365),
+      _ => Duration.zero,
+    };
+    if (duration == Duration.zero) return false;
+    final old = verifiedPassExpiries[productId] ?? 0;
+    final base = old > _nowMs() ? old : _nowMs();
+    final expiry = base + duration.inMilliseconds;
+    verifiedPassExpiries[productId] = expiry;
+    _owned.add(productId);
+    onEntitlementChanged?.call(<String>{..._owned});
+    return true;
   }
 
   /// Test hook: simulate a PENDING purchase clearing AFTER buyOneTime gave up —

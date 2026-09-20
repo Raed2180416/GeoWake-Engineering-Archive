@@ -132,4 +132,57 @@ void main() {
       expect(tSec, inInclusiveRange(60, 120));
     },
   );
+
+  test('keeps transfer boundaries across Google leg seams', () {
+    final directions = {
+      'routes': [
+        {
+          'legs': [
+            {
+              'steps': [
+                {
+                  'travel_mode': 'TRANSIT',
+                  'distance': {'value': 800},
+                  'transit_details': {
+                    'line': {
+                      'short_name': 'Purple Line',
+                      'vehicle': {'type': 'SUBWAY'},
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              'steps': [
+                {
+                  'travel_mode': 'WALKING',
+                  'distance': {'value': 120},
+                },
+                {
+                  'travel_mode': 'TRANSIT',
+                  'distance': {'value': 900},
+                  'transit_details': {
+                    'line': {
+                      'short_name': 'Purple Line',
+                      'vehicle': {'type': 'SUBWAY'},
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    // The first metro ride ends before the cross-leg walk, and the second
+    // metro ride boards after it.  Both boundaries must survive flattening.
+    expect(
+      TransferUtils.buildTransferBoundariesMeters(
+        directions,
+        metroMode: true,
+      ),
+      containsAll(<double>[0, 800, 920, 1820]),
+    );
+  });
 }

@@ -45,7 +45,8 @@ class StationAssociationDiagnostics {
     'windowMeters': windowMeters.toStringAsFixed(0),
     'numCandidates': numCandidates,
     'candidateIndices': candidateIndices,
-    'candidateDistances': candidateDistances.map((d) => d.toStringAsFixed(0)).toList(),
+    'candidateDistances':
+        candidateDistances.map((d) => d.toStringAsFixed(0)).toList(),
     if (selectedIndex != null) 'selectedIndex': selectedIndex,
     if (selectionMode != null) 'selectionMode': selectionMode,
     if (rejectReason != null) 'rejectReason': rejectReason,
@@ -54,20 +55,21 @@ class StationAssociationDiagnostics {
 
 class StationAssociationConfig {
   const StationAssociationConfig({
-    this.baseMarginMeters = 50,  // Base margin for high-confidence estimates
-    this.maxMarginMeters = 150,  // Maximum margin cap
-    this.marginPerSigma = 0.5,   // Additional margin per sigma of uncertainty
-    this.dwellSeconds = 3,       // Reduced from 5: faster snap for testing (ZUPT has its own 3s dwell)
+    this.baseMarginMeters = 50, // Base margin for high-confidence estimates
+    this.maxMarginMeters = 150, // Maximum margin cap
+    this.marginPerSigma = 0.5, // Additional margin per sigma of uncertainty
+    this.dwellSeconds =
+        3, // Reduced from 5: faster snap for testing (ZUPT has its own 3s dwell)
   });
 
   final double baseMarginMeters;
   final double maxMarginMeters;
   final double marginPerSigma; // Adaptive margin based on uncertainty
   final int dwellSeconds;
-  
+
   /// Calculate adaptive margin: higher uncertainty → smaller margin.
   /// This prevents window overlap when sigmaS is large.
-  /// 
+  ///
   /// Logic: margin = baseMargin + marginPerSigma * sigmaS, capped at maxMargin
   /// When sigmaS is small (good estimate): larger window for tolerance
   /// When sigmaS is large (bad estimate): tighter window to avoid multi-candidates
@@ -96,10 +98,10 @@ class StationAssociationResult {
 
 class StationAssociation {
   StationAssociation({StationAssociationConfig? config})
-      : _config = config ?? const StationAssociationConfig();
+    : _config = config ?? const StationAssociationConfig();
 
   final StationAssociationConfig _config;
-  
+
   /// Last diagnostics for debugging.
   StationAssociationDiagnostics? lastDiagnostics;
 
@@ -115,7 +117,7 @@ class StationAssociation {
     // Use adaptive margin based on current uncertainty
     final adaptiveMargin = _config.marginForSigma(sigmaS);
     final window = 3 * sigmaS + adaptiveMargin;
-    
+
     // Find all candidates first (for diagnostics)
     final candidates = <int>[];
     final candidateDistances = <double>[];
@@ -126,57 +128,27 @@ class StationAssociation {
         candidateDistances.add(d);
       }
     }
-    
+
     String? rejectReason;
-    int? selectedIndex;
-    String? selectionMode;
     if (!isMetroLeg) {
       rejectReason = 'NOT_METRO_LEG';
     } else if (!zuptConfirmed) {
       rejectReason = 'ZUPT_NOT_CONFIRMED';
     } else if (zuptDwell.inSeconds < _config.dwellSeconds) {
-      rejectReason = 'DWELL_TOO_SHORT (${zuptDwell.inMilliseconds}ms < ${_config.dwellSeconds * 1000}ms)';
+      rejectReason =
+          'DWELL_TOO_SHORT (${zuptDwell.inMilliseconds}ms < ${_config.dwellSeconds * 1000}ms)';
     } else if (stationMeters.isEmpty) {
       rejectReason = 'NO_STATIONS';
     } else if (candidates.isEmpty) {
-      rejectReason = 'NO_CANDIDATES_IN_WINDOW (window=${window.toStringAsFixed(0)}m)';
+      rejectReason =
+          'NO_CANDIDATES_IN_WINDOW (window=${window.toStringAsFixed(0)}m)';
     } else if (candidates.length != 1) {
-      if (isDegraded && candidates.isNotEmpty) {
-        // In degraded mode, prefer the nearest station ahead of sEst.
-        int? bestIdx;
-        double bestDist = double.infinity;
-        for (var i = 0; i < candidates.length; i++) {
-          final idx = candidates[i];
-          final sStation = stationMeters[idx];
-          final d = candidateDistances[i];
-          final isAhead = sStation >= sEst;
-          if (isAhead && d < bestDist) {
-            bestDist = d;
-            bestIdx = idx;
-          }
-        }
-        // If none ahead, fall back to nearest overall.
-        if (bestIdx == null) {
-          for (var i = 0; i < candidates.length; i++) {
-            final idx = candidates[i];
-            final d = candidateDistances[i];
-            if (d < bestDist) {
-              bestDist = d;
-              bestIdx = idx;
-            }
-          }
-        }
-        if (bestIdx != null) {
-          selectedIndex = bestIdx;
-          selectionMode = 'DEGRADED_NEAREST';
-        } else {
-          rejectReason = 'MULTIPLE_CANDIDATES (${candidates.length})';
-        }
-      } else {
-        rejectReason = 'MULTIPLE_CANDIDATES (${candidates.length})';
-      }
+      // GPS degradation increases uncertainty; it never makes an ambiguous
+      // nearest-station guess safer. Keep the ZUPT velocity/bias correction but
+      // refuse any position snap unless exactly one active-route station fits.
+      rejectReason = 'MULTIPLE_CANDIDATES (${candidates.length})';
     }
-    
+
     lastDiagnostics = StationAssociationDiagnostics(
       isMetroLeg: isMetroLeg,
       zuptConfirmed: zuptConfirmed,
@@ -189,19 +161,17 @@ class StationAssociation {
       numCandidates: candidates.length,
       candidateIndices: candidates,
       candidateDistances: candidateDistances,
-      selectedIndex: selectedIndex,
-      selectionMode: selectionMode,
       rejectReason: rejectReason,
     );
-    
+
     // Early exits with diagnostics
     if (!isMetroLeg) return null;
     if (!zuptConfirmed) return null;
     if (zuptDwell.inSeconds < _config.dwellSeconds) return null;
     if (stationMeters.isEmpty) return null;
-    if (candidates.length != 1 && selectedIndex == null) return null;
+    if (candidates.length != 1) return null;
 
-    final idx = selectedIndex ?? candidates.single;
+    final idx = candidates.single;
     return StationAssociationResult(
       stationIndex: idx,
       stationMeters: stationMeters[idx],

@@ -123,10 +123,14 @@ class SnapToRouteEngine {
     int start = 0;
     int end = polyline.length - 2;
 
-    // effectiveHint: Use previous result's index if available
-    int? effectiveHint = previousResult?.segmentIndex;
+    // Prefer the rich previous result, but honour the persisted per-route hint
+    // when the process has just resumed and no in-memory SnapResult exists.
+    // The old implementation silently ignored [hintIndex], making every live
+    // ActiveRouteManager update a global nearest-segment search.
+    int? effectiveHint = previousResult?.segmentIndex ?? hintIndex;
 
     if (effectiveHint != null) {
+      effectiveHint = effectiveHint.clamp(0, end).toInt();
       // Dynamic window: if we are moving fast, look further ahead?
       // For now, fixed window around last known pos.
       start = (effectiveHint - 5).clamp(

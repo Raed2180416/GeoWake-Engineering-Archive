@@ -5,6 +5,9 @@
 # Google Maps API Key for Android
 googleMapsApiKey=your_production_api_key_here
 
+# AdMob Android app id (ad unit ids are Dart defines; see README)
+adMobAppId=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+
 # Signing keys (example - replace with your actual paths)
 storePassword=your_store_password
 keyPassword=your_key_password

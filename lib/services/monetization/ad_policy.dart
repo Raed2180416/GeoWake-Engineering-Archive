@@ -37,6 +37,10 @@ enum AdPlacement {
   /// engages the rewarded flow instead — see post_arrival_screen.dart).
   postArrival,
 
+  /// Announced checkpoint immediately before a free rider's fourth trip of the
+  /// local day. Interstitial only; it is never reached from an alarm/wake path.
+  preTripSponsor,
+
   /// The alarm is ringing. NEVER an ad.
   alarm,
 
@@ -61,15 +65,15 @@ class AdPolicy {
     AdPlacement.routeArming,
     AdPlacement.mapTracking,
     AdPlacement.postArrival,
+    AdPlacement.preTripSponsor,
   };
 
   /// Interstitial surfaces subject to the every-N-rides frequency cap.
-  /// The interstitial fires at post-arrival (after tracking has fully ended
-  /// and the alarm is dismissed, on every 3rd completed ride) — never during
-  /// an ongoing trip, never on the alarm/wake path. Banner surfaces
-  /// (route-arming, map) are low-intrusion and NOT capped.
+  /// The interstitial is an announced sponsor checkpoint before trip four,
+  /// after three trips have fully completed that local day. It is never shown
+  /// during tracking or on the alarm/wake path. Banner surfaces remain uncapped.
   static const Set<AdPlacement> frequencyCappedPlacements = <AdPlacement>{
-    AdPlacement.postArrival,
+    AdPlacement.preTripSponsor,
   };
 
   /// Surfaces where an ad is NEVER permitted — the alarm and its wake path.

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
+import 'package:geowake2/services/tracking_recovery_policy.dart';
 
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/api_client.dart';
@@ -61,7 +62,10 @@ class _SplashScreenState extends State<SplashScreen>
     }
 
     try {
-      await NotificationService().initialize();
+      // Permission ownership lives at the explicit arm action, where rationale
+      // and degraded behavior can be explained. App launch only initializes
+      // channels/response handling and must never nag on every open.
+      await NotificationService().initialize(requestAndroidPermissions: false);
     } catch (e) {
       dev.log(
         "Notification Service initialization failed: $e",
@@ -71,6 +75,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     try {
       await TrackingService().initializeService();
+      // On a cold process restart Flutter can already be in `resumed` before
+      // MyApp registers its lifecycle observer, so no resumed callback arrives.
+      // Explicitly reconcile the foreground heartbeat here; otherwise an active
+      // background journey can stay falsely marked paused after reopening.
+      await TrackingService().handleAppLifecycleChange(
+        AppLifecycleState.resumed,
+      );
     } catch (e) {
       dev.log(
         "Tracking Service initialization failed: $e",
@@ -103,10 +114,29 @@ class _SplashScreenState extends State<SplashScreen>
     }
 
     final restoreSession = await TrackingStateStore.isActive();
+    final snapshot = await TrackingStateStore.loadSnapshot();
+    final recovery = TrackingRecoveryPolicy.evaluate(
+      isActive: restoreSession,
+      snapshot: snapshot,
+      now: DateTime.now(),
+    );
+
+    // The foreground restore path must enforce the same user-intent/age gate as
+    // the booted background isolate. Otherwise reopening after a force-stop can
+    // navigate into yesterday's journey without ever entering `_onStart`.
+    if (recovery != TrackingRecoveryDisposition.restore &&
+        (restoreSession || snapshot != null)) {
+      dev.log(
+        'SplashScreen: stale/inconsistent tracking state, cleaning up',
+        name: 'SplashScreen',
+      );
+      await TrackingService().completeEndTracking(navigateHome: false);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/');
+      return;
+    }
 
     if (restoreSession) {
-      // Load snapshot to pass route data to mapTracking screen
-      final snapshot = await TrackingStateStore.loadSnapshot();
       if (!mounted) return;
 
       if (snapshot == null || snapshot.directions == null) {
