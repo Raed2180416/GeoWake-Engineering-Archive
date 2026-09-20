@@ -1,8 +1,10 @@
 # GeoWake
 
-**Never miss your stop.** GeoWake is a location-based wake-up alarm for transit commuters — metro, bus, or car. Set a destination, and GeoWake monitors your journey in real time, alerting you just before you arrive.
+**A destination alarm for transit journeys.** GeoWake is a location-based wake-up alarm for transit commuters — metro, bus, or car. Set a destination, and GeoWake monitors your journey in real time, alerting you just before you arrive.
 
 Flutter, Android-first, India-first. iOS support is partial (no background location).
+
+For software acquisition or licensing review, start with the [buyer package](docs/sale/README.md). Underground consistency remains unfinished; simulation results are not a field-reliability guarantee. The current preparation branch has original alarm tones and a configurable backend endpoint.
 
 ---
 
@@ -11,7 +13,7 @@ Flutter, Android-first, India-first. iOS support is partial (no background locat
 ### Prerequisites
 
 - Flutter 3.44.x (stable)
-- Android SDK 35 (minSdk 24)
+- Android compile SDK 36, target SDK 35, minSdk 24; NDK 28.2.13676358
 - A Google Maps API key with Directions, Places, and Geocoding enabled
 
 ### Setup
@@ -45,8 +47,8 @@ cd geowake-server && npm install && npm start
 ### Test
 
 ```bash
-flutter test                    # full suite (1373+ tests)
-flutter analyze lib/            # static analysis (0 errors)
+flutter test --coverage         # headless suite; coverage scope documented in buyer package
+flutter analyze lib/ --no-fatal-infos  # infos are reported but non-fatal
 ```
 
 ---
@@ -56,16 +58,18 @@ flutter analyze lib/            # static analysis (0 errors)
 1. **Set a destination** — search via Google Places or pick from recents
 2. **Choose alarm mode** — distance-based, time-based, or stops-based (metro mode)
 3. **Arm the alarm** — GeoWake starts a foreground service tracking your position
-4. **Sleep / commute** — the app runs in the background, surviving screen-off and OEM battery killers
+4. **Sleep / commute** — the app runs in the background, with Android background-service support; OEM behavior requires device testing
 5. **Wake up** — GeoWake fires a high-priority full-screen alarm with sound + vibration before you reach your stop
 
-### Pro Features (₹199 one-time)
+### Optional premium features
 
 - **Anti-theft mode** — accelerometer + gyroscope snatch detection triggers a loud alarm if someone moves your phone
 - **Guardian mode** — auto-share your commute with a saved contact; "arrived safely" push notification
 - **Custom alarm sounds** — personalized wake tones
 - **Home-screen widget** — quick arm/disarm from the home screen
 - **Ad-free** — remove all banner ads
+
+The paywall uses prepaid entitlement periods; store configuration and fulfillment require verification before launch. Historical prices are not a current sales offer.
 
 The **core wake alarm is always free**. Reliability features (foreground service, exact-alarm backstop) are never gated.
 

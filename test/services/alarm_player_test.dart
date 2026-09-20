@@ -59,49 +59,66 @@ void main() {
     expect(AlarmPlayer.lastResolvedAssetPathForTests, _customRingtone);
   });
 
-  test(
-      'a lapsed entitlement (free tier) falls back to the default sound, '
+  test('a lapsed entitlement (free tier) falls back to the default sound, '
       'even though a custom ringtone is still saved in prefs', () async {
     mon.premium = PremiumService(backend: FakePurchaseBackend());
-    expect(mon.premiumOrNull?.canUseCustomAlarmSounds, isFalse,
-        reason: 'a fresh free-tier PremiumService must not unlock custom '
-            'ringtones');
+    expect(
+      mon.premiumOrNull?.canUseCustomAlarmSounds,
+      isFalse,
+      reason:
+          'a fresh free-tier PremiumService must not unlock custom '
+          'ringtones',
+    );
 
     await AlarmPlayer.playSelected();
 
-    expect(AlarmPlayer.lastResolvedAssetPathForTests,
-        AlarmPlayer.defaultRingtoneAsset,
-        reason: 'must fail toward the default sound, never keep playing an '
-            'unentitled custom ringtone');
+    expect(
+      AlarmPlayer.lastResolvedAssetPathForTests,
+      AlarmPlayer.defaultRingtoneAsset,
+      reason:
+          'must fail toward the default sound, never keep playing an '
+          'unentitled custom ringtone',
+    );
   });
 
   test(
-      'an EXPIRED rewarded day-pass falls back to the default sound (the '
-      'exact reported leak: buy a day-pass, pick a ringtone, let it lapse)',
-      () async {
-    var clock = 1000;
-    mon.premium =
-        PremiumService(backend: FakePurchaseBackend(), nowMs: () => clock);
-    await mon.premium.grantRewardedDayPass(duration: const Duration(hours: 24));
-    expect(mon.premiumOrNull?.canUseCustomAlarmSounds, isTrue,
-        reason: 'within the pass window, custom ringtones are unlocked');
+    'an EXPIRED rewarded day-pass falls back to the default sound (the '
+    'exact reported leak: buy a day-pass, pick a ringtone, let it lapse)',
+    () async {
+      var clock = 1000;
+      mon.premium = PremiumService(
+        backend: FakePurchaseBackend(),
+        nowMs: () => clock,
+      );
+      await mon.premium.grantRewardedDayPass(
+        duration: const Duration(hours: 24),
+      );
+      expect(
+        mon.premiumOrNull?.canUseCustomAlarmSounds,
+        isTrue,
+        reason: 'within the pass window, custom ringtones are unlocked',
+      );
 
-    // Pick up a custom ringtone while entitled (mirrors RingtonesScreen's
-    // unconditional prefs write).
-    await AlarmPlayer.playSelected();
-    expect(AlarmPlayer.lastResolvedAssetPathForTests, _customRingtone);
+      // Pick up a custom ringtone while entitled (mirrors RingtonesScreen's
+      // unconditional prefs write).
+      await AlarmPlayer.playSelected();
+      expect(AlarmPlayer.lastResolvedAssetPathForTests, _customRingtone);
 
-    // The pass expires — nothing clears 'selected_ringtone' from prefs.
-    clock = 1000 + const Duration(hours: 25).inMilliseconds;
-    expect(mon.premiumOrNull?.canUseCustomAlarmSounds, isFalse);
+      // The pass expires — nothing clears 'selected_ringtone' from prefs.
+      clock = 1000 + const Duration(hours: 25).inMilliseconds;
+      expect(mon.premiumOrNull?.canUseCustomAlarmSounds, isFalse);
 
-    await AlarmPlayer.playSelected();
+      await AlarmPlayer.playSelected();
 
-    expect(AlarmPlayer.lastResolvedAssetPathForTests,
+      expect(
+        AlarmPlayer.lastResolvedAssetPathForTests,
         AlarmPlayer.defaultRingtoneAsset,
-        reason: 'the real wake alarm must not keep the custom sound once '
-            'the day-pass that unlocked it has expired');
-  });
+        reason:
+            'the real wake alarm must not keep the custom sound once '
+            'the day-pass that unlocked it has expired',
+      );
+    },
+  );
 
   test('no saved ringtone at all always resolves to the default, entitled '
       'or not', () async {
@@ -111,7 +128,24 @@ void main() {
 
     await AlarmPlayer.playSelected();
 
-    expect(AlarmPlayer.lastResolvedAssetPathForTests,
-        AlarmPlayer.defaultRingtoneAsset);
+    expect(
+      AlarmPlayer.lastResolvedAssetPathForTests,
+      AlarmPlayer.defaultRingtoneAsset,
+    );
+  });
+
+  test('a removed legacy tone falls back to audible default for Pro', () async {
+    SharedPreferences.setMockInitialValues({
+      'selected_ringtone': 'assets/ringtones/(One UI) Asteroid.ogg',
+    });
+    mon.premium = PremiumService(backend: FakePurchaseBackend());
+    await mon.premium.buyPro();
+
+    await AlarmPlayer.playSelected();
+
+    expect(
+      AlarmPlayer.lastResolvedAssetPathForTests,
+      AlarmPlayer.defaultRingtoneAsset,
+    );
   });
 }

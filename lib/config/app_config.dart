@@ -12,9 +12,11 @@ class AppConfig {
     return 'Secure Server';
   }
 
-  // Server configuration (aligned with production ApiClient base URL)
-  static const String serverBaseUrl =
-      'https://geowake-production.up.railway.app/api';
+  // Buyers and local developers can use their own backend without editing code.
+  static const String serverBaseUrl = String.fromEnvironment(
+    'GEOWAKE_API_BASE_URL',
+    defaultValue: 'https://geowake-production.up.railway.app/api',
+  );
 
   // Unified bundle ID - must match:
   // - android/app/build.gradle

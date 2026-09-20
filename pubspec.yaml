@@ -1,5 +1,5 @@
 name: geowake2
-description: "A new Flutter project."
+description: "An Android-first destination alarm for transit journeys."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -110,7 +110,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/geowake.png
-    - assets/ringtones/
+    - assets/ringtones/geowake_pulse.wav
+    - assets/ringtones/geowake_chime.wav
+    - assets/ringtones/geowake_signal.wav
     # NOTE: assets/osm/bengaluru.wkp (~20MB) is NOT bundled in the release APK.
     # It is only used by dev dashboards (deviation_dashboard, unified_dashboard)
     # and loaded via HTTP on web or via a dev-only asset path. Bundling it

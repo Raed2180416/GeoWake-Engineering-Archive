@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact non-secret test value and SharedPreferences storage key"
+regexTarget = "secret"
+regexes = [
+  '''^test-jwt-secret-at-least-32-characters-long$''',
+  '''^gw_mobility_consent_v1$''',
+]

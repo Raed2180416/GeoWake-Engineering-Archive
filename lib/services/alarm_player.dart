@@ -14,7 +14,7 @@ class AlarmPlayer {
   /// alarm itself must never silently break or go quiet because a day-pass
   /// expired, so it fails toward this default rather than toward silence.
   static const String defaultRingtoneAsset =
-      'assets/ringtones/(One UI) Asteroid.ogg';
+      'assets/ringtones/geowake_pulse.wav';
 
   static AudioPlayer? _player;
   static bool _initialized = false;
@@ -121,9 +121,15 @@ class AlarmPlayer {
       // broken/unentitled alarm.
       if (saved != null) {
         final canUseCustom =
-            MonetizationService.instance.premiumOrNull?.canUseCustomAlarmSounds ??
-                false;
-        assetPath = canUseCustom ? saved : defaultRingtoneAsset;
+            MonetizationService
+                .instance
+                .premiumOrNull
+                ?.canUseCustomAlarmSounds ??
+            false;
+        // Older builds bundled third-party tones that are no longer shipped.
+        // A saved legacy choice must still produce the free default alarm.
+        final removedTone = saved.startsWith('assets/ringtones/(One UI) ');
+        assetPath = canUseCustom && !removedTone ? saved : defaultRingtoneAsset;
       }
     } catch (_) {
       // SharedPreferences not available in unit tests without mocks

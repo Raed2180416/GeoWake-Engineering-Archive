@@ -7,8 +7,7 @@ import 'package:geowake2/config/app_config.dart';
 import 'dart:developer' as dev;
 
 class ApiClient {
-  static const String _baseUrl =
-      'https://geowake-production.up.railway.app/api'; // Fixed: Added https:// and /api
+  static const String _baseUrl = AppConfig.serverBaseUrl;
   static const String _tokenKey = 'geowake_api_token';
   static const String _deviceIdKey = 'geowake_device_id';
 

@@ -22,6 +22,8 @@
 .pub/
 .pub-cache/
 /build/
+/coverage/
+**/coverage/
 
 # Android specific
 *.apk
@@ -56,6 +58,11 @@ app.*.map.json
 .env.production
 .env.staging
 *.key
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
 **/google-services.json
 **/GoogleService-Info.plist
 android/key.properties

@@ -30,27 +30,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Before we build a list of ringtones, we create a "blueprint" for what a
 // single ringtone looks like. This keeps our code clean and organized.
 class Ringtone {
-  final String name;      // The pretty name the user will see, e.g., "Classic Alarm"
+  final String name; // The pretty name the user will see, e.g., "Classic Alarm"
   final String assetPath; // The exact file path for the app to find the sound
 
   const Ringtone({required this.name, required this.assetPath});
 }
 
-// Now we use our blueprint to create a "catalog" of all available ringtones.
-// This list is what our screen will use to build the UI.
-// I have transcribed the filenames exactly from the image you provided.
-final List<Ringtone> availableRingtones = [
-  const Ringtone(name: 'Asteroid', assetPath: 'assets/ringtones/(One UI) Asteroid.ogg'),
-  const Ringtone(name: 'Atomic Bell', assetPath: 'assets/ringtones/(One UI) Atomic Bell.ogg'),
-  const Ringtone(name: 'Beep-Beep', assetPath: 'assets/ringtones/(One UI) Beep-Beep.ogg'),
-  const Ringtone(name: 'Comet', assetPath: 'assets/ringtones/(One UI) Comet.ogg'),
-  const Ringtone(name: 'Cosmos', assetPath: 'assets/ringtones/(One UI) Cosmos.ogg'),
-  const Ringtone(name: 'Galaxy Bells', assetPath: 'assets/ringtones/(One UI) Galaxy Bells.ogg'),
-  const Ringtone(name: 'Over the Horizon', assetPath: 'assets/ringtones/(One UI) Media_preview_Over_the_horizon (2019).ogg'),
-  const Ringtone(name: 'Neon', assetPath: 'assets/ringtones/(One UI) Neon.ogg'),
-  const Ringtone(name: 'Outer Bell', assetPath: 'assets/ringtones/(One UI) Outer Bell.ogg'),
-  const Ringtone(name: 'Pluto', assetPath: 'assets/ringtones/(One UI) Pluto.ogg'),
-  const Ringtone(name: 'Single Tone', assetPath: 'assets/ringtones/(One UI) Single Tone.ogg'),
+// Original oscillator-generated tones. See assets/ringtones/PROVENANCE.md.
+const List<Ringtone> availableRingtones = [
+  Ringtone(name: 'Pulse', assetPath: 'assets/ringtones/geowake_pulse.wav'),
+  Ringtone(name: 'Chime', assetPath: 'assets/ringtones/geowake_chime.wav'),
+  Ringtone(name: 'Signal', assetPath: 'assets/ringtones/geowake_signal.wav'),
 ];
 
 // =========================================================================
@@ -68,13 +58,15 @@ class RingtonesScreen extends StatefulWidget {
 
 // This is the "brain" of our widget. It holds all the memory (the "state").
 class _RingtonesScreenState extends State<RingtonesScreen> {
-
   // =========================================================================
   // SECTION 4: STATE VARIABLES (The Screen's Memory)
   // =========================================================================
-  late AudioPlayer _audioPlayer; // This will hold our audio playing tool. `late` is a promise we'll create it before using it.
-  String? _currentlyPlayingPath; // Remembers which song is playing so we can show a "pause" icon. The `?` means it's okay if nothing is playing.
-  String? _selectedRingtonePath; // Remembers the user's final choice. This determines which radio button is checked.
+  late AudioPlayer
+  _audioPlayer; // This will hold our audio playing tool. `late` is a promise we'll create it before using it.
+  String?
+  _currentlyPlayingPath; // Remembers which song is playing so we can show a "pause" icon. The `?` means it's okay if nothing is playing.
+  String?
+  _selectedRingtonePath; // Remembers the user's final choice. This determines which radio button is checked.
   bool _testingAlarm = false; // True while the real-alarm test is firing.
   Timer? _testAlarmTimer; // Auto-stops the alarm test after a few seconds.
 
@@ -154,21 +146,30 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
   // =========================================================================
   // SECTION 6: CORE LOGIC (The Functions that "Do Stuff")
   // =========================================================================
-  
+
   // This function loads the saved ringtone from the device's local storage.
   Future<void> _loadSelectedRingtone() async {
-    final prefs = await SharedPreferences.getInstance(); // Get access to the storage.
+    final prefs =
+        await SharedPreferences.getInstance(); // Get access to the storage.
     setState(() {
       // Try to read the string with our special key.
       // If it doesn't exist (e.g., first time app launch), default to the first ringtone in our list.
-      _selectedRingtonePath = prefs.getString(ringtonePrefKey) ?? availableRingtones.first.assetPath;
+      final saved = prefs.getString(ringtonePrefKey);
+      _selectedRingtonePath =
+          availableRingtones.any((tone) => tone.assetPath == saved)
+              ? saved
+              : availableRingtones.first.assetPath;
     });
   }
 
   // This function saves the user's ringtone choice.
   Future<void> _saveSelectedRingtone(String assetPath) async {
-    final prefs = await SharedPreferences.getInstance(); // Get access to the storage.
-    await prefs.setString(ringtonePrefKey, assetPath); // Save the chosen path with our key.
+    final prefs =
+        await SharedPreferences.getInstance(); // Get access to the storage.
+    await prefs.setString(
+      ringtonePrefKey,
+      assetPath,
+    ); // Save the chosen path with our key.
   }
 
   // This function handles the play/pause button for previews.
@@ -176,14 +177,19 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
     // If the user taps the play button for the sound that's already playing...
     if (_currentlyPlayingPath == assetPath) {
       _audioPlayer.stop(); // ...stop it.
-      setState(() { _currentlyPlayingPath = null; }); // Forget what was playing.
+      setState(() {
+        _currentlyPlayingPath = null;
+      }); // Forget what was playing.
     } else {
       // If they tap a new sound...
-      _audioPlayer.stop(); // ...stop anything that might have been playing before.
+      _audioPlayer
+          .stop(); // ...stop anything that might have been playing before.
       // The `AssetSource` tells the player to look in your `assets` folder.
       // The `replaceFirst` is needed because the player package expects the path without the initial 'assets/'.
       _audioPlayer.play(AssetSource(assetPath.replaceFirst('assets/', '')));
-      setState(() { _currentlyPlayingPath = assetPath; }); // Remember the new sound that's playing.
+      setState(() {
+        _currentlyPlayingPath = assetPath;
+      }); // Remember the new sound that's playing.
     }
   }
 
@@ -191,7 +197,8 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
   void _onRingtoneSelected(String assetPath) {
     // setState tells Flutter that our screen's memory has changed and it needs to redraw itself.
     setState(() {
-      _selectedRingtonePath = assetPath; // Update our memory with the new selection.
+      _selectedRingtonePath =
+          assetPath; // Update our memory with the new selection.
     });
     _saveSelectedRingtone(assetPath); // Immediately save the new choice.
   }
@@ -207,7 +214,9 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
       appBar: AppBar(
         title: Text(
           'Select Ringtone',
-          style: GoogleFonts.montserrat(fontWeight: FontWeight.w600), // Use a nice font
+          style: GoogleFonts.montserrat(
+            fontWeight: FontWeight.w600,
+          ), // Use a nice font
         ),
       ),
       // Let the user fire the REAL alarm once to verify it wakes them.
@@ -219,19 +228,33 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
       // ListView.builder is the best way to create a list. It's efficient because
       // it only builds the items that are currently visible on the screen.
       body: ListView.builder(
-        itemCount: availableRingtones.length, // Tell the list how many items to build.
+        itemCount:
+            availableRingtones.length, // Tell the list how many items to build.
         itemBuilder: (context, index) {
           // This function is called for each item in the list.
-          final ringtone = availableRingtones[index]; // Get the ringtone for the current row.
-          final bool isSelected = _selectedRingtonePath == ringtone.assetPath; // Check if this row is the selected one.
-          final bool isPlaying = _currentlyPlayingPath == ringtone.assetPath;  // Check if this row's sound is playing.
+          final ringtone =
+              availableRingtones[index]; // Get the ringtone for the current row.
+          final bool isSelected =
+              _selectedRingtonePath ==
+              ringtone.assetPath; // Check if this row is the selected one.
+          final bool isPlaying =
+              _currentlyPlayingPath ==
+              ringtone.assetPath; // Check if this row's sound is playing.
 
           // Material and ListTile give us the standard row appearance.
           return Material(
             // Give a subtle background color to the selected item.
-            color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+            color:
+                isSelected
+                    ? Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1)
+                    : Colors.transparent,
             child: ListTile(
-              onTap: () => _onRingtoneSelected(ringtone.assetPath), // Make the whole row tappable.
+              onTap:
+                  () => _onRingtoneSelected(
+                    ringtone.assetPath,
+                  ), // Make the whole row tappable.
               leading: Radio<String>(
                 // The radio button is visually "on" when its `value` matches the `groupValue`.
                 value: ringtone.assetPath,
@@ -245,16 +268,26 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
               title: Text(
                 ringtone.name,
                 style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, // Make the selected text bold.
+                  fontWeight:
+                      isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal, // Make the selected text bold.
                 ),
               ),
               trailing: IconButton(
                 // This is a compact if/else statement: `condition ? value_if_true : value_if_false`
                 // It chooses the icon based on whether the sound is playing.
-                icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill),
+                icon: Icon(
+                  isPlaying
+                      ? Icons.pause_circle_filled
+                      : Icons.play_circle_fill,
+                ),
                 color: Theme.of(context).colorScheme.primary,
                 iconSize: 30,
-                onPressed: () => _togglePreview(ringtone.assetPath), // The button calls our play/pause logic.
+                onPressed:
+                    () => _togglePreview(
+                      ringtone.assetPath,
+                    ), // The button calls our play/pause logic.
               ),
             ),
           );
