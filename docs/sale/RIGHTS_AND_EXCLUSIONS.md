@@ -1,6 +1,7 @@
 # Rights and delivery boundaries
 
-This is a factual inventory prepared on 20 September 2026, not a conclusion
+This is a factual inventory prepared on 20 September 2026 and updated on
+21 September 2026, not a conclusion
 that every item in Git can be licensed. Original files and history are
 preserved; current cleanup does not silently erase historical inclusions.
 
@@ -16,7 +17,8 @@ preserved; current cleanup does not silently erase historical inclusions.
 | Raw ride recordings | `docs/Sandalsoap-whitefield/`, including coordinates and device metadata | Exclude from default delivery pending provenance and subject/transfer rights |
 | Ride-derived route geometry | `assets/ekf_test_routes/`, `route_log_extracted.json` | Hold pending provenance review; useful local research is not a cleared commercial dataset |
 | Synthetic replay and scale data | JSON flags `synthetic: true` | Identify as synthetic. Geographic inputs may still carry upstream rights; review separately |
-| App icon, screenshots, documents | Files present; creation records incomplete | Preserve and inventory; no unqualified rights representation |
+| GeoWake clock/map-pin logo and generated variants | Founder confirmed on 21 September 2026: "i made it digitally"; recorded in `FOUNDER_CLARIFICATIONS.jsonl` | Founder-created artwork; no claim over Flutter template marks or third-party content shown in screenshots |
+| Demo, app screenshots and third-party tool screenshots | Existing visual records include third-party interface and map content | Review-only material, outside the proposed model-training grant; exact path scope in `EXPORT_SCOPE.md` |
 | Package dependencies | npm lockfiles, Flutter package notices, native build inputs | Third-party licenses continue to apply; include notices for delivered components |
 | Historical credentials | Local history scan returned credential-pattern findings | Original history must not be sent. Sanitize a separate export, rescan it, document mapping, and establish rotation/revocation status |
 

@@ -30,6 +30,19 @@ silently revoke an earlier grant or change third-party licenses.
 
 Current alarm tones were synthesized from oscillators; see
 `assets/ringtones/PROVENANCE.md`. Prior OneUI recordings are excluded throughout
-history. The demo is separately supplied with provenance. App/website artwork
-is not a separately valued dataset; founder confirmation of its creation
-provenance is pending.
+history. The demo is supplied with provenance in `docs/sale/demo/README.md`.
+
+On 21 September 2026, the founder confirmed that he created the GeoWake
+clock/map-pin logo digitally. This covers the logo in `assets/geowake.png`,
+`assets/app_icon.png`, `website/assets/app-icon.png` and its generated app
+icon/splash variants. The contemporaneous answer is recorded in
+`docs/sale/FOUNDER_CLARIFICATIONS.jsonl`; it is a founder account, not a recovered
+design-source record. Flutter template artwork retains its upstream terms.
+
+The demo, app screenshots and screenshots of third-party tools are supplied
+as reference material for reviewing the software. They are outside the proposed
+model-training grant. In particular, no license to train on Google Maps tiles,
+labels, Places content or other third-party interface content is offered.
+The path scope is listed in `docs/sale/EXPORT_SCOPE.md`. Visible attribution
+must remain intact. Source code for the app and map integrations remains in
+the offered code scope; rendered third-party content is a separate matter.

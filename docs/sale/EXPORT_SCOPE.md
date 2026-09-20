@@ -16,6 +16,29 @@ commit identities to 147 distinct sanitized identities: none maps to zero;
 some histories become identical after excluded content is removed. Newly dated
 export commits are additional and are not historical development work.
 
+## Reference media and training scope
+
+The following paths are supplied for reviewing the software and its historical
+development context, outside the proposed model-training grant:
+
+- `docs/sale/demo/GeoWake-demo.mp4`
+- `website/assets/screens/`
+- `pics/`
+- `image/TIME_MODE_EXECUTION_PLAN/`
+- `android/image.png`
+
+This boundary also applies to historical versions of these media and any
+rendered third-party map or interface content in the selected history.
+Google Maps/Places imagery and third-party interface content are not offered
+as seller-owned training data. Keep their attribution intact. The app and
+backend source, map integration code, engineering records, test code and
+regression exercises remain in the code offer. Geographic inputs and software
+dependencies retain their own upstream terms in `THIRD_PARTY_NOTICES.md`.
+The founder confirmed creation of the GeoWake logo on 21 September 2026.
+
+The license scope is defined by these boundaries, not by treating every byte
+present for context as an unrestricted training asset.
+
 ## Exclusions applied across the delivered history
 
 | Material | Treatment |
