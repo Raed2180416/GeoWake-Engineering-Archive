@@ -23,6 +23,8 @@ def main():
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--flutter', default='flutter')
     p.add_argument('--concurrency', type=int, default=2, help='Flutter test workers; keep resource use predictable')
+    p.add_argument('--profile', choices=['full', 'code'], default='full',
+                   help='code excludes explicitly listed dataset-dependent files; full retains all original tests')
     p.add_argument('--skip-install', action='store_true', help='Use already resolved dependencies')
     args = p.parse_args()
     out = args.out.resolve()
@@ -39,14 +41,18 @@ def main():
     if not args.skip_install:
         checks += [('flutter-dependencies', [flutter, 'pub', 'get'], ROOT),
                    ('node-dependencies', ['npm', 'ci', '--ignore-scripts', '--no-audit'], ROOT / 'geowake-server')]
+    exclusions = json.loads((ROOT / 'tools/sale/dataset-dependent-tests.json').read_text()) if args.profile == 'code' else {}
+    flutter_selection = [str(p.relative_to(ROOT)) for p in sorted((ROOT / 'test').rglob('*_test.dart'))
+                         if str(p.relative_to(ROOT)) not in exclusions] if exclusions else []
     checks += [('analyze', [flutter, 'analyze', 'lib/', '--no-fatal-infos'], ROOT),
-               ('flutter-tests', [flutter, 'test', '--coverage', '--concurrency', str(args.concurrency), '--reporter', 'json'], ROOT),
+               ('flutter-tests', [flutter, 'test', '--coverage', '--concurrency', str(args.concurrency), '--reporter', 'json', *flutter_selection], ROOT),
                ('backend-tests', ['npm', 'test', '--', '--runInBand', '--coverage', '--json',
                                   '--outputFile=' + str(out / 'backend-tests.json')], ROOT / 'geowake-server'),
                ('share-tests', ['npm', 'test'], ROOT / 'backend/share')]
     report = {'started_at': datetime.now(timezone.utc).isoformat(),
               'revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
               'working_tree_status': subprocess.check_output(['git', 'status', '--porcelain=v1'], cwd=ROOT, text=True),
+              'profile': args.profile, 'excluded_test_files': exclusions,
               'checks': [], 'scope': 'Headless/local checks; no field, OEM, real-store, or live-service validation.'}
     for name, command, cwd in checks:
         start = time.monotonic()

@@ -20,13 +20,16 @@ remain part of the development record.
 
 ```bash
 flutter pub get
-python3 tools/sale/verify.py --out /tmp/geowake-verification
+python3 tools/sale/verify.py --profile code --out /tmp/geowake-verification
 ```
 
 The runner defaults to two Flutter test workers to keep resource use bounded.
 The runner captures commands, exit codes, timestamps and log hashes. Its API
 test keys are explicit dummy values. It runs static analysis, the full Flutter
-suite with coverage, the Express suite and the share suite. It does not launch
+suite with coverage, the Express suite and the share suite. In the cleaned export,
+`--profile code` excludes eight explicitly listed dataset-dependent files. The
+full original test source is retained; `--profile full` attempts all cases and
+needs the withheld datasets. See `tools/sale/dataset-dependent-tests.json`. It does not launch
 production services or exercise a buyer's billing credentials.
 
 The full Flutter suite includes the replay, reachability, route-scale,

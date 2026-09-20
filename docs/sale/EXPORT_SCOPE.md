@@ -59,3 +59,9 @@ The final external delivery manifest identifies the Git revision, all file
 hashes and local/remote equality. Third-party licenses remain separate from
 any seller-controlled source grant. No deployment, dataset acquisition or
 further product development is included in the transaction.
+
+The full export probe completed and exposed eight failures in five files, all
+at the withheld catalog/route boundaries. The code profile excludes those five
+files and three additional data gates that can otherwise skip or pass on empty
+inputs. Every exclusion and its observed reason is listed in
+`tools/sale/dataset-dependent-tests.json`; no original assertion was weakened.

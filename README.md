@@ -53,3 +53,14 @@ changes are dated September 2026; they are not reconstructed old tickets.
 Raw recordings from friends' phones are a **separate optional data candidate**.
 They are not silently included in the code license. No users, revenue, service
 accounts, signing keys or production credentials are offered with this corpus.
+
+## Reproduce the available code checks
+
+```bash
+python3 tools/sale/verify.py --profile code --out /tmp/geowake-verification
+```
+
+Use Flutter 3.44.6, Node 24.x and Python 3. The code profile explicitly excludes
+eight dataset-dependent files, including gates that would otherwise pass on
+empty data. Their original source remains present. See the reproduction and
+export-scope guides for the separate complete pre-exclusion source receipt.

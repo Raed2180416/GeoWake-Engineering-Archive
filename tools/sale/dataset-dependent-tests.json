@@ -1,0 +1,10 @@
+{
+  "test/dashboard/playground_reachability_e2e_test.dart": "Recorded-route asset withheld; two observed missing-asset failures in full export probe.",
+  "test/data_asset/station_binner_test.dart": "Contains shipped-catalog assertion; empty catalog failed nonempty-token assertion.",
+  "test/metro_ordered_sequence_test.dart": "Requires a populated Bengaluru Purple sequence from the withheld catalog.",
+  "test/services/trusted_station_context_test.dart": "Contains production city extraction case requiring withheld stations.",
+  "test/tracking/multi_city_route_permutation_matrix_test.dart": "Three observed null failures while constructing cases from withheld city catalogs.",
+  "test/metro_data_integrity_test.dart": "Empty catalog loops can pass vacuously; not counted as a verified data gate.",
+  "test/scale/reachability_scale_test.dart": "Its 15 mixed-catalog fixture pairs are withheld; original test can return early.",
+  "test/reachability/tightening_never_late_test.dart": "Original test can return early when the withheld recorded-route asset is absent."
+}
