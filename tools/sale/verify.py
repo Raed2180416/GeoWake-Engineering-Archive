@@ -22,6 +22,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--flutter', default='flutter')
+    p.add_argument('--concurrency', type=int, default=2, help='Flutter test workers; keep resource use predictable')
     p.add_argument('--skip-install', action='store_true', help='Use already resolved dependencies')
     args = p.parse_args()
     out = args.out.resolve()
@@ -39,7 +40,7 @@ def main():
         checks += [('flutter-dependencies', [flutter, 'pub', 'get'], ROOT),
                    ('node-dependencies', ['npm', 'ci', '--ignore-scripts', '--no-audit'], ROOT / 'geowake-server')]
     checks += [('analyze', [flutter, 'analyze', 'lib/', '--no-fatal-infos'], ROOT),
-               ('flutter-tests', [flutter, 'test', '--coverage', '--reporter', 'json'], ROOT),
+               ('flutter-tests', [flutter, 'test', '--coverage', '--concurrency', str(args.concurrency), '--reporter', 'json'], ROOT),
                ('backend-tests', ['npm', 'test', '--', '--runInBand', '--coverage', '--json',
                                   '--outputFile=' + str(out / 'backend-tests.json')], ROOT / 'geowake-server'),
                ('share-tests', ['npm', 'test'], ROOT / 'backend/share')]
