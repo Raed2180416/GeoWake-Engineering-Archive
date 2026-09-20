@@ -75,6 +75,7 @@ class SnapToRouteEngine {
       polyline: polyline,
       heading: heading,
       previousResult: previousResult,
+      hintIndex: hintIndex,
       cum: cum,
       searchWindow: searchWindow,
     );
@@ -82,7 +83,7 @@ class SnapToRouteEngine {
     // If windowed search has large lateral offset, it may be "stuck" in the wrong
     // segment region. Fall back to full-route search to find a better match.
     if (windowedResult.lateralOffsetMeters > _kMaxLateralBeforeFullSearch &&
-        previousResult != null) {
+        (previousResult != null || hintIndex != null)) {
       // Full-route search (no previous result = no window constraint)
       final fullResult = _snapInRange(
         point: point,
@@ -116,6 +117,7 @@ class SnapToRouteEngine {
     required List<LatLng> polyline,
     double? heading,
     SnapResult? previousResult,
+    int? hintIndex,
     required List<double> cum,
     int searchWindow = 25,
   }) {

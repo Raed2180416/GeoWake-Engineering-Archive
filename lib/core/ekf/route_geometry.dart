@@ -52,7 +52,7 @@ class RouteGeometry {
     final hasHistory =
         previousProgressMeters != null && previousProgressMeters.isFinite;
     final priorS = hasHistory
-        ? previousProgressMeters!.clamp(0.0, totalLengthMeters).toDouble()
+        ? previousProgressMeters.clamp(0.0, totalLengthMeters).toDouble()
         : double.nan;
 
     for (var i = 0; i < _points.length - 1; i++) {

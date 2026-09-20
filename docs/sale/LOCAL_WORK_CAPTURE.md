@@ -20,3 +20,10 @@ These are archived as existing development work, without assuming that every
 change is complete or production-validated. New verification is recorded
 separately and must name this revision; earlier baseline results are not
 relabelled as results for this capture.
+
+The first check of the captured work found a missing `hintIndex` parameter in
+the private route-snapping helper. Preparation wired the existing public hint
+through that helper and retained a full-search escape when a hint is stale.
+An unnecessary null assertion was also removed from route geometry. These
+small reproduction fixes are separately dated changes; the pre-fix capture
+remains in history for comparison.
