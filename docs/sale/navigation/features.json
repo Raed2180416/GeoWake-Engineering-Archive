@@ -1,5 +1,5 @@
 {
-  "pinned_commit": "59421267011127de8b585d2bdc1b01871c931e81",
+  "pinned_commit": "ece03e4ef00ca1580c76e5c1d909c68a23cdc997",
   "features": [
     {
       "id": "app_shell",
@@ -321,8 +321,6 @@
         "tools/make_replay_fixtures.py"
       ],
       "test_paths": [
-        "evaluation/zupt-degraded-gating/reference/test/core/ekf/zupt_degraded_gating_test.dart",
-        "evaluation/zupt-degraded-gating/task/test/core/ekf/zupt_degraded_gating_test.dart",
         "test/core/ekf/degraded_mode_test.dart",
         "test/core/ekf/ekf_logger_test.dart",
         "test/core/ekf/ekf_orchestrator_test.dart",
@@ -683,8 +681,6 @@
         "lib/widgets/monetization/pro_gate.dart"
       ],
       "test_paths": [
-        "evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart",
-        "evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart",
         "test/monetization/late_purchase_grant_test.dart",
         "test/monetization/monetization_edgecases_test.dart",
         "test/monetization/monetization_journey_test.dart",
@@ -1239,12 +1235,28 @@
       "name": "Archive Package",
       "description": "Archived-codebase sale checks and reproducibility tooling",
       "source_paths": [
+        "evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend.dart",
+        "evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart",
+        "evaluation/purchase-restore/run_example.sh",
+        "evaluation/purchase-restore/task/lib/services/monetization/purchase_backend.dart",
+        "evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart",
+        "evaluation/zupt-degraded-gating/fixed-regression-test.dart",
+        "evaluation/zupt-degraded-gating/reference/lib/core/ekf/ekf_types.dart",
+        "evaluation/zupt-degraded-gating/reference/lib/core/ekf/zupt_detector.dart",
+        "evaluation/zupt-degraded-gating/run_example.sh",
+        "evaluation/zupt-degraded-gating/task/lib/core/ekf/ekf_types.dart",
+        "evaluation/zupt-degraded-gating/task/lib/core/ekf/zupt_detector.dart",
         "tools/sale/generate_alarm_tones.py",
         "tools/sale/generate_navigation.py",
         "tools/sale/inventory.py",
         "tools/sale/verify.py"
       ],
-      "test_paths": [],
+      "test_paths": [
+        "evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart",
+        "evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart",
+        "evaluation/zupt-degraded-gating/reference/test/core/ekf/zupt_degraded_gating_test.dart",
+        "evaluation/zupt-degraded-gating/task/test/core/ekf/zupt_degraded_gating_test.dart"
+      ],
       "support_paths": [
         "docs/sale/BRANCH_HISTORY.md",
         "docs/sale/BUYER_BRIEF.md",
@@ -1270,6 +1282,40 @@
         "docs/sale/demo/README.md",
         "docs/sale/demo/captions.srt",
         "docs/sale/demo/narration-script.md",
+        "docs/sale/navigation/README.md",
+        "docs/sale/navigation/counts.json",
+        "docs/sale/navigation/dependencies.csv",
+        "docs/sale/navigation/features.json",
+        "docs/sale/navigation/files.csv",
+        "docs/sale/navigation/symbols.csv",
+        "docs/sale/navigation/test_matches.csv",
+        "evaluation/README.md",
+        "evaluation/purchase-restore/README.md",
+        "evaluation/purchase-restore/manifest.json",
+        "evaluation/purchase-restore/reference/pubspec.lock",
+        "evaluation/purchase-restore/reference/pubspec.yaml",
+        "evaluation/purchase-restore/reference/solution.patch",
+        "evaluation/purchase-restore/results/reference-exit.txt",
+        "evaluation/purchase-restore/results/reference-pub-get.log",
+        "evaluation/purchase-restore/results/reference-test.log",
+        "evaluation/purchase-restore/results/task-exit.txt",
+        "evaluation/purchase-restore/results/task-test.log",
+        "evaluation/purchase-restore/task.md",
+        "evaluation/purchase-restore/task/pubspec.lock",
+        "evaluation/purchase-restore/task/pubspec.yaml",
+        "evaluation/zupt-degraded-gating/README.md",
+        "evaluation/zupt-degraded-gating/manifest.json",
+        "evaluation/zupt-degraded-gating/minimal-reference-pub-get.log",
+        "evaluation/zupt-degraded-gating/minimal-reference-test.log",
+        "evaluation/zupt-degraded-gating/minimal-task-pub-get.log",
+        "evaluation/zupt-degraded-gating/minimal-task-test.log",
+        "evaluation/zupt-degraded-gating/post-fix-test.log",
+        "evaluation/zupt-degraded-gating/pre-fix-test.log",
+        "evaluation/zupt-degraded-gating/reference/pubspec.yaml",
+        "evaluation/zupt-degraded-gating/solution.patch",
+        "evaluation/zupt-degraded-gating/task.md",
+        "evaluation/zupt-degraded-gating/task/pubspec.yaml",
+        "evaluation/zupt-degraded-gating/test.patch",
         "tools/sale/dataset-dependent-tests.json"
       ],
       "cross_reference_paths": []
@@ -1327,12 +1373,7 @@
         "docs/research/raw/play_reqs.md",
         "docs/research/raw/privacy_tech.md",
         "docs/research/raw/routing_alt.md",
-        "docs/research/real_device_reliability.md",
-        "evaluation/README.md",
-        "evaluation/purchase-restore/README.md",
-        "evaluation/purchase-restore/task.md",
-        "evaluation/zupt-degraded-gating/README.md",
-        "evaluation/zupt-degraded-gating/task.md"
+        "docs/research/real_device_reliability.md"
       ],
       "cross_reference_paths": []
     },
@@ -1357,44 +1398,9 @@
       "id": "unclassified",
       "name": "Unclassified",
       "description": "Files whose specific subsystem cannot be established from path/import evidence",
-      "source_paths": [
-        "evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend.dart",
-        "evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart",
-        "evaluation/purchase-restore/run_example.sh",
-        "evaluation/purchase-restore/task/lib/services/monetization/purchase_backend.dart",
-        "evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart",
-        "evaluation/zupt-degraded-gating/fixed-regression-test.dart",
-        "evaluation/zupt-degraded-gating/reference/lib/core/ekf/ekf_types.dart",
-        "evaluation/zupt-degraded-gating/reference/lib/core/ekf/zupt_detector.dart",
-        "evaluation/zupt-degraded-gating/run_example.sh",
-        "evaluation/zupt-degraded-gating/task/lib/core/ekf/ekf_types.dart",
-        "evaluation/zupt-degraded-gating/task/lib/core/ekf/zupt_detector.dart"
-      ],
+      "source_paths": [],
       "test_paths": [],
-      "support_paths": [
-        "evaluation/purchase-restore/manifest.json",
-        "evaluation/purchase-restore/reference/pubspec.lock",
-        "evaluation/purchase-restore/reference/pubspec.yaml",
-        "evaluation/purchase-restore/reference/solution.patch",
-        "evaluation/purchase-restore/results/reference-exit.txt",
-        "evaluation/purchase-restore/results/reference-pub-get.log",
-        "evaluation/purchase-restore/results/reference-test.log",
-        "evaluation/purchase-restore/results/task-exit.txt",
-        "evaluation/purchase-restore/results/task-test.log",
-        "evaluation/purchase-restore/task/pubspec.lock",
-        "evaluation/purchase-restore/task/pubspec.yaml",
-        "evaluation/zupt-degraded-gating/manifest.json",
-        "evaluation/zupt-degraded-gating/minimal-reference-pub-get.log",
-        "evaluation/zupt-degraded-gating/minimal-reference-test.log",
-        "evaluation/zupt-degraded-gating/minimal-task-pub-get.log",
-        "evaluation/zupt-degraded-gating/minimal-task-test.log",
-        "evaluation/zupt-degraded-gating/post-fix-test.log",
-        "evaluation/zupt-degraded-gating/pre-fix-test.log",
-        "evaluation/zupt-degraded-gating/reference/pubspec.yaml",
-        "evaluation/zupt-degraded-gating/solution.patch",
-        "evaluation/zupt-degraded-gating/task/pubspec.yaml",
-        "evaluation/zupt-degraded-gating/test.patch"
-      ],
+      "support_paths": [],
       "cross_reference_paths": []
     }
   ]

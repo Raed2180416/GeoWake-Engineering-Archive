@@ -12,7 +12,7 @@ path,mode,object_type,blob_oid,size_bytes,kind,language,generated_vs_authored,ru
 .github/workflows/ci.yml,100644,blob,1e8807e63d55dc4bc9d5cc019d5e978607f3d378,4382,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
 .github/workflows/deploy-website.yml,100644,blob,881c9b85f43b47b1069b029000086760f39833e8,738,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
 .github/workflows/qodana_code_quality.yml,100644,blob,cba09bca34db870de08c3ba9885a58930b88a821,1292,config,YAML,authored,tooling,deployment_ci,,deployment_path,,,,0,0,no
-.gitignore,100644,blob,a80b503cc2dc6f9578b2827db5d601872a174543,1598,config,,authored,tooling,dev_tooling,,root_dotfile,,,,0,0,no
+.gitignore,100644,blob,86e202caf934c4b5ee7475d235e977b55de5a83b,1706,config,,authored,tooling,dev_tooling,,root_dotfile,,,,0,0,no
 .gitleaks.toml,100644,blob,e0c044677c3a131661bc767082e6da9d154d822d,286,config,,authored,tooling,dev_tooling,,root_config,,,,0,0,no
 .mcp.json,100644,blob,6e5abb4fb02fc804a10e050d1bb817eb39b303ea,509,config,JSON,authored,tooling,dev_tooling,,root_config,,,,0,0,no
 .metadata,100644,blob,e8f7bf911cbc662c0c90dfb58863b3bae9149b6d,1706,config,,authored,tooling,dev_tooling,,root_dotfile,,,,0,0,no
@@ -195,18 +195,18 @@ docs/research/underground/scripts/scale_baseline_check.py,100644,blob,a045c08880
 docs/sale/BRANCH_HISTORY.md,100644,blob,bac42bc232df974c8a929fa0f801c20ad97e85e2,8564,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/BUYER_BRIEF.md,100644,blob,d2ba9ddab00950c78ac59581d00a796aa97ed23f,5688,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/CLAIMS.csv,100644,blob,c753e2256d99a89953130de9345b500c066cfcd6,2537,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/DATA_FLOW.md,100644,blob,8f04fd50df93ca0345d1e1c82eb5b3c9508a4e4c,9572,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/DATA_FLOW.md,100644,blob,372b7b4735cb19a637f125947a2e5f4d0930186b,9621,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/DECISIONS.csv,100644,blob,d5d8e4bcc8bc3250a37140e5e96830e9e5626948,14066,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/DOCUMENT_CURATION.csv,100644,blob,7e35de8970f0584f5fe8a9116da4a6703d05226a,42900,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/DOCUMENT_CURATION.md,100644,blob,4623d3ea4dbf839ae00027a9c74f7bf07429d134,9024,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/DOCUMENT_CURATION.md,100644,blob,0389d14f762310743b4ffdd2e72f06200f17ef0b,9260,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/ENGINEERING_RETROSPECTIVES.md,100644,blob,1a8a699fed51089013dcc8e7a1b092fdfeaea07e,2944,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/EXPORT_SCOPE.md,100644,blob,9d78253c1687fc9cff90731afe7c3972ddc0a2cf,4183,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/FEATURES.md,100644,blob,082ff70d3d9271f55a58a659dcd7e13c7dcca15c,4842,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/FEATURES.md,100644,blob,3cbd6be1bb17584ef8d2c8c7784687fefd1569d5,4880,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/FOUNDER_CLARIFICATIONS.jsonl,100644,blob,e986e28b2750122767837e267b25d0b70459c895,1825,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/JOURNEY_AND_ROUTING.md,100644,blob,d33d67db9cfe5c31263718976a74480e94531bce,24713,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/JOURNEY_AND_ROUTING.md,100644,blob,2a684eb858f679f6a2ec292daa0d0cc9473bb55a,24831,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/LOCAL_WORK_CAPTURE.md,100644,blob,71a20006c38e9042fe2cb38eeb67510ca197a43a,2416,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/ORIGINAL_TO_EXPORT_COMMITS.txt,100644,blob,20fe44d21d816fd37bea73e268b5884870fc98c5,16691,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
-docs/sale/README.md,100644,blob,edf4a6d395971c210e459b0cff1c9caa295dc183,3293,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/README.md,100644,blob,cbc1f50b635a204dc7fa3afe57a85642f23ce832,3398,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/RIGHTS_AND_EXCLUSIONS.md,100644,blob,73159e0dd0110f050c867c914c8c695e1e015b95,4368,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/SUPPORTING_SYSTEMS.md,100644,blob,cf9ea07ea9a369a54aabbddf0dd3f755f7f172e9,14505,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/TECHNICAL_HANDOVER.md,100644,blob,64082bbaf58521407a8ad600e60b8d5f60f9f239,5433,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
@@ -216,48 +216,55 @@ docs/sale/demo/NARRATION_PROVENANCE.md,100644,blob,9908a0d26909f6f52f1d25ecb8cb3
 docs/sale/demo/README.md,100644,blob,432ed52c1595df11e93d6c28b284fcd36e64a3b6,862,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/demo/captions.srt,100644,blob,a2ed7654cba8b9e381afd5e4159723639fa6bd83,2291,other,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
 docs/sale/demo/narration-script.md,100644,blob,050478308947d79adf4bd28b52b62a096b746866,2937,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
-evaluation/README.md,100644,blob,a92d6a6cf7f0e713cdfcbd3328aa775812b3fb2c,674,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
-evaluation/purchase-restore/README.md,100644,blob,14b03a513b7d6405ffdf03c4288a57559096803c,1300,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
-evaluation/purchase-restore/manifest.json,100644,blob,ea2aef54736cf9349b121a80d7689c6bf1b103b7,4190,config,JSON,authored,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend.dart,100644,blob,90c678e880b8e89890c68ce327a999d7421d9f65,4573,source,Dart,authored,reference,unclassified,,no_path_match,,,,11,0,yes
-evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart,100644,blob,54259b7c305f173ca545d929f250b5850e056deb,11589,source,Dart,authored,reference,unclassified,,no_path_match,evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart|evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart|test/monetization/purchase_backend_impl_test.dart,,,11,1,yes
-evaluation/purchase-restore/reference/pubspec.lock,100644,blob,92cec8312e3f6ce4dc51991c4a25807d297b4d70,10752,config,,generated,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/reference/pubspec.yaml,100644,blob,80318fa0828f8d53d737ef06bc031398b0bab0ca,318,config,YAML,authored,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/reference/solution.patch,100644,blob,8b3eb84e066f7314937c57a87b0d68d3b9b400b0,5681,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart,100644,blob,aa0fa4a9d52417744f540142c36af725650bb36b,7578,test,Dart,authored,test,monetization,,test_directory,,evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart|evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart|lib/services/monetization/purchase_backend_impl.dart,test_or_support,8,1,yes
-evaluation/purchase-restore/results/reference-exit.txt,100644,blob,573541ac9702dd3969c9bc859d2b91ec1f7e6e56,2,data,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/results/reference-pub-get.log,100644,blob,350f1e21695963db04c33c55f4fd8b2d26060d47,68,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/results/reference-test.log,100644,blob,49810915bb7a7794fd30539dde8aa9e089fd6da5,776,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/results/task-exit.txt,100644,blob,d00491fd7e5bb6fa28c517a0bb32b8b506539d4d,2,data,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/results/task-test.log,100644,blob,c6bafa2b879c65fd5ee231614658f28c7a6c9d33,1912,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/run_example.sh,100755,blob,762a72236e8d51465bf5fc7a70cf14cd42a89815,2627,source,Shell,authored,reference,unclassified,,no_path_match,,,,2,0,yes
-evaluation/purchase-restore/task.md,100644,blob,5d60c94bae8f4d0cf4503d4f248203e9821cf836,1104,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
-evaluation/purchase-restore/task/lib/services/monetization/purchase_backend.dart,100644,blob,90c678e880b8e89890c68ce327a999d7421d9f65,4573,source,Dart,authored,reference,unclassified,,no_path_match,,,,11,0,yes
-evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart,100644,blob,dd8731eba5555ec71455a9ebedf5adafdb11cd52,9985,source,Dart,authored,reference,unclassified,,no_path_match,evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart|evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart|test/monetization/purchase_backend_impl_test.dart,,,11,1,yes
-evaluation/purchase-restore/task/pubspec.lock,100644,blob,92cec8312e3f6ce4dc51991c4a25807d297b4d70,10752,config,,generated,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/task/pubspec.yaml,100644,blob,80318fa0828f8d53d737ef06bc031398b0bab0ca,318,config,YAML,authored,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart,100644,blob,aa0fa4a9d52417744f540142c36af725650bb36b,7578,test,Dart,authored,test,monetization,,test_directory,,evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart|evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart|lib/services/monetization/purchase_backend_impl.dart,test_or_support,8,1,yes
-evaluation/zupt-degraded-gating/README.md,100644,blob,d7c9456db3c91a3ab1ae7838bd0adf05ae041c8d,2350,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
-evaluation/zupt-degraded-gating/fixed-regression-test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,source,Dart,authored,reference,unclassified,,no_path_match,,,,3,2,yes
-evaluation/zupt-degraded-gating/manifest.json,100644,blob,9f1563296781172b686beb8b4d03592d99694a8b,4919,config,JSON,authored,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-reference-pub-get.log,100644,blob,fed85ed0c794fef0f5bea52adb2598bc6a6743b2,627,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-reference-test.log,100644,blob,6c9d2c6e1d1a6cc628556e250e8e03fcb176620a,829,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-task-pub-get.log,100644,blob,fed85ed0c794fef0f5bea52adb2598bc6a6743b2,627,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/minimal-task-test.log,100644,blob,e8f165477177ba2952f35abd2283a1896095e403,2226,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/post-fix-test.log,100644,blob,67ce09226c3974ce7c3f6489e8581c0870354d87,821,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/pre-fix-test.log,100644,blob,475eafc82346c70227c7453259cbec97b88b5c2e,2214,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/reference/lib/core/ekf/ekf_types.dart,100644,blob,9af18527a8a51e2100ca693d3afefe4693d5917c,3670,source,Dart,authored,reference,unclassified,,no_path_match,,,,10,0,yes
-evaluation/zupt-degraded-gating/reference/lib/core/ekf/zupt_detector.dart,100644,blob,11f5f7ae69f4257ed59a2bc9aae1d51b0c5c3a04,4805,source,Dart,authored,reference,unclassified,,no_path_match,test/core/ekf/zupt_detector_test.dart,,,4,1,yes
-evaluation/zupt-degraded-gating/reference/pubspec.yaml,100644,blob,32773729fb91b1e4dc4d723f971cd4fa4650a5de,233,config,YAML,authored,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/reference/test/core/ekf/zupt_degraded_gating_test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,test,Dart,authored,test,ekf,,test_directory,,lib/core/ekf/ekf_types.dart|lib/core/ekf/zupt_detector.dart,test_or_support,3,2,yes
-evaluation/zupt-degraded-gating/run_example.sh,100755,blob,7d6426c67efc8f7bd82b13e3f99e7355fb0ca2bb,2733,source,Shell,authored,reference,unclassified,,no_path_match,,,,2,0,yes
-evaluation/zupt-degraded-gating/solution.patch,100644,blob,fb0a34e7c86aa924ee279f0ac3745a1a4907a628,3117,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/task.md,100644,blob,c8e32e6889f6f5303e616e97572d0da052d8af06,1500,documentation,,authored,reference,repository_documentation,,root_doc,,,,0,0,no
-evaluation/zupt-degraded-gating/task/lib/core/ekf/ekf_types.dart,100644,blob,9af18527a8a51e2100ca693d3afefe4693d5917c,3670,source,Dart,authored,reference,unclassified,,no_path_match,,,,10,0,yes
-evaluation/zupt-degraded-gating/task/lib/core/ekf/zupt_detector.dart,100644,blob,728cd5eb57d0dc4fed7fa954f45569bb7493826b,3850,source,Dart,authored,reference,unclassified,,no_path_match,test/core/ekf/zupt_detector_test.dart,,,4,1,yes
-evaluation/zupt-degraded-gating/task/pubspec.yaml,100644,blob,32773729fb91b1e4dc4d723f971cd4fa4650a5de,233,config,YAML,authored,tooling,unclassified,,no_path_match,,,,0,0,no
-evaluation/zupt-degraded-gating/task/test/core/ekf/zupt_degraded_gating_test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,test,Dart,authored,test,ekf,,test_directory,,lib/core/ekf/ekf_types.dart|lib/core/ekf/zupt_detector.dart,test_or_support,3,2,yes
-evaluation/zupt-degraded-gating/test.patch,100644,blob,2a70048ee585f7c7d2297fe2a673ca48a9a52807,4695,other,,unknown,reference,unclassified,,no_path_match,,,,0,0,no
+docs/sale/navigation/README.md,100644,blob,e96e6d0ca39daf07b44da0d8b861331126114cf8,1536,documentation,,authored,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/counts.json,100644,blob,1f5ef3d9a48e103dee964e81df49447c8f0decd0,3536,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/dependencies.csv,100644,blob,34374fd4a8a424508f4e8a639c0edf2ae7989c97,159036,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/features.json,100644,blob,8f1198fa9cfc829510daa8745f760fd2dec8c85c,59073,config,JSON,authored,tooling,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/files.csv,100644,blob,4975b5e47a27f15c4ce4b39507d195dc9e6e6835,195615,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/symbols.csv,100644,blob,5e7d14a201d7beb4eba49eeac9dbec5287c6dd36,494959,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+docs/sale/navigation/test_matches.csv,100644,blob,ea73d6202fbb3ed5d7152dc316d74dcf2fb79f51,58630,data,,unknown,reference,archive_package,,sale_doc_path,,,,0,0,no
+evaluation/README.md,100644,blob,a92d6a6cf7f0e713cdfcbd3328aa775812b3fb2c,674,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/README.md,100644,blob,14b03a513b7d6405ffdf03c4288a57559096803c,1300,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/manifest.json,100644,blob,ea2aef54736cf9349b121a80d7689c6bf1b103b7,4190,config,JSON,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend.dart,100644,blob,90c678e880b8e89890c68ce327a999d7421d9f65,4573,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,11,0,yes
+evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart,100644,blob,54259b7c305f173ca545d929f250b5850e056deb,11589,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart|evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart|test/monetization/purchase_backend_impl_test.dart,,,11,1,yes
+evaluation/purchase-restore/reference/pubspec.lock,100644,blob,92cec8312e3f6ce4dc51991c4a25807d297b4d70,10752,config,,generated,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/reference/pubspec.yaml,100644,blob,80318fa0828f8d53d737ef06bc031398b0bab0ca,318,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/reference/solution.patch,100644,blob,8b3eb84e066f7314937c57a87b0d68d3b9b400b0,5681,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart,100644,blob,aa0fa4a9d52417744f540142c36af725650bb36b,7578,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart|evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart|lib/services/monetization/purchase_backend_impl.dart,test_or_support,8,1,yes
+evaluation/purchase-restore/results/reference-exit.txt,100644,blob,573541ac9702dd3969c9bc859d2b91ec1f7e6e56,2,data,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/results/reference-pub-get.log,100644,blob,350f1e21695963db04c33c55f4fd8b2d26060d47,68,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/results/reference-test.log,100644,blob,49810915bb7a7794fd30539dde8aa9e089fd6da5,776,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/results/task-exit.txt,100644,blob,d00491fd7e5bb6fa28c517a0bb32b8b506539d4d,2,data,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/results/task-test.log,100644,blob,c6bafa2b879c65fd5ee231614658f28c7a6c9d33,1912,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/run_example.sh,100755,blob,762a72236e8d51465bf5fc7a70cf14cd42a89815,2627,source,Shell,authored,reference,archive_package,,explicit historical evaluation artifact,,,,2,0,yes
+evaluation/purchase-restore/task.md,100644,blob,5d60c94bae8f4d0cf4503d4f248203e9821cf836,1104,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/task/lib/services/monetization/purchase_backend.dart,100644,blob,90c678e880b8e89890c68ce327a999d7421d9f65,4573,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,11,0,yes
+evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart,100644,blob,dd8731eba5555ec71455a9ebedf5adafdb11cd52,9985,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart|evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart|test/monetization/purchase_backend_impl_test.dart,,,11,1,yes
+evaluation/purchase-restore/task/pubspec.lock,100644,blob,92cec8312e3f6ce4dc51991c4a25807d297b4d70,10752,config,,generated,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/task/pubspec.yaml,100644,blob,80318fa0828f8d53d737ef06bc031398b0bab0ca,318,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart,100644,blob,aa0fa4a9d52417744f540142c36af725650bb36b,7578,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart|evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart|lib/services/monetization/purchase_backend_impl.dart,test_or_support,8,1,yes
+evaluation/zupt-degraded-gating/README.md,100644,blob,d7c9456db3c91a3ab1ae7838bd0adf05ae041c8d,2350,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/fixed-regression-test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,3,2,yes
+evaluation/zupt-degraded-gating/manifest.json,100644,blob,9f1563296781172b686beb8b4d03592d99694a8b,4919,config,JSON,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-reference-pub-get.log,100644,blob,fed85ed0c794fef0f5bea52adb2598bc6a6743b2,627,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-reference-test.log,100644,blob,6c9d2c6e1d1a6cc628556e250e8e03fcb176620a,829,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-task-pub-get.log,100644,blob,fed85ed0c794fef0f5bea52adb2598bc6a6743b2,627,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/minimal-task-test.log,100644,blob,e8f165477177ba2952f35abd2283a1896095e403,2226,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/post-fix-test.log,100644,blob,67ce09226c3974ce7c3f6489e8581c0870354d87,821,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/pre-fix-test.log,100644,blob,475eafc82346c70227c7453259cbec97b88b5c2e,2214,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/reference/lib/core/ekf/ekf_types.dart,100644,blob,9af18527a8a51e2100ca693d3afefe4693d5917c,3670,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,10,0,yes
+evaluation/zupt-degraded-gating/reference/lib/core/ekf/zupt_detector.dart,100644,blob,11f5f7ae69f4257ed59a2bc9aae1d51b0c5c3a04,4805,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,test/core/ekf/zupt_detector_test.dart,,,4,1,yes
+evaluation/zupt-degraded-gating/reference/pubspec.yaml,100644,blob,32773729fb91b1e4dc4d723f971cd4fa4650a5de,233,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/reference/test/core/ekf/zupt_degraded_gating_test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,lib/core/ekf/ekf_types.dart|lib/core/ekf/zupt_detector.dart,test_or_support,3,2,yes
+evaluation/zupt-degraded-gating/run_example.sh,100755,blob,7d6426c67efc8f7bd82b13e3f99e7355fb0ca2bb,2733,source,Shell,authored,reference,archive_package,,explicit historical evaluation artifact,,,,2,0,yes
+evaluation/zupt-degraded-gating/solution.patch,100644,blob,fb0a34e7c86aa924ee279f0ac3745a1a4907a628,3117,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/task.md,100644,blob,c8e32e6889f6f5303e616e97572d0da052d8af06,1500,documentation,,authored,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/task/lib/core/ekf/ekf_types.dart,100644,blob,9af18527a8a51e2100ca693d3afefe4693d5917c,3670,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,,,,10,0,yes
+evaluation/zupt-degraded-gating/task/lib/core/ekf/zupt_detector.dart,100644,blob,728cd5eb57d0dc4fed7fa954f45569bb7493826b,3850,source,Dart,authored,reference,archive_package,,explicit historical evaluation artifact,test/core/ekf/zupt_detector_test.dart,,,4,1,yes
+evaluation/zupt-degraded-gating/task/pubspec.yaml,100644,blob,32773729fb91b1e4dc4d723f971cd4fa4650a5de,233,config,YAML,authored,tooling,archive_package,,explicit historical evaluation artifact,,,,0,0,no
+evaluation/zupt-degraded-gating/task/test/core/ekf/zupt_degraded_gating_test.dart,100644,blob,b6c03af0e3f25371c2ba0e7e53ce11e6fd5f9e41,4341,test,Dart,authored,test,archive_package,,explicit historical evaluation artifact,,lib/core/ekf/ekf_types.dart|lib/core/ekf/zupt_detector.dart,test_or_support,3,2,yes
+evaluation/zupt-degraded-gating/test.patch,100644,blob,2a70048ee585f7c7d2297fe2a673ca48a9a52807,4695,other,,unknown,reference,archive_package,,explicit historical evaluation artifact,,,,0,0,no
 geowake-server/.gitignore,100644,blob,524f0325e8ee9000d6c32ce440b516517a68f40a,146,config,,authored,tooling,backend_maps_auth,,backend_path,,,,0,0,no
 geowake-server/Dockerfile,100644,blob,0daa59625c8bf91a8b3a39ac90d666d24fc23b9b,282,config,,authored,tooling,backend_maps_auth,,backend_path,,,,0,0,no
 geowake-server/package-lock.json,100644,blob,e6271e6dee4fd94ee7c6d25bf7e8b71fcadc11c6,203706,config,JSON,generated,tooling,backend_maps_auth,,backend_path,,,,0,0,no
@@ -857,7 +864,7 @@ tools/nix_setup_flutter_android.sh,100644,blob,a73a7b94d0bd6d7d1a4403940ee4bdb27
 tools/relay_server.dart,100644,blob,815bacb40d10c92c1df355f507fbfa6e0ba55352,3203,source,Dart,authored,tooling,dev_tooling,,tool_path,,,,1,0,yes
 tools/sale/dataset-dependent-tests.json,100644,blob,dc36ab723b4e7d530e8794407e44648a54b706f8,1071,config,JSON,authored,tooling,archive_package,,tool_path,,,,0,0,no
 tools/sale/generate_alarm_tones.py,100644,blob,034517fa1f2d12e7680d2759af72702aa7245402,1394,source,Python,authored,tooling,archive_package,,tool_path,,,,1,0,yes
-tools/sale/generate_navigation.py,100644,blob,8d7e1234dcbce88e80ea9e00cef37a2236f011f5,38966,source,Python,authored,tooling,archive_package,,tool_path,,,,14,0,yes
+tools/sale/generate_navigation.py,100644,blob,347bb47d553584f1b7611e14f1c4869246bfe415,39078,source,Python,authored,tooling,archive_package,,tool_path,,,,14,0,yes
 tools/sale/inventory.py,100644,blob,61923054f40003509972974852ec17c5e8b77fbe,5224,source,Python,authored,tooling,archive_package,,tool_path,,,,4,0,yes
 tools/sale/verify.py,100644,blob,5dca7b4df36f1375e34c3a4942338bcfbb397538,4419,source,Python,authored,tooling,archive_package,,tool_path,,,,1,0,yes
 tools/validate_metro_data.py,100644,blob,de1f3ab04424984b2c48b8c16a6d7d25b5fafbcd,6882,source,Python,authored,tooling,metro_data,,tool_filename,,,,2,0,yes

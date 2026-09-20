@@ -1,0 +1,202 @@
+Resolving dependencies...
+Downloading packages...
+  android_intent_plus 6.0.0 (6.1.0 available)
+  app_links 6.4.1 (7.2.1 available)
+  app_settings 6.1.1 (9.0.0 available)
+  archive 4.0.7 (4.3.0 available)
+  async 2.12.0 (2.13.1 available)
+  audioplayers 6.5.1 (6.8.1 available)
+  audioplayers_android 5.2.1 (5.3.0 available)
+  audioplayers_darwin 6.3.0 (6.5.0 available)
+  audioplayers_linux 4.2.1 (4.3.0 available)
+  audioplayers_platform_interface 7.1.1 (7.2.0 available)
+  audioplayers_web 5.1.1 (5.3.0 available)
+  audioplayers_windows 4.2.1 (4.4.1 available)
+  battery_plus 7.0.0 (7.1.1 available)
+  checked_yaml 2.0.3 (2.0.4 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  connectivity_plus 7.0.0 (7.3.1 available)
+  connectivity_plus_platform_interface 2.0.1 (2.1.0 available)
+  cross_file 0.3.5+4 (0.3.5+5 available)
+  crypto 3.0.6 (3.0.7 available)
+  cupertino_icons 1.0.8 (1.0.9 available)
+  dbus 0.7.11 (0.8.0 available)
+  device_info_plus 12.1.0 (13.2.0 available)
+  device_info_plus_platform_interface 7.0.3 (8.1.0 available)
+  equatable 2.1.0 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  flutter_dotenv 6.0.0 (6.0.1 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_local_notifications 19.4.2 (22.3.1 available)
+  flutter_local_notifications_linux 6.0.0 (8.0.1 available)
+  flutter_local_notifications_platform_interface 9.1.0 (12.2.0 available)
+  flutter_local_notifications_windows 1.0.3 (3.1.1 available)
+  flutter_native_splash 2.4.6 (2.4.8 available)
+  flutter_plugin_android_lifecycle 2.0.30 (2.0.35 available)
+  geolocator 14.0.1 (14.0.3 available)
+  geolocator_android 5.0.2 (5.0.3 available)
+  geolocator_apple 2.3.13 (2.3.14 available)
+  geolocator_platform_interface 4.2.6 (4.3.0 available)
+  geolocator_web 4.1.3 (4.1.4 available)
+  google_fonts 8.1.0 (8.2.1 available)
+  google_maps 8.1.1 (8.3.0 available)
+  google_maps_flutter 2.13.1 (2.18.1 available)
+  google_maps_flutter_android 2.18.2 (2.19.13 available)
+  google_maps_flutter_ios 2.15.5 (2.18.6 available)
+  google_maps_flutter_platform_interface 2.14.0 (2.17.0 available)
+  google_maps_flutter_web 0.5.14+2 (0.6.3+1 available)
+  google_mobile_ads 6.0.0 (9.1.0 available)
+  home_widget 0.7.0+1 (0.10.0 available)
+  html 0.15.6 (0.15.7 available)
+  http 1.5.0 (1.6.0 available)
+  image 4.5.4 (4.10.1 available)
+  in_app_purchase 3.3.0 (3.3.1 available)
+  in_app_purchase_android 0.5.2 (0.5.3 available)
+  in_app_purchase_platform_interface 1.4.0 (1.4.1 available)
+  in_app_purchase_storekit 0.4.4 (0.4.13 available)
+  intl 0.20.2 (0.20.3 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.18.0 (1.19.0 available)
+  mime 2.0.0 (2.1.0 available)
+  package_info_plus 9.0.0 (10.2.1 available)
+  package_info_plus_platform_interface 3.2.1 (4.1.0 available)
+  path_provider 2.1.5 (2.1.6 available)
+  path_provider_android 2.2.18 (2.3.1 available)
+  path_provider_foundation 2.4.2 (2.6.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  patrol 4.7.1 (4.10.0 available)
+  patrol_log 0.10.0 (0.10.1 available)
+  permission_handler 12.0.1 (13.0.2 available)
+  permission_handler_android 13.0.1 (14.1.0 available)
+  permission_handler_apple 9.4.7 (9.6.1 available)
+  permission_handler_html 0.1.3+5 (0.1.4+1 available)
+  permission_handler_platform_interface 4.3.0 (4.4.1 available)
+  permission_handler_windows 0.2.1 (0.2.2 available)
+  petitparser 6.1.0 (7.0.2 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.2 available)
+  process 5.0.3 (5.0.6 available)
+  sanitize_html 2.1.0 (2.2.0 available)
+  sensors_plus 7.0.0 (7.1.0 available)
+  sensors_plus_platform_interface 2.0.1 (2.0.2 available)
+  share_plus 10.1.4 (13.3.0 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.3 (2.5.5 available)
+  shared_preferences_android 2.4.12 (2.4.28 available)
+  shared_preferences_foundation 2.5.4 (2.5.7 available)
+  shared_preferences_platform_interface 2.4.1 (2.4.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  synchronized 3.3.1 (3.4.2 available)
+  test_api 0.7.11 (0.7.14 available)
+  timezone 0.10.1 (0.11.1 available)
+  universal_io 2.2.2 (2.3.1 available)
+  url_launcher_android 6.3.32 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  uuid 4.5.1 (4.6.0 available)
+  vector_math 2.2.0 (2.4.3 available)
+  vibration 3.1.4 (3.2.1 available)
+  vibration_platform_interface 0.1.1 (0.1.2 available)
+  vm_service 14.3.1 (15.3.0 available)
+  webdriver 3.0.4 (3.2.0 available)
+  webview_flutter 4.13.0 (4.14.1 available)
+  webview_flutter_android 4.10.1 (4.14.1 available)
+  webview_flutter_platform_interface 2.14.0 (2.15.1 available)
+  webview_flutter_wkwebview 3.23.0 (3.26.1 available)
+  win32 5.13.0 (6.4.0 available)
+  win32_registry 2.1.0 (3.0.3 available)
+  xml 6.5.0 (7.0.1 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+116 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing lib...                                                
+
+   info • The constant name 'MAJESTIC_TO_NALLUR_HALLI_POLYLINE' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:8:20 • constant_identifier_names
+   info • The constant name 'MAJESTIC_TO_NALLUR_HALLI_STATION_METERS' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:30:20 • constant_identifier_names
+   info • The constant name 'MAJESTIC_TO_NALLUR_HALLI_STATION_NAMES' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:52:20 • constant_identifier_names
+   info • The constant name 'RAJAJINAGAR_TO_NALLUR_HALLI_POLYLINE' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:74:20 • constant_identifier_names
+   info • The constant name 'RAJAJINAGAR_TO_NALLUR_HALLI_STATION_METERS' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:101:20 • constant_identifier_names
+   info • The constant name 'RAJAJINAGAR_TO_NALLUR_HALLI_STATION_NAMES' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:128:20 • constant_identifier_names
+   info • The constant name 'NALLUR_HALLI_TO_VIJAYANAGAR_POLYLINE' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:155:20 • constant_identifier_names
+   info • The constant name 'NALLUR_HALLI_TO_VIJAYANAGAR_STATION_METERS' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:180:20 • constant_identifier_names
+   info • The constant name 'NALLUR_HALLI_TO_VIJAYANAGAR_STATION_NAMES' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style • lib/core/ekf/test_routes.dart:205:20 • constant_identifier_names
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/dashboard/ekf_test_panel.dart:194:9 • avoid_print
+   info • The imported package 'flutter_driver' isn't a dependency of the importing package. Try adding a dependency for 'flutter_driver' in the 'pubspec.yaml' file • lib/main.dart:6:8 • depend_on_referenced_packages
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext • lib/screens/homescreen.dart:1178:9 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/screens/maptracking.dart:505:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/screens/maptracking.dart:634:11 • avoid_print
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/screens/maptracking.dart:1344:53 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/screens/maptracking.dart:1457:45 • use_build_context_synchronously
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/screens/ringtones_screen.dart:261:17 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement • lib/screens/ringtones_screen.dart:262:17 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/screens/splash_screen.dart:149:22 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:179:5 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:187:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:227:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:259:13 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:292:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:416:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:435:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:472:15 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:542:13 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:648:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1397:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1421:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1429:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1435:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1451:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1501:13 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1531:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1547:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/alarm_evaluator.dart:1556:5 • avoid_print
+   info • 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion. Try replacing the use of the deprecated member with the replacement • lib/services/direction_service.dart:519:60 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion. Try replacing the use of the deprecated member with the replacement • lib/services/direction_service.dart:553:58 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/monetization/ad_service.dart:167:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/polyline_simplifier.dart:63:23 • curly_braces_in_flow_control_structures
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/route_session_manager.dart:471:13 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/route_session_manager.dart:487:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/route_session_manager.dart:494:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/route_session_manager.dart:515:13 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/route_session_manager.dart:582:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/route_session_manager.dart:587:9 • avoid_print
+   info • Unnecessary use of getter and setter to wrap a field. Try removing the getter and setter and renaming the field • lib/services/simulation_client.dart:53:21 • unnecessary_getters_setters
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:72:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:90:19 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:98:19 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:105:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:121:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:125:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:131:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:146:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:186:5 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:245:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:275:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:299:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:320:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:327:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:340:11 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:448:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/simulation_client.dart:464:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/snap_to_route.dart:101:9 • avoid_print
+   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/tracking/alarm_controller.dart:498:7 • curly_braces_in_flow_control_structures
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/trackingservice.dart:1308:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/trackingservice.dart:1325:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/transfer_utils.dart:87:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/transfer_utils.dart:103:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/transfer_utils.dart:109:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/transfer_utils.dart:114:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/services/transfer_utils.dart:115:7 • avoid_print
+   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/widget/widget_arm_handler.dart:72:7 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/services/widget/widget_arm_handler.dart:250:9 • curly_braces_in_flow_control_structures
+
+77 issues found. (ran in 0.9s)

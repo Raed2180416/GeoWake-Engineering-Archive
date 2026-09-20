@@ -1,0 +1,81 @@
+{
+  "started_at": "2026-09-20T17:50:08.412092+00:00",
+  "revision": "49a98bce5d2bcb8dc88837d8bdd21d0874ce4e7e",
+  "working_tree_status": "?? docs/sale/BRANCH_HISTORY.md\n?? docs/sale/DATA_FLOW.md\n?? docs/sale/DOCUMENT_CURATION.csv\n?? docs/sale/DOCUMENT_CURATION.md\n?? docs/sale/FOUNDER_CLARIFICATIONS.jsonl\n?? docs/sale/JOURNEY_AND_ROUTING.md\n?? docs/sale/SUPPORTING_SYSTEMS.md\n?? docs/sale/UNDERGROUND_EVOLUTION.md\n",
+  "checks": [
+    {
+      "name": "toolchain",
+      "command": [
+        "/home/raed/flutter/bin/flutter",
+        "--version"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 0.23,
+      "log": "toolchain.log",
+      "sha256": "62621559d31ca4d16743e535ac4cea0668245665483ccb744329e186e2be00b4"
+    },
+    {
+      "name": "analyze",
+      "command": [
+        "/home/raed/flutter/bin/flutter",
+        "analyze",
+        "lib/",
+        "--no-fatal-infos"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 2.81,
+      "log": "analyze.log",
+      "sha256": "350503f5a9e18c2a0685e244c42bb06ba2fd47ec2acb35c49d711c3ca0cca322"
+    },
+    {
+      "name": "flutter-tests",
+      "command": [
+        "/home/raed/flutter/bin/flutter",
+        "test",
+        "--coverage",
+        "--concurrency",
+        "2",
+        "--reporter",
+        "json"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 220.36,
+      "log": "flutter-tests.log",
+      "sha256": "ead39e9ba796d16ac0b542c936a482f87f6fc45a6ebf1880b9bbe12aaf2fc2a5"
+    },
+    {
+      "name": "backend-tests",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--runInBand",
+        "--coverage",
+        "--json",
+        "--outputFile=/home/raed/Projects/GeoWake-Sale-2026-09-20/evidence/controlled-final-verification/backend-tests.json"
+      ],
+      "cwd": "geowake-server",
+      "exit_code": 0,
+      "seconds": 1.7,
+      "log": "backend-tests.log",
+      "sha256": "6dc0f3f582c17208ab583308d890a06a4af2130a33e9571d6e68f018dc3cfaf6"
+    },
+    {
+      "name": "share-tests",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "cwd": "backend/share",
+      "exit_code": 0,
+      "seconds": 0.23,
+      "log": "share-tests.log",
+      "sha256": "8178e67659bd6a7f22b6d3bca0b607ea5388f2e822fcf286309495ea87887687"
+    }
+  ],
+  "scope": "Headless/local checks; no field, OEM, real-store, or live-service validation.",
+  "finished_at": "2026-09-20T17:53:53.760939+00:00"
+}

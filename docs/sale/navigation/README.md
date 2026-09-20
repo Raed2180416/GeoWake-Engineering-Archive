@@ -1,7 +1,7 @@
 # Source navigation
 
-Pinned to source revision `59421267011127de8b585d2bdc1b01871c931e81` before this index was committed.
-There are 894 tracked paths in that tree, 4728 lexical symbol
+Pinned to source revision `ece03e4ef00ca1580c76e5c1d909c68a23cdc997` before this index was committed.
+There are 901 tracked paths in that tree, 4728 lexical symbol
 candidates and 1022 resolved static local references. No path
 was left unclassified. Broad platform/repository groups preserve uncertain
 feature assignments rather than inventing runtime meaning.

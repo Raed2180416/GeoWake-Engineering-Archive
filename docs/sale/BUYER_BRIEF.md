@@ -74,6 +74,13 @@ One historical ZUPT defect is independently reproduced: the same original test
 has two intended failures before the fix and all five tests passing afterward.
 The task, source, tests, reference patch and logs are packaged for inspection.
 
+The cleaned export separately passed **1,423 visible Flutter cases, 61 Express
+and 16 sharing tests** under the explicit code profile. Eight dataset-dependent
+files are outside that profile. The generated mixed-source metro catalog is
+withheld and represented by schema interfaces; see [scope](EXPORT_SCOPE.md)
+and [verification](VERIFICATION.md) for the exact differences. Two historical
+fail-to-pass exercises are now supplied, including concurrent restore handling.
+
 ## Corpus boundaries
 
 The original developer reports that above-ground use worked mostly well, and

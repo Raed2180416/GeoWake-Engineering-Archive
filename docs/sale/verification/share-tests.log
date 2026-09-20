@@ -1,0 +1,43 @@
+npm notice run geowake-share@1.0.0 test
+npm notice run node --test
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ health endpoint is open and reports ok (29.281485ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ create -> ping -> ping keeps ONLY the latest coarse point (no history) (9.801415ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ coordinates are rounded to 3 dp on ingest and on read (5.411135ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ TTL: expired shares are hard-deleted and /j returns 410 Gone (5.13146ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ revoke (DELETE) hard-deletes state; page then 410; delete is idempotent (4.195524ms)
+[arrived] share=share-abc-123
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ arrived marks the share and acks 204; page shows arrived state (3.401855ms)
+[info] SHARE_AUTH_TOKEN is empty — founder override is disabled; per-share capabilities remain required.
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ auth: /v1 rejects missing or wrong bearer token with 401 (3.275297ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ missing founder token never opens capability-protected routes (4.107619ms)
+[arrived] share=cap-share-123
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ per-share capabilities create, read, update, and never persist raw tokens (5.042784ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ capability create rejects weak or incomplete tokens (2.591013ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ create validation: bad id and already-expired TTL are rejected (2.890214ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ ping validation: out-of-range coordinates are rejected (1.997198ms)
+✔ assetlinks.json exposes the configured package + fingerprint (1.665035ms)
+✔ HMAC `?t=`: valid token passes, tampered token 403 (when secret set) (2.468162ms)
+[info] HMAC_SECRET is empty — legacy HMAC verification is disabled; per-share capabilities remain enforced.
+✔ HMAC require: missing `?t=` is 403 only when HMAC_REQUIRE is on (2.048694ms)
+✔ latest-only body: a payload carrying a history array is not persisted as history (2.398992ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 134.779891

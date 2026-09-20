@@ -29,6 +29,7 @@ two verified historical regressions.
 
 ## What can be checked
 
+[Verified results and input limits](VERIFICATION.md) give both exact scopes.
 [Reproduction notes](TECHNICAL_HANDOVER.md) explain the toolchain and local
 checks. [Claims](CLAIMS.csv) separates code, measured results, founder reports
 and unresolved claims. [The source navigation index](navigation/README.md) supplies exact file, symbol,
