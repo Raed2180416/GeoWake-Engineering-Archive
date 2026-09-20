@@ -1,0 +1,1401 @@
+{
+  "pinned_commit": "59421267011127de8b585d2bdc1b01871c931e81",
+  "features": [
+    {
+      "id": "app_shell",
+      "name": "App Shell",
+      "description": "Flutter entry, lifecycle, navigation, theme and shared foundation",
+      "source_paths": [
+        "lib/core/clock/app_clock.dart",
+        "lib/core/logging/app_logger.dart",
+        "lib/main.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/screens/splash_screen.dart",
+        "lib/services/navigation_service.dart",
+        "lib/themes/appthemes.dart",
+        "lib/widgets/pulsing_dots.dart"
+      ],
+      "test_paths": [
+        "test/app_config_url_alignment_test.dart",
+        "test/core/clock/app_clock_integration_test.dart",
+        "test/core/clock/app_clock_test.dart",
+        "test/core/clock/monotonic_clock_test.dart",
+        "test/maestro/persona_critic_tour.yaml"
+      ],
+      "support_paths": [
+        "assets/app_icon.png",
+        "assets/geowake.png",
+        "pubspec.lock",
+        "pubspec.yaml"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "localization",
+      "name": "Localization",
+      "description": "Authored translation resources and generated locale accessors",
+      "source_paths": [
+        "lib/l10n/app_localizations.dart",
+        "lib/l10n/app_localizations_bn.dart",
+        "lib/l10n/app_localizations_en.dart",
+        "lib/l10n/app_localizations_hi.dart",
+        "lib/l10n/app_localizations_ta.dart",
+        "lib/l10n/app_localizations_te.dart"
+      ],
+      "test_paths": [],
+      "support_paths": [
+        "l10n.yaml",
+        "lib/l10n/app_bn.arb",
+        "lib/l10n/app_en.arb",
+        "lib/l10n/app_hi.arb",
+        "lib/l10n/app_ta.arb",
+        "lib/l10n/app_te.arb"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "destination_search",
+      "name": "Destination Search",
+      "description": "Places search, recent destinations and destination selection",
+      "source_paths": [
+        "lib/screens/homescreen.dart",
+        "lib/screens/otherimpservices/recent_locations_service.dart",
+        "lib/services/places_service.dart"
+      ],
+      "test_paths": [
+        "test/destination_only_metro_time_test.dart",
+        "test/places_session_token_test.dart",
+        "test/recent_locations_destination_only_test.dart",
+        "test/route_registry_upsert_replace_test.dart",
+        "test/services/places_service_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "route_planning",
+      "name": "Route Planning",
+      "description": "Directions retrieval, metro endpoints, polyline decoding and route request",
+      "source_paths": [
+        "lib/screens/otherimpservices/preload_map_screen.dart",
+        "lib/services/direction_service.dart",
+        "lib/services/polyline_decoder.dart",
+        "lib/services/polyline_simplifier.dart"
+      ],
+      "test_paths": [
+        "test/direction_service_behavior_test.dart",
+        "test/simplified_polyline_present_test.dart",
+        "test/tool_fetch_route.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "metro_data",
+      "name": "Metro Data",
+      "description": "Metro station/line catalogs, validation and derived station data",
+      "source_paths": [
+        "lib/all_india_stops.dart",
+        "lib/data/metro_line_sequences.dart",
+        "lib/metro_color_map.dart",
+        "lib/services/metro_stop_service.dart",
+        "lib/services/metro_vehicle_types.dart",
+        "tools/validate_metro_data.py"
+      ],
+      "test_paths": [
+        "test/metro_data_integrity_test.dart",
+        "test/metro_ordered_sequence_test.dart",
+        "test/metro_vehicle_types_test.dart",
+        "test/services/metro_route_endpoint_policy_test.dart",
+        "test/services/trusted_station_context_test.dart"
+      ],
+      "support_paths": [
+        "assets/india_metro/india_metro_osm_stations.json",
+        "assets/india_metro/india_metro_osm_stations.meta.json"
+      ],
+      "cross_reference_paths": [
+        "lib/services/transfer_utils.dart"
+      ]
+    },
+    {
+      "id": "route_cache",
+      "name": "Route Cache",
+      "description": "Route result cache, offline pinning and offline continuation",
+      "source_paths": [
+        "lib/services/offline_coordinator.dart",
+        "lib/services/route_cache.dart"
+      ],
+      "test_paths": [
+        "test/direction_service_caching_test.dart",
+        "test/integration/offline_scenario_test.dart",
+        "test/offline_coordinator_test.dart",
+        "test/offline_routing_guard_test.dart",
+        "test/route_cache_integration_test.dart",
+        "test/route_cache_pin_test.dart",
+        "test/route_cache_policy_test.dart",
+        "test/route_cache_transit_variant_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/services/direction_service.dart"
+      ]
+    },
+    {
+      "id": "route_session",
+      "name": "Route Session",
+      "description": "Route compilation, events, transfers, active-route registry and switching",
+      "source_paths": [
+        "lib/models/route_models.dart",
+        "lib/services/active_route_manager.dart",
+        "lib/services/route_logger.dart",
+        "lib/services/route_queue.dart",
+        "lib/services/route_registry.dart",
+        "lib/services/route_session_manager.dart",
+        "lib/services/transfer_utils.dart"
+      ],
+      "test_paths": [
+        "test/active_route_manager_complex_test.dart",
+        "test/active_route_manager_test.dart",
+        "test/driving_coalesce_test.dart",
+        "test/mixed_mode_regression_test.dart",
+        "test/multiple_switch_point_alarm_test.dart",
+        "test/repro_mumbai_transfer_test.dart",
+        "test/route_events_test.dart",
+        "test/route_journey_fixes_test.dart",
+        "test/route_registry_lru_eviction_test.dart",
+        "test/route_registry_test.dart",
+        "test/segment_builder_test.dart",
+        "test/services/route_continuity_live_path_test.dart",
+        "test/services/route_session_manager_test.dart",
+        "test/switch_point_logic_test.dart",
+        "test/transfer_utils_test.dart",
+        "test/transit_leg_stops_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/screens/maptracking.dart"
+      ]
+    },
+    {
+      "id": "route_deviation",
+      "name": "Route Deviation",
+      "description": "Position snapping, lateral deviation and wrong-direction signals",
+      "source_paths": [
+        "lib/config/deviation_config.dart",
+        "lib/services/deviation_detection.dart",
+        "lib/services/deviation_monitor.dart",
+        "lib/services/snap_to_route.dart",
+        "lib/services/soft_lock_manager.dart"
+      ],
+      "test_paths": [
+        "test/deviation_config_test.dart",
+        "test/deviation_decision_tree_test.dart",
+        "test/deviation_detection_integration_test.dart",
+        "test/metro_wrong_snap_test.dart",
+        "test/polyline_projection_clamp_test.dart",
+        "test/polyline_simplifier_test.dart",
+        "test/rapid_deviations_vm_test.dart",
+        "test/services/projection_correction_test.dart",
+        "test/snap_to_route_test.dart",
+        "test/soft_lock_manager_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/services/active_route_manager.dart",
+        "lib/services/trackingservice.dart"
+      ]
+    },
+    {
+      "id": "rerouting",
+      "name": "Rerouting",
+      "description": "Remote reroute policy, constraints and termination after deviation",
+      "source_paths": [
+        "lib/services/reroute_constraints.dart",
+        "lib/services/reroute_policy.dart",
+        "lib/services/tracking_termination_policy.dart"
+      ],
+      "test_paths": [
+        "test/deviation_reroute_stress_test.dart",
+        "test/reroute_chain_integration_test.dart",
+        "test/reroute_constraints_test.dart",
+        "test/reroute_policy_continuity_test.dart",
+        "test/tracking_service_reroute_integration_test.dart",
+        "test/tracking_termination_policy_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/services/trackingservice.dart"
+      ]
+    },
+    {
+      "id": "tracking_lifecycle",
+      "name": "Tracking Lifecycle",
+      "description": "Background service, state handoff, session persistence and recovery",
+      "source_paths": [
+        "lib/screens/maptracking.dart",
+        "lib/services/pending_ack_manager.dart",
+        "lib/services/tracking/background_handlers.dart",
+        "lib/services/tracking/foreground_bridge.dart",
+        "lib/services/tracking/heartbeat_monitor.dart",
+        "lib/services/tracking/location_stream_handler.dart",
+        "lib/services/tracking/post_alarm_multicast.dart",
+        "lib/services/tracking/snapshot_route_restorer.dart",
+        "lib/services/tracking/tracking.dart",
+        "lib/services/tracking_recovery_policy.dart",
+        "lib/services/tracking_state_store.dart",
+        "lib/services/trackingservice.dart"
+      ],
+      "test_paths": [
+        "test/integration/lifecycle_restore_scenario_test.dart",
+        "test/maestro/persona_arm.yaml",
+        "test/pending_ack_manager_test.dart",
+        "test/persistence_repro.dart",
+        "test/power_policy_tracking_test.dart",
+        "test/process_death_recovery_test.dart",
+        "test/services/background_handlers_ack_test.dart",
+        "test/services/tracking_handshake_policy_test.dart",
+        "test/services/tracking_recovery_policy_test.dart",
+        "test/stop_end_tracking_vm_test.dart",
+        "test/tracking/arrival_hooks_test.dart",
+        "test/tracking/cold_start_reach_backstop_test.dart",
+        "test/tracking/multi_city_route_permutation_matrix_test.dart",
+        "test/tracking_service_connectivity_test.dart",
+        "test/tracking_service_route_activation_test.dart",
+        "test/tracking_service_stop_flow_integration_test.dart",
+        "test/tracking_state_store_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/main.dart",
+        "lib/screens/homescreen.dart",
+        "lib/screens/settingsdrawer.dart"
+      ]
+    },
+    {
+      "id": "position_sensors",
+      "name": "Position Sensors",
+      "description": "GPS provider, health, sensor and battery-aware position input",
+      "source_paths": [
+        "lib/config/power_policy.dart",
+        "lib/services/gps_health_monitor.dart",
+        "lib/services/location_manager.dart",
+        "lib/services/position/gps_position_provider.dart",
+        "lib/services/position/position_provider.dart",
+        "lib/services/position/position_providers.dart"
+      ],
+      "test_paths": [
+        "test/gps_health_monitor_test.dart",
+        "test/location_manager_test.dart",
+        "test/mock_location_provider.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/services/tracking/location_stream_handler.dart"
+      ]
+    },
+    {
+      "id": "ekf",
+      "name": "Ekf",
+      "description": "GPS-denied route-progress estimation, sensor fusion and replay",
+      "source_paths": [
+        "docs/research/underground/scripts/core_probe.py",
+        "docs/research/underground/scripts/e1_signals.py",
+        "docs/research/underground/scripts/mutation_test.sh",
+        "docs/research/underground/scripts/scale_baseline_check.py",
+        "lib/core/ekf/degraded_mode.dart",
+        "lib/core/ekf/ekf_logger.dart",
+        "lib/core/ekf/ekf_metrics.dart",
+        "lib/core/ekf/ekf_orchestrator.dart",
+        "lib/core/ekf/ekf_pipeline.dart",
+        "lib/core/ekf/ekf_test_controller.dart",
+        "lib/core/ekf/ekf_types.dart",
+        "lib/core/ekf/gps_degradation_detector.dart",
+        "lib/core/ekf/imu_replay_engine_v2.dart",
+        "lib/core/ekf/motion_classifier.dart",
+        "lib/core/ekf/route_geometry.dart",
+        "lib/core/ekf/station_association.dart",
+        "lib/core/ekf/test_routes.dart",
+        "lib/core/ekf/tilt_filter.dart",
+        "lib/core/ekf/zupt_detector.dart",
+        "lib/services/sensor_fusion.dart",
+        "tools/make_replay_fixtures.py"
+      ],
+      "test_paths": [
+        "evaluation/zupt-degraded-gating/reference/test/core/ekf/zupt_degraded_gating_test.dart",
+        "evaluation/zupt-degraded-gating/task/test/core/ekf/zupt_degraded_gating_test.dart",
+        "test/core/ekf/degraded_mode_test.dart",
+        "test/core/ekf/ekf_logger_test.dart",
+        "test/core/ekf/ekf_orchestrator_test.dart",
+        "test/core/ekf/ekf_pipeline_test.dart",
+        "test/core/ekf/ekf_test_controller_wiring_test.dart",
+        "test/core/ekf/gps_degradation_detector_test.dart",
+        "test/core/ekf/motion_classifier_test.dart",
+        "test/core/ekf/route_geometry_test.dart",
+        "test/core/ekf/station_association_test.dart",
+        "test/core/ekf/tilt_filter_test.dart",
+        "test/core/ekf/zupt_degraded_gating_test.dart",
+        "test/core/ekf/zupt_detector_test.dart",
+        "test/ekf/replay_harness_test.dart",
+        "test/ekf/underground_drift_probe_test.dart",
+        "test/helpers/ekf_test_helpers.dart",
+        "test/integration/ekf_logged_data_test.dart",
+        "test/performance/ekf_performance_test.dart",
+        "test/sensor_fusion_test.dart",
+        "test/services/ekf_integration/ambiguous_station_stop_test.dart",
+        "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
+        "test/services/ekf_integration/long_tunnel_no_stops_test.dart",
+        "test/services/ekf_integration/smooth_acceleration_test.dart",
+        "test/services/sensor_fusion_gps_acceptance_test.dart",
+        "test/simulated_route_integration_test.dart"
+      ],
+      "support_paths": [
+        "assets/ekf_test_routes/README.md",
+        "docs/business_os/research/underground_data_hunt.md",
+        "docs/business_os/research/underground_validation.md",
+        "docs/business_os/research/underground_validation_execution.md",
+        "docs/research/underground/DATA_CONTRACT.md",
+        "docs/research/underground/EMPIRICAL_RESULTS.md",
+        "docs/research/underground/FOUNDATION.md",
+        "docs/research/underground/MODES.md",
+        "docs/research/underground/ON_ROUTE_CONFIRMATION.md",
+        "docs/research/underground/SCALE_SIMULATION.md",
+        "docs/research/underground/SYNTHESIS.md",
+        "docs/research/underground/TIGHTENING.md",
+        "docs/research/underground/TIGHTENING_IMPL.md",
+        "docs/research/underground/VALIDATION_GAPS.md",
+        "docs/research/underground/plots/crosstrack_discriminator.png",
+        "docs/research/underground/plots/e2_stop_detection.png",
+        "docs/research/underground/plots/e4_position_Nada.png",
+        "docs/research/underground/plots/e4_position_Nallur.png",
+        "docs/research/underground/plots/e5_cone_Nadaprabhu.png",
+        "docs/research/underground/plots/e5_cone_Nallur.png",
+        "docs/research/underground/plots/mode_fusion.png",
+        "test/fixtures/imu_data/README.md",
+        "test/fixtures/rail_geometry_namma.json",
+        "test/fixtures/replay/fixture_allunderground_20min.json",
+        "test/fixtures/replay/fixture_allunderground_20min_gps.csv",
+        "test/fixtures/replay/fixture_allunderground_20min_imu.csv",
+        "test/fixtures/replay/fixture_express_skip.json",
+        "test/fixtures/replay/fixture_express_skip_gps.csv",
+        "test/fixtures/replay/fixture_express_skip_imu.csv",
+        "test/fixtures/replay/fixture_short_2stop.json",
+        "test/fixtures/replay/fixture_short_2stop_gps.csv",
+        "test/fixtures/replay/fixture_short_2stop_imu.csv"
+      ],
+      "cross_reference_paths": [
+        "lib/services/tracking/location_stream_handler.dart"
+      ]
+    },
+    {
+      "id": "reachability",
+      "name": "Reachability",
+      "description": "Reachability bounds and related timing physics",
+      "source_paths": [
+        "lib/core/reachability/reachability.dart"
+      ],
+      "test_paths": [
+        "test/fire_decision_fractile_test.dart",
+        "test/integration/reachability_ride_scenario_test.dart",
+        "test/integration/reachability_scenarios_test.dart",
+        "test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+        "test/reachability/multileg_piecewise_vline_test.dart",
+        "test/reachability/never_late_along_track_gps_test.dart",
+        "test/reachability/never_late_vehicle_type_piecewise_test.dart",
+        "test/reachability/reachability_edgecases_test.dart",
+        "test/reachability/reachability_test.dart",
+        "test/reachability/tightening_guards_test.dart",
+        "test/reachability/tightening_never_late_test.dart",
+        "test/reachability/vline_vehicle_type_test.dart",
+        "test/scale/multi_target_scale_test.dart",
+        "test/scale/never_late_gps_error_stress_test.dart",
+        "test/scale/reachability_scale_test.dart",
+        "test/tracking/production_reachability_tightening_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/trackingservice.dart"
+      ]
+    },
+    {
+      "id": "alarm_evaluation",
+      "name": "Alarm Evaluation",
+      "description": "Alarm thresholds, ETA, stop/distance/time decisions and event state",
+      "source_paths": [
+        "lib/config/fire_decision_config.dart",
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/alarm_threshold_validator.dart",
+        "lib/services/eta_engine.dart",
+        "lib/services/eta_utils.dart",
+        "lib/services/stop_logic_engine.dart",
+        "lib/services/stop_matcher.dart",
+        "lib/services/tracking/alarm_context_builder.dart",
+        "lib/services/tracking/alarm_controller.dart"
+      ],
+      "test_paths": [
+        "integration_test/alarm_chain_ondevice_test.dart",
+        "integration_test/device_alarm_integration_test.dart",
+        "integration_test/patrol_alarm_test.dart",
+        "test/alarm_leg_id_stability_test.dart",
+        "test/alarm_logic_rewrite_test.dart",
+        "test/alarm_logic_test.dart",
+        "test/alarm_reliability_test.dart",
+        "test/alarm_repro.dart",
+        "test/complex_route_alarm_test.dart",
+        "test/comprehensive_real_world_scenarios_test.dart",
+        "test/dashboard_alarm_test.dart",
+        "test/debug_alarm_diagnostic.dart",
+        "test/debug_alarm_mismatch.dart",
+        "test/eta_engine_test.dart",
+        "test/eta_sigma_floor_test.dart",
+        "test/eta_utils_test.dart",
+        "test/event_alarm_overlap_test.dart",
+        "test/event_alarm_progress_source_test.dart",
+        "test/hybrid_eta_test.dart",
+        "test/hybrid_eta_time_test.dart",
+        "test/maptracking_eta_distance_test.dart",
+        "test/metro_alarm_reliability_test.dart",
+        "test/metro_final_station_alarm_test.dart",
+        "test/metro_stops_prior_test.dart",
+        "test/mixed_mode_alarm_test.dart",
+        "test/regression_prod_data_test.dart",
+        "test/reproduce_distance_alarm_failure.dart",
+        "test/reproduce_stop_alarm.dart",
+        "test/reproduce_stop_alarm_overshoot_test.dart",
+        "test/reproduce_stop_logic.dart",
+        "test/services/alarm_threshold_validator_test.dart",
+        "test/stop_logic_engine_test.dart",
+        "test/stop_matcher_test.dart",
+        "test/stops_mode_validation_test.dart",
+        "test/stops_prior_semantics_test.dart",
+        "test/time_alarm_vm_test.dart",
+        "test/time_mode_switch_targeting_universal_test.dart",
+        "test/tracking/post_alarm_multicast_test.dart",
+        "test/tracking_alarm_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/screens/homescreen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/trackingservice.dart",
+        "lib/services/transfer_utils.dart"
+      ]
+    },
+    {
+      "id": "preboarding",
+      "name": "Preboarding",
+      "description": "Approach/boarding alert before a metro leg; cross-cutting evaluator/UI/state references",
+      "source_paths": [],
+      "test_paths": [
+        "test/preboarding_semantics_test.dart",
+        "test/preboarding_toggle_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking_state_store.dart",
+        "lib/services/transfer_utils.dart",
+        "test/destination_only_metro_time_test.dart"
+      ]
+    },
+    {
+      "id": "alarm_delivery",
+      "name": "Alarm Delivery",
+      "description": "Notification, sound, vibration, exact-alarm backstop and ringtone UI",
+      "source_paths": [
+        "android/app/src/main/java/com/example/geowake2/AlarmReceiver.kt",
+        "android/app/src/main/kotlin/com/example/geowake2/NotificationChannels.kt",
+        "lib/screens/ringtones_screen.dart",
+        "lib/services/alarm_haptics.dart",
+        "lib/services/alarm_player.dart",
+        "lib/services/ios/ios_backstop_planner.dart",
+        "lib/services/notification_service.dart",
+        "lib/services/tracking/notification_updater.dart",
+        "packages/wakepoint_native/android/src/main/kotlin/com/geowake/wakepoint_native/WakepointNativePlugin.kt",
+        "packages/wakepoint_native/lib/wakepoint_native.dart"
+      ],
+      "test_paths": [
+        "integration_test/backstop_doze_ondevice_test.dart",
+        "patrol_test/test_bundle.dart",
+        "test/notification_action_classification_test.dart",
+        "test/notification_backstop_lead_test.dart",
+        "test/notification_behavior_spec_test.dart",
+        "test/notification_physics_backstop_test.dart",
+        "test/notification_service_test.dart",
+        "test/notification_tap_navigation_widget_test.dart",
+        "test/services/alarm_player_test.dart"
+      ],
+      "support_paths": [
+        "assets/ringtones/PROVENANCE.md",
+        "assets/ringtones/geowake_chime.wav",
+        "assets/ringtones/geowake_pulse.wav",
+        "assets/ringtones/geowake_signal.wav",
+        "packages/wakepoint_native/android/build.gradle",
+        "packages/wakepoint_native/android/src/main/AndroidManifest.xml",
+        "packages/wakepoint_native/pubspec.lock",
+        "packages/wakepoint_native/pubspec.yaml"
+      ],
+      "cross_reference_paths": [
+        "lib/screens/maptracking.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/trackingservice.dart"
+      ]
+    },
+    {
+      "id": "permissions_reliability",
+      "name": "Permissions Reliability",
+      "description": "Permissions, OEM settings and arming preflight",
+      "source_paths": [
+        "lib/services/oem_autostart_service.dart",
+        "lib/services/permission_service.dart",
+        "lib/services/reliability/reliability_preflight_runner.dart",
+        "lib/services/reliability/reliability_preflight_service.dart",
+        "lib/services/reliability/reliability_probe_impl.dart"
+      ],
+      "test_paths": [
+        "test/integration/preflight_arm_scenario_test.dart",
+        "test/maestro/persona_firsttime.yaml",
+        "test/reliability/reliability_preflight_combinatorial_test.dart",
+        "test/reliability/reliability_preflight_delivery_channel_test.dart",
+        "test/reliability/reliability_preflight_test.dart",
+        "test/widgets/preflight_dialog_widget_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/screens/homescreen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/notification_service.dart"
+      ]
+    },
+    {
+      "id": "arrival",
+      "name": "Arrival",
+      "description": "Final alarm, teardown and post-arrival hooks",
+      "source_paths": [
+        "lib/services/tracking/arrival_hooks.dart",
+        "lib/widgets/post_arrival_card.dart"
+      ],
+      "test_paths": [
+        "test/widgets/post_arrival_card_widget_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/screens/maptracking.dart"
+      ]
+    },
+    {
+      "id": "saved_routes_widget",
+      "name": "Saved Routes Widget",
+      "description": "Automatic route memory and home-screen widget quick entry",
+      "source_paths": [
+        "android/app/src/main/kotlin/com/example/geowake2/GeoWakeWidgetProvider.kt",
+        "lib/services/saved_route.dart",
+        "lib/services/saved_routes_service.dart",
+        "lib/services/widget/home_widget_bridge.dart",
+        "lib/services/widget/widget_arm_handler.dart",
+        "lib/services/widget/widget_render_state.dart",
+        "lib/widgets/widget/widget_settings_tile.dart"
+      ],
+      "test_paths": [
+        "test/saved_routes_service_test.dart",
+        "test/widget/home_widget_test.dart",
+        "test/widget/widget_field_contract_test.dart"
+      ],
+      "support_paths": [
+        "android/app/src/main/res/drawable/geowake_widget_bg.xml",
+        "android/app/src/main/res/drawable/geowake_widget_cta_bg.xml",
+        "android/app/src/main/res/layout/geowake_widget.xml",
+        "android/app/src/main/res/xml/geowake_widget_info.xml"
+      ],
+      "cross_reference_paths": [
+        "lib/screens/homescreen.dart",
+        "lib/screens/settingsdrawer.dart"
+      ]
+    },
+    {
+      "id": "journey_share_guardian",
+      "name": "Journey Share Guardian",
+      "description": "Journey sharing, guardian and followed rides",
+      "source_paths": [
+        "lib/screens/friends_rides_screen.dart",
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/services/share/followed_rides_service.dart",
+        "lib/services/share/guardian_contact_picker.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/share/journey_share_models.dart",
+        "lib/services/share/journey_share_service.dart",
+        "lib/services/share/live_share_backend.dart",
+        "lib/services/share/share_backend_config.dart",
+        "lib/services/share/share_deep_link.dart",
+        "lib/services/share/share_link_builder.dart",
+        "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/share/share_journey_action.dart",
+        "lib/widgets/share/share_sheet.dart"
+      ],
+      "test_paths": [
+        "test/maestro/persona_redteam_deeplink.yaml",
+        "test/share/followed_rides_service_test.dart",
+        "test/share/guardian_service_test.dart",
+        "test/share/journey_share_models_test.dart",
+        "test/share/journey_share_service_test.dart",
+        "test/share/live_share_backend_test.dart",
+        "test/share/share_deep_link_test.dart",
+        "test/share/share_journey_action_widget_test.dart",
+        "test/share/share_link_builder_test.dart",
+        "test/shared_prefs_reload_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/main.dart"
+      ]
+    },
+    {
+      "id": "anti_theft",
+      "name": "Anti Theft",
+      "description": "Optional sensor-based anti-theft feature",
+      "source_paths": [
+        "lib/screens/anti_theft_setup_screen.dart",
+        "lib/services/anti_theft_service.dart"
+      ],
+      "test_paths": [
+        "test/services/anti_theft_entitlement_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "monetization",
+      "name": "Monetization",
+      "description": "Entitlements, ads, purchase handling and paywall",
+      "source_paths": [
+        "lib/screens/monetization/paywall_screen.dart",
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/services/monetization/ad_policy.dart",
+        "lib/services/monetization/ad_service.dart",
+        "lib/services/monetization/monetization_service.dart",
+        "lib/services/monetization/post_arrival_service.dart",
+        "lib/services/monetization/premium_service.dart",
+        "lib/services/monetization/purchase_backend.dart",
+        "lib/services/monetization/purchase_backend_impl.dart",
+        "lib/widgets/gated_banner_ad.dart",
+        "lib/widgets/monetization/pro_gate.dart"
+      ],
+      "test_paths": [
+        "evaluation/purchase-restore/reference/test/monetization/purchase_backend_impl_test.dart",
+        "evaluation/purchase-restore/task/test/monetization/purchase_backend_impl_test.dart",
+        "test/monetization/late_purchase_grant_test.dart",
+        "test/monetization/monetization_edgecases_test.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart",
+        "test/monetization/monetization_test.dart",
+        "test/monetization/pass_ladder_test.dart",
+        "test/monetization/post_arrival_decision_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/monetization/post_arrival_screen_widget_test.dart",
+        "test/monetization/post_arrival_test.dart",
+        "test/monetization/premium_gates_wave0_test.dart",
+        "test/monetization/purchase_backend_impl_test.dart"
+      ],
+      "support_paths": [
+        "docs/business_os/03_monetization.md",
+        "docs/business_os/research/monetization_benchmarks.md",
+        "docs/research/raw/maps_pricing.md"
+      ],
+      "cross_reference_paths": [
+        "lib/main.dart"
+      ]
+    },
+    {
+      "id": "mobility_data",
+      "name": "Mobility Data",
+      "description": "Consent-gated mobility aggregates and privacy controls",
+      "source_paths": [
+        "lib/screens/mobility_data_consent_screen.dart",
+        "lib/services/data_asset/aggregate_egress_sink.dart",
+        "lib/services/data_asset/aggregate_schema.dart",
+        "lib/services/data_asset/contribution_cap.dart",
+        "lib/services/data_asset/data_asset_config.dart",
+        "lib/services/data_asset/data_asset_pipeline.dart",
+        "lib/services/data_asset/differential_privacy.dart",
+        "lib/services/data_asset/http_aggregate_egress_sink.dart",
+        "lib/services/data_asset/http_candidate_egress_sink.dart",
+        "lib/services/data_asset/k_anonymity_filter.dart",
+        "lib/services/data_asset/mobility_consent_copy.dart",
+        "lib/services/data_asset/mobility_consent_service.dart",
+        "lib/services/data_asset/od_aggregator.dart",
+        "lib/services/data_asset/od_cell.dart",
+        "lib/services/data_asset/station_binner.dart"
+      ],
+      "test_paths": [
+        "test/data_asset/consent_test.dart",
+        "test/data_asset/dp_and_kanon_test.dart",
+        "test/data_asset/http_egress_sink_test.dart",
+        "test/data_asset/pipeline_hive_test.dart",
+        "test/data_asset/station_binner_test.dart",
+        "test/services/data_asset/data_asset_config_test.dart",
+        "test/services/data_asset/http_candidate_egress_sink_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": [
+        "lib/main.dart"
+      ]
+    },
+    {
+      "id": "telemetry",
+      "name": "Telemetry",
+      "description": "Local/HTTP telemetry, diagnostics and report flow",
+      "source_paths": [
+        "lib/screens/report_problem_screen.dart",
+        "lib/services/telemetry/file_telemetry_sink.dart",
+        "lib/services/telemetry/http_telemetry_sink.dart",
+        "lib/services/telemetry/telemetry_report_builder.dart",
+        "lib/services/telemetry/telemetry_service.dart",
+        "lib/services/telemetry/telemetry_session.dart"
+      ],
+      "test_paths": [
+        "test/report_problem_screen_test.dart",
+        "test/telemetry/emit_sites_test.dart",
+        "test/telemetry/file_telemetry_sink_test.dart",
+        "test/telemetry/http_telemetry_sink_test.dart",
+        "test/telemetry/telemetry_edgecases_test.dart",
+        "test/telemetry/telemetry_service_test.dart"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "simulation_dashboard",
+      "name": "Simulation Dashboard",
+      "description": "Dev dashboards, simulation, OSM testing and route replay UI",
+      "source_paths": [
+        "lib/config/platform_test_flag_io.dart",
+        "lib/config/platform_test_flag_stub.dart",
+        "lib/config/playground_bridge.dart",
+        "lib/config/test_mode_flag.dart",
+        "lib/dashboard/aggregate_data_dashboard.dart",
+        "lib/dashboard/alarm_debouncer.dart",
+        "lib/dashboard/constraint_drawer.dart",
+        "lib/dashboard/constraint_logger.dart",
+        "lib/dashboard/deviation_dashboard.dart",
+        "lib/dashboard/deviation_simulation_controller.dart",
+        "lib/dashboard/ekf_test_panel.dart",
+        "lib/dashboard/osm_overlay_manager.dart",
+        "lib/dashboard/simulation_controls.dart",
+        "lib/dashboard/simulation_state.dart",
+        "lib/dashboard/speed_slider.dart",
+        "lib/dashboard/time_warp_slider.dart",
+        "lib/dashboard/unified_dashboard.dart",
+        "lib/debug/demo_tools.dart",
+        "lib/debug/dev_server.dart",
+        "lib/main_aggregate_dashboard.dart",
+        "lib/main_playground.dart",
+        "lib/main_unified_dashboard.dart",
+        "lib/services/simulation_client.dart",
+        "lib/services/test_service_instance.dart",
+        "lib/services/testing/osm_graph.dart",
+        "lib/services/testing/osm_loader.dart",
+        "lib/services/testing/pathfinder.dart",
+        "lib/simulation_engine.dart",
+        "lib/testing/harness_runner.dart"
+      ],
+      "test_paths": [
+        "test/bug_repro_test.dart",
+        "test/compare_routes.dart",
+        "test/complex_failure_repro.dart",
+        "test/dashboard/constraint_event_integration_test.dart",
+        "test/dashboard/constraint_logger_test.dart",
+        "test/dashboard/deviation_dashboard_integration_test.dart",
+        "test/dashboard/deviation_simulation_controller_test.dart",
+        "test/dashboard/osm_overlay_manager_test.dart",
+        "test/dashboard/playground_reachability_e2e_test.dart",
+        "test/dashboard/simulation_state_test.dart",
+        "test/dashboard_regression_test.dart",
+        "test/debug_route2.dart",
+        "test/playground_bridge_flag_test.dart",
+        "test/reproduce_missing_bounds.dart",
+        "test/reproduce_polyline_color_test.dart",
+        "test/services/testing/osm_graph_test.dart",
+        "test/services/testing/pathfinder_test.dart",
+        "test/test_routes.dart",
+        "test/testing/harness_runner_test.dart"
+      ],
+      "support_paths": [
+        "assets/osm/bengaluru.wkp"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "backend_maps_auth",
+      "name": "Backend Maps Auth",
+      "description": "Maps proxy, authentication, quota and server security",
+      "source_paths": [
+        "geowake-server/scripts/maps-parity-probe.js",
+        "geowake-server/src/config/config.js",
+        "geowake-server/src/controllers/authController.js",
+        "geowake-server/src/controllers/mapsController.js",
+        "geowake-server/src/middleware/auth.js",
+        "geowake-server/src/middleware/mapsGuard.js",
+        "geowake-server/src/middleware/security.js",
+        "geowake-server/src/routes/auth.js",
+        "geowake-server/src/routes/legal.js",
+        "geowake-server/src/routes/maps.js",
+        "geowake-server/src/server.js",
+        "geowake-server/src/utils/cache.js",
+        "geowake-server/src/utils/quotaTracker.js",
+        "lib/config/app_config.dart",
+        "lib/services/api_client.dart"
+      ],
+      "test_paths": [
+        "geowake-server/test/auth.test.js",
+        "geowake-server/test/cost_protection_kill_switch.test.js",
+        "geowake-server/test/cost_protection_quota.test.js",
+        "geowake-server/test/legal.test.js",
+        "geowake-server/test/maps.test.js",
+        "geowake-server/test/maps_error_body.test.js",
+        "geowake-server/test/setup-env.js",
+        "geowake-server/test/token_issuance_rate_limit.test.js"
+      ],
+      "support_paths": [
+        "docs/BACKEND.md",
+        "geowake-server/.gitignore",
+        "geowake-server/Dockerfile",
+        "geowake-server/package-lock.json",
+        "geowake-server/package.json",
+        "geowake-server/test/README.md"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "backend_billing",
+      "name": "Backend Billing",
+      "description": "Server-side billing verification and entitlement routes",
+      "source_paths": [
+        "geowake-server/src/routes/billing.js",
+        "geowake-server/src/services/playBillingVerifier.js"
+      ],
+      "test_paths": [
+        "geowake-server/test/billing.test.js"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "backend_share",
+      "name": "Backend Share",
+      "description": "Standalone journey-share backend service",
+      "source_paths": [
+        "backend/share/server.js"
+      ],
+      "test_paths": [
+        "backend/share/server.test.js"
+      ],
+      "support_paths": [
+        "backend/share/.env.example",
+        "backend/share/.gitignore",
+        "backend/share/Dockerfile",
+        "backend/share/README.md",
+        "backend/share/package-lock.json",
+        "backend/share/package.json",
+        "backend/share/railway.json"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "backend_aggregates",
+      "name": "Backend Aggregates",
+      "description": "Server aggregate ingest and merge logic",
+      "source_paths": [
+        "geowake-server/src/controllers/aggregateController.js",
+        "geowake-server/src/routes/aggregate.js",
+        "geowake-server/src/utils/mergeEngine.js"
+      ],
+      "test_paths": [
+        "geowake-server/test/aggregate.test.js"
+      ],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "website_marketing",
+      "name": "Website Marketing",
+      "description": "Separate promotional website",
+      "source_paths": [
+        "website/index.html"
+      ],
+      "test_paths": [],
+      "support_paths": [
+        "website/README.md",
+        "website/assets/app-icon.png",
+        "website/assets/screens/home-distance.png",
+        "website/assets/screens/home-stops.png",
+        "website/assets/screens/metro-tracking.png",
+        "website/assets/screens/pricing.png",
+        "website/assets/screens/search.png",
+        "website/assets/screens/settings.png"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "platform_android",
+      "name": "Platform Android",
+      "description": "Android app/project integration and resources not mapped elsewhere",
+      "source_paths": [
+        "android/app/src/main/kotlin/com/example/geowake2/GeoWakeApplication.kt",
+        "android/app/src/main/kotlin/com/example/geowake2/MainActivity.kt"
+      ],
+      "test_paths": [
+        "android/app/src/androidTest/java/com/geowake/app/MainActivityTest.java"
+      ],
+      "support_paths": [
+        "android/.gitignore",
+        "android/app/build.gradle",
+        "android/app/proguard-rules.pro",
+        "android/app/src/debug/AndroidManifest.xml",
+        "android/app/src/main/AndroidManifest.xml",
+        "android/app/src/main/res/drawable-hdpi/android12splash.png",
+        "android/app/src/main/res/drawable-hdpi/ic_launcher_foreground.png",
+        "android/app/src/main/res/drawable-hdpi/splash.png",
+        "android/app/src/main/res/drawable-mdpi/android12splash.png",
+        "android/app/src/main/res/drawable-mdpi/ic_launcher_foreground.png",
+        "android/app/src/main/res/drawable-mdpi/splash.png",
+        "android/app/src/main/res/drawable-night-hdpi/android12splash.png",
+        "android/app/src/main/res/drawable-night-mdpi/android12splash.png",
+        "android/app/src/main/res/drawable-night-xhdpi/android12splash.png",
+        "android/app/src/main/res/drawable-night-xxhdpi/android12splash.png",
+        "android/app/src/main/res/drawable-night-xxxhdpi/android12splash.png",
+        "android/app/src/main/res/drawable-v21/background.png",
+        "android/app/src/main/res/drawable-v21/launch_background.xml",
+        "android/app/src/main/res/drawable-xhdpi/android12splash.png",
+        "android/app/src/main/res/drawable-xhdpi/ic_launcher_foreground.png",
+        "android/app/src/main/res/drawable-xhdpi/splash.png",
+        "android/app/src/main/res/drawable-xxhdpi/android12splash.png",
+        "android/app/src/main/res/drawable-xxhdpi/ic_launcher_foreground.png",
+        "android/app/src/main/res/drawable-xxhdpi/splash.png",
+        "android/app/src/main/res/drawable-xxxhdpi/android12splash.png",
+        "android/app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png",
+        "android/app/src/main/res/drawable-xxxhdpi/splash.png",
+        "android/app/src/main/res/drawable/background.png",
+        "android/app/src/main/res/drawable/ic_location_tracking.xml",
+        "android/app/src/main/res/drawable/launch_background.xml",
+        "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+        "android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+        "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+        "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+        "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+        "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+        "android/app/src/main/res/values-night-v31/styles.xml",
+        "android/app/src/main/res/values-night/colors.xml",
+        "android/app/src/main/res/values-night/styles.xml",
+        "android/app/src/main/res/values-v31/styles.xml",
+        "android/app/src/main/res/values/colors.xml",
+        "android/app/src/main/res/values/strings.xml",
+        "android/app/src/main/res/values/styles.xml",
+        "android/app/src/main/res/xml/data_extraction_rules.xml",
+        "android/app/src/profile/AndroidManifest.xml",
+        "android/build.gradle",
+        "android/gradle.properties",
+        "android/gradle/wrapper/gradle-wrapper.properties",
+        "android/image.png",
+        "android/key.properties.example",
+        "android/settings.gradle"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "platform_ios",
+      "name": "Platform Ios",
+      "description": "iOS app/project integration and backstop planning",
+      "source_paths": [
+        "ios/Runner/AppDelegate.swift",
+        "ios/Runner/Runner-Bridging-Header.h"
+      ],
+      "test_paths": [
+        "ios/RunnerTests/RunnerTests.swift",
+        "test/ios/ios_backstop_edgecases_test.dart",
+        "test/ios/ios_backstop_planner_test.dart"
+      ],
+      "support_paths": [
+        "ios/.gitignore",
+        "ios/Flutter/AppFrameworkInfo.plist",
+        "ios/Flutter/Debug.xcconfig",
+        "ios/Flutter/Release.xcconfig",
+        "ios/Runner.xcodeproj/project.pbxproj",
+        "ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+        "ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+        "ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+        "ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme",
+        "ios/Runner.xcworkspace/contents.xcworkspacedata",
+        "ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+        "ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png",
+        "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png",
+        "ios/Runner/Assets.xcassets/LaunchBackground.imageset/Contents.json",
+        "ios/Runner/Assets.xcassets/LaunchBackground.imageset/background.png",
+        "ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json",
+        "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png",
+        "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
+        "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
+        "ios/Runner/Base.lproj/LaunchScreen.storyboard",
+        "ios/Runner/Base.lproj/Main.storyboard",
+        "ios/Runner/Info.plist"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "platform_desktop_web",
+      "name": "Platform Desktop Web",
+      "description": "Flutter desktop/web bootstrap and resources",
+      "source_paths": [
+        "linux/flutter/generated_plugin_registrant.cc",
+        "linux/flutter/generated_plugin_registrant.h",
+        "linux/runner/main.cc",
+        "linux/runner/my_application.cc",
+        "linux/runner/my_application.h",
+        "macos/Flutter/GeneratedPluginRegistrant.swift",
+        "macos/Runner/AppDelegate.swift",
+        "macos/Runner/MainFlutterWindow.swift",
+        "web/index.html",
+        "web/maps_key.example.js"
+      ],
+      "test_paths": [
+        "macos/RunnerTests/RunnerTests.swift"
+      ],
+      "support_paths": [
+        "linux/.gitignore",
+        "linux/CMakeLists.txt",
+        "linux/flutter/CMakeLists.txt",
+        "linux/flutter/generated_plugins.cmake",
+        "linux/runner/CMakeLists.txt",
+        "macos/.gitignore",
+        "macos/Flutter/Flutter-Debug.xcconfig",
+        "macos/Flutter/Flutter-Release.xcconfig",
+        "macos/Runner.xcodeproj/project.pbxproj",
+        "macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+        "macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme",
+        "macos/Runner.xcworkspace/contents.xcworkspacedata",
+        "macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png",
+        "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png",
+        "macos/Runner/Base.lproj/MainMenu.xib",
+        "macos/Runner/Configs/AppInfo.xcconfig",
+        "macos/Runner/Configs/Debug.xcconfig",
+        "macos/Runner/Configs/Release.xcconfig",
+        "macos/Runner/Configs/Warnings.xcconfig",
+        "macos/Runner/DebugProfile.entitlements",
+        "macos/Runner/Info.plist",
+        "macos/Runner/Release.entitlements",
+        "web/favicon.png",
+        "web/icons/Icon-192.png",
+        "web/icons/Icon-512.png",
+        "web/icons/Icon-maskable-192.png",
+        "web/icons/Icon-maskable-512.png",
+        "web/manifest.json",
+        "web/splash/img/dark-1x.png",
+        "web/splash/img/dark-2x.png",
+        "web/splash/img/dark-3x.png",
+        "web/splash/img/dark-4x.png",
+        "web/splash/img/light-1x.png",
+        "web/splash/img/light-2x.png",
+        "web/splash/img/light-3x.png",
+        "web/splash/img/light-4x.png"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "deployment_ci",
+      "name": "Deployment Ci",
+      "description": "Deployment, CI and operational configuration",
+      "source_paths": [
+        "deploy/oracle-vm/setup.sh"
+      ],
+      "test_paths": [],
+      "support_paths": [
+        ".env.example",
+        ".github/dependabot.yml",
+        ".github/workflows/ci.yml",
+        ".github/workflows/deploy-website.yml",
+        ".github/workflows/qodana_code_quality.yml",
+        "deploy/n8n-workflows/README.md",
+        "deploy/oracle-vm/.env.example",
+        "deploy/oracle-vm/.env.n8n.example",
+        "deploy/oracle-vm/.env.share.example",
+        "deploy/oracle-vm/Caddyfile",
+        "deploy/oracle-vm/docker-compose.yml",
+        "deploy/oracle-vm/graphhopper-config.yml",
+        "gradle.properties"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "data_tooling",
+      "name": "Data Tooling",
+      "description": "Scripts for metro data extraction, validation and transformation",
+      "source_paths": [
+        "scripts/build_line_sequences.py",
+        "scripts/count_stops.py",
+        "scripts/debug_mumbai.py",
+        "scripts/disambiguate_stations.py",
+        "scripts/print_delhi_lines.py",
+        "scripts/scrape_yometro.py",
+        "scripts/standardize_stops.py",
+        "scripts/test_color.py",
+        "scripts/test_embed_scrape.py",
+        "scripts/test_extract.py",
+        "scripts/test_key.py",
+        "scripts/update_stops.py",
+        "scripts/verify_coords.py"
+      ],
+      "test_paths": [],
+      "support_paths": [],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "dev_tooling",
+      "name": "Dev Tooling",
+      "description": "Developer automation, static indexes, lint and test infrastructure",
+      "source_paths": [
+        ".githooks/post-checkout",
+        ".githooks/post-commit",
+        ".githooks/post-merge",
+        ".githooks/post-rewrite",
+        ".githooks/pre-commit",
+        "autopilot/bin/nightly.sh",
+        "autopilot/bin/watchdog.sh",
+        "autopilot/bin/worker.sh",
+        "autopilot/config.sh",
+        "autopilot/systemd/install.sh",
+        "scripts/analyze_coverage.py",
+        "scripts/check_headers.py",
+        "shell.nix",
+        "tools/nix_setup_flutter_android.sh",
+        "tools/relay_server.dart",
+        "tools/wake-manifest.mjs",
+        "tools/wakepoint-build-intent-graph.mjs",
+        "tools/wakepoint-coverage-ledger.mjs",
+        "tools/wakepoint-decode-scip.mjs",
+        "tools/wakepoint-indexer.mjs",
+        "tools/wakepoint-rag.mjs",
+        "tools/wakepoint-update.mjs"
+      ],
+      "test_paths": [
+        "test/flutter_test_config.dart",
+        "test/log_helper.dart",
+        "test/minimal_test.dart",
+        "test_driver/integration_test.dart"
+      ],
+      "support_paths": [
+        ".agent/workflows/launch_simulation.md",
+        ".claude/launch.json",
+        ".gitattributes",
+        ".gitignore",
+        ".gitleaks.toml",
+        ".mcp.json",
+        ".metadata",
+        ".semgrep.yml",
+        "analysis_options.yaml",
+        "autopilot/.heartbeat",
+        "autopilot/README.md",
+        "autopilot/queue/TEMPLATE.md",
+        "devtools_options.yaml",
+        "docs/TESTING.md",
+        "docs/business_os/research/dashboard_testing_flow.md",
+        "package-lock.json",
+        "package.json",
+        "qodana.yaml",
+        "scripts/coverage_report.json"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "archive_package",
+      "name": "Archive Package",
+      "description": "Archived-codebase sale checks and reproducibility tooling",
+      "source_paths": [
+        "tools/sale/generate_alarm_tones.py",
+        "tools/sale/generate_navigation.py",
+        "tools/sale/inventory.py",
+        "tools/sale/verify.py"
+      ],
+      "test_paths": [],
+      "support_paths": [
+        "docs/sale/BRANCH_HISTORY.md",
+        "docs/sale/BUYER_BRIEF.md",
+        "docs/sale/CLAIMS.csv",
+        "docs/sale/DATA_FLOW.md",
+        "docs/sale/DECISIONS.csv",
+        "docs/sale/DOCUMENT_CURATION.csv",
+        "docs/sale/DOCUMENT_CURATION.md",
+        "docs/sale/ENGINEERING_RETROSPECTIVES.md",
+        "docs/sale/EXPORT_SCOPE.md",
+        "docs/sale/FEATURES.md",
+        "docs/sale/FOUNDER_CLARIFICATIONS.jsonl",
+        "docs/sale/JOURNEY_AND_ROUTING.md",
+        "docs/sale/LOCAL_WORK_CAPTURE.md",
+        "docs/sale/ORIGINAL_TO_EXPORT_COMMITS.txt",
+        "docs/sale/README.md",
+        "docs/sale/RIGHTS_AND_EXCLUSIONS.md",
+        "docs/sale/SUPPORTING_SYSTEMS.md",
+        "docs/sale/TECHNICAL_HANDOVER.md",
+        "docs/sale/UNDERGROUND_EVOLUTION.md",
+        "docs/sale/demo/GeoWake-demo.mp4",
+        "docs/sale/demo/NARRATION_PROVENANCE.md",
+        "docs/sale/demo/README.md",
+        "docs/sale/demo/captions.srt",
+        "docs/sale/demo/narration-script.md",
+        "tools/sale/dataset-dependent-tests.json"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "repository_documentation",
+      "name": "Repository Documentation",
+      "description": "Cross-cutting documentation and repository guidance",
+      "source_paths": [],
+      "test_paths": [],
+      "support_paths": [
+        "AGENTS.md",
+        "AUTOMATION_BLUEPRINT.md",
+        "MONETIZATION_ANALYSIS.md",
+        "PASS_PRICING_ANALYSIS.md",
+        "README.md",
+        "THIRD_PARTY_NOTICES.md",
+        "docs/ANDROID.md",
+        "docs/ARCHITECTURE.md",
+        "docs/PRIVACY.md",
+        "docs/RESEARCH_2026.md",
+        "docs/WEBSITE_CLAIMS_AUDIT.md",
+        "docs/archive/AGENT_CONTEXT.md",
+        "docs/archive/README-before-corpus-preparation.md",
+        "docs/archive/README.md",
+        "docs/business_os/00_DECK.md",
+        "docs/business_os/01_launch_readiness.md",
+        "docs/business_os/02_engineering_autopilot.md",
+        "docs/business_os/04_marketing.md",
+        "docs/business_os/05_maps_cost_elimination.md",
+        "docs/business_os/06_expansion_and_underground.md",
+        "docs/business_os/07_governance.md",
+        "docs/business_os/08_automation_stack.md",
+        "docs/business_os/research/agent_stack_2026.md",
+        "docs/business_os/research/competitors_2026.md",
+        "docs/business_os/research/component_intent_map.md",
+        "docs/business_os/research/maps_replacement_2026.md",
+        "docs/business_os/research/marketing_playbook_raw.md",
+        "docs/business_os/research/play_policy_2026.md",
+        "docs/production/maps-provider-parity-contract.md",
+        "docs/research/grounding_notes.md",
+        "docs/research/raw/android_fgs.md",
+        "docs/research/raw/boot_doze.md",
+        "docs/research/raw/dpdp.md",
+        "docs/research/raw/ecpm.md",
+        "docs/research/raw/exact_alarm.md",
+        "docs/research/raw/fbs_geo.md",
+        "docs/research/raw/flagged_lines.md",
+        "docs/research/raw/fln.md",
+        "docs/research/raw/fullscreen_dnd.md",
+        "docs/research/raw/metro_speeds.md",
+        "docs/research/raw/mobility_market.md",
+        "docs/research/raw/oem_kill.md",
+        "docs/research/raw/perm_ads_iap.md",
+        "docs/research/raw/play_reqs.md",
+        "docs/research/raw/privacy_tech.md",
+        "docs/research/raw/routing_alt.md",
+        "docs/research/real_device_reliability.md",
+        "evaluation/README.md",
+        "evaluation/purchase-restore/README.md",
+        "evaluation/purchase-restore/task.md",
+        "evaluation/zupt-degraded-gating/README.md",
+        "evaluation/zupt-degraded-gating/task.md"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "repository_assets",
+      "name": "Repository Assets",
+      "description": "Unparsed tracked media and supporting data",
+      "source_paths": [],
+      "test_paths": [],
+      "support_paths": [
+        "image/TIME_MODE_EXECUTION_PLAN/1768258533689.png",
+        "image/TIME_MODE_EXECUTION_PLAN/1768258553007.png",
+        "pics/1.jpeg",
+        "pics/2.jpeg",
+        "pics/3.jpeg",
+        "pics/4.jpeg",
+        "pics/5.jpeg"
+      ],
+      "cross_reference_paths": []
+    },
+    {
+      "id": "unclassified",
+      "name": "Unclassified",
+      "description": "Files whose specific subsystem cannot be established from path/import evidence",
+      "source_paths": [
+        "evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend.dart",
+        "evaluation/purchase-restore/reference/lib/services/monetization/purchase_backend_impl.dart",
+        "evaluation/purchase-restore/run_example.sh",
+        "evaluation/purchase-restore/task/lib/services/monetization/purchase_backend.dart",
+        "evaluation/purchase-restore/task/lib/services/monetization/purchase_backend_impl.dart",
+        "evaluation/zupt-degraded-gating/fixed-regression-test.dart",
+        "evaluation/zupt-degraded-gating/reference/lib/core/ekf/ekf_types.dart",
+        "evaluation/zupt-degraded-gating/reference/lib/core/ekf/zupt_detector.dart",
+        "evaluation/zupt-degraded-gating/run_example.sh",
+        "evaluation/zupt-degraded-gating/task/lib/core/ekf/ekf_types.dart",
+        "evaluation/zupt-degraded-gating/task/lib/core/ekf/zupt_detector.dart"
+      ],
+      "test_paths": [],
+      "support_paths": [
+        "evaluation/purchase-restore/manifest.json",
+        "evaluation/purchase-restore/reference/pubspec.lock",
+        "evaluation/purchase-restore/reference/pubspec.yaml",
+        "evaluation/purchase-restore/reference/solution.patch",
+        "evaluation/purchase-restore/results/reference-exit.txt",
+        "evaluation/purchase-restore/results/reference-pub-get.log",
+        "evaluation/purchase-restore/results/reference-test.log",
+        "evaluation/purchase-restore/results/task-exit.txt",
+        "evaluation/purchase-restore/results/task-test.log",
+        "evaluation/purchase-restore/task/pubspec.lock",
+        "evaluation/purchase-restore/task/pubspec.yaml",
+        "evaluation/zupt-degraded-gating/manifest.json",
+        "evaluation/zupt-degraded-gating/minimal-reference-pub-get.log",
+        "evaluation/zupt-degraded-gating/minimal-reference-test.log",
+        "evaluation/zupt-degraded-gating/minimal-task-pub-get.log",
+        "evaluation/zupt-degraded-gating/minimal-task-test.log",
+        "evaluation/zupt-degraded-gating/post-fix-test.log",
+        "evaluation/zupt-degraded-gating/pre-fix-test.log",
+        "evaluation/zupt-degraded-gating/reference/pubspec.yaml",
+        "evaluation/zupt-degraded-gating/solution.patch",
+        "evaluation/zupt-degraded-gating/task/pubspec.yaml",
+        "evaluation/zupt-degraded-gating/test.patch"
+      ],
+      "cross_reference_paths": []
+    }
+  ]
+}

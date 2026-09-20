@@ -31,7 +31,8 @@ two verified historical regressions.
 
 [Reproduction notes](TECHNICAL_HANDOVER.md) explain the toolchain and local
 checks. [Claims](CLAIMS.csv) separates code, measured results, founder reports
-and unresolved claims. The separately supplied evidence bundle contains the
+and unresolved claims. [The source navigation index](navigation/README.md) supplies exact file, symbol,
+import and test lookup. The separately supplied evidence bundle contains the
 exact-revision file/symbol/import/test index, verification receipts, dependency
 notices, history mapping and the runnable ZUPT evaluation example. Lexical
 source-to-test matches are navigation hints, not measured coverage.
