@@ -679,6 +679,9 @@ class DirectionService {
         }
       }
 
+      // A generic input must not fuzzy-match a city-qualified key.
+      if (!isSafeStaticKey(lineName)) return Colors.indigo;
+
       // 2. Fuzzy match (if input is substring of key or vice versa)
       for (final key in metroLineColors.keys) {
         if (!isSafeStaticKey(key)) continue;

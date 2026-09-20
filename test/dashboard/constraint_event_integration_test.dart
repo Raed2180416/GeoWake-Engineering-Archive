@@ -36,9 +36,9 @@ void main() {
       expect(capturedEvents, isEmpty);
 
       // Over threshold - event logged
-      // threshold = 15 + 1.5 * 5 = 22.5m
+      // threshold = 30 + 1.5 * 5 = 37.5m
       monitor.ingest(
-        offsetMeters: 25,
+        offsetMeters: 40,
         speedMps: 5,
         at: baseTime.add(const Duration(seconds: 1)),
       );
@@ -47,14 +47,14 @@ void main() {
       expect(capturedEvents.length, 1);
       expect(capturedEvents.first.type, ConstraintEventType.deviationDetected);
       expect(capturedEvents.first.title, 'Deviation Detected');
-      expect(capturedEvents.first.details['offsetMeters'], 25);
+      expect(capturedEvents.first.details['offsetMeters'], 40);
     });
 
     test('logs deviationSustained after duration', () async {
       final baseTime = DateTime(2025, 1, 7, 10, 0, 0);
 
       // Start deviation
-      monitor.ingest(offsetMeters: 30, speedMps: 5, at: baseTime);
+      monitor.ingest(offsetMeters: 40, speedMps: 5, at: baseTime);
       await Future.delayed(const Duration(milliseconds: 10));
 
       expect(capturedEvents.length, 1);
@@ -62,7 +62,7 @@ void main() {
 
       // Continue deviation - not yet sustained
       monitor.ingest(
-        offsetMeters: 30,
+        offsetMeters: 40,
         speedMps: 5,
         at: baseTime.add(const Duration(seconds: 1)),
       );
@@ -71,7 +71,7 @@ void main() {
 
       // Sustain threshold reached (2 seconds)
       monitor.ingest(
-        offsetMeters: 30,
+        offsetMeters: 40,
         speedMps: 5,
         at: baseTime.add(const Duration(seconds: 2)),
       );
@@ -86,12 +86,12 @@ void main() {
       final baseTime = DateTime(2025, 1, 7, 10, 0, 0);
 
       // Start deviation
-      monitor.ingest(offsetMeters: 30, speedMps: 5, at: baseTime);
+      monitor.ingest(offsetMeters: 40, speedMps: 5, at: baseTime);
       await Future.delayed(const Duration(milliseconds: 10));
 
       expect(capturedEvents.length, 1);
 
-      // Return to route (below low threshold = 0.7 * 22.5 = 15.75m)
+      // Return to route (below low threshold = 0.7 * 37.5 = 26.25m)
       monitor.ingest(
         offsetMeters: 10,
         speedMps: 5,
@@ -216,7 +216,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 50));
 
         // Now trigger a deviation
-        monitor.ingest(offsetMeters: 30, speedMps: 5);
+        monitor.ingest(offsetMeters: 40, speedMps: 5);
         await Future.delayed(const Duration(milliseconds: 10));
 
         expect(capturedEvents.length, 1);
@@ -238,7 +238,7 @@ void main() {
       AppClock().setWarpFactor(100); // 100x warp - 5s sustain = 50ms real
 
       // Trigger deviation
-      monitor.ingest(offsetMeters: 30, speedMps: 5);
+      monitor.ingest(offsetMeters: 40, speedMps: 5);
       await Future.delayed(const Duration(milliseconds: 10));
 
       expect(capturedEvents.length, 1);
@@ -248,7 +248,7 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 60));
 
       // Trigger another ingest to check sustain
-      monitor.ingest(offsetMeters: 30, speedMps: 5);
+      monitor.ingest(offsetMeters: 40, speedMps: 5);
       await Future.delayed(const Duration(milliseconds: 10));
 
       expect(capturedEvents.length, 2);
@@ -274,12 +274,12 @@ void main() {
       final baseTime = DateTime(2025, 1, 7, 10, 0, 0);
 
       // 1. Initial deviation detected
-      monitor.ingest(offsetMeters: 30, speedMps: 5, at: baseTime);
+      monitor.ingest(offsetMeters: 40, speedMps: 5, at: baseTime);
       await Future.delayed(const Duration(milliseconds: 10));
 
       // 2. Sustain reached
       monitor.ingest(
-        offsetMeters: 30,
+        offsetMeters: 40,
         speedMps: 5,
         at: baseTime.add(const Duration(seconds: 2)),
       );

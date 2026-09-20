@@ -139,7 +139,7 @@ void main() {
 
     test('dwell is charged once per stopped episode', () {
       final base = DateTime(2026, 1, 1);
-      Position at(DateTime timestamp) => geo.Position(
+      geo.Position at(DateTime timestamp) => geo.Position(
         longitude: 0,
         latitude: 0,
         timestamp: timestamp,

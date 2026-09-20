@@ -1,10 +1,15 @@
 // Unit tests for EKF logger ring buffer (§12).
 
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/core/ekf/ekf_logger.dart';
 import 'package:geowake2/core/ekf/ekf_types.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('EkfLogEntry', () {
     test('headerLine contains expected columns', () {
       final header = EkfLogEntry.headerLine();
@@ -189,15 +194,34 @@ void main() {
     });
 
     test('flush clears buffer but keeps session active', () async {
-      await logger.startSession();
-      logger.log(EkfLogEntry(monotonicMs: 0, wallClockMs: 0));
-      await logger.flush();
+      final documents = await Directory.systemTemp.createTemp('geowake-flush-');
+      const channel = MethodChannel('plugins.flutter.io/path_provider');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'getApplicationDocumentsDirectory')
+          return documents.path;
+        return null;
+      });
+      try {
+        await logger.startSession();
+        final entry = EkfLogEntry(monotonicMs: 123, wallClockMs: 456);
+        logger.log(entry);
+        await logger.flush();
 
-      expect(logger.isActive, isTrue);
-      expect(logger.entryCount, 0);
-      expect(logger.bufferSizeBytes, 0);
-
-      await logger.endSession();
+        expect(logger.isActive, isTrue);
+        expect(logger.entryCount, 0);
+        expect(logger.bufferSizeBytes, 0);
+        final files = await logger.getLogFiles();
+        expect(files, hasLength(1));
+        final contents = await files.single.readAsString();
+        expect(contents, contains(EkfLogEntry.headerLine()));
+        expect(contents, contains(entry.toCsvLine()));
+      } finally {
+        await logger.endSession();
+        messenger.setMockMethodCallHandler(channel, null);
+        await documents.delete(recursive: true);
+      }
     });
 
     test('multiple sessions work independently', () async {

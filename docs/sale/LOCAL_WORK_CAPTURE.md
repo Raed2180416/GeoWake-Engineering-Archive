@@ -27,3 +27,13 @@ through that helper and retained a full-search escape when a hint is stale.
 An unnecessary null assertion was also removed from route geometry. These
 small reproduction fixes are separately dated changes; the pre-fix capture
 remains in history for comparison.
+
+The full captured suite then exposed two missing test type/import references,
+six deviation fixtures still using the previous 15 m base threshold, a logger
+flush fixture without writable storage, and a generic metro color incorrectly
+fuzzy-matching a city-qualified name. Preparation repairs qualify the types,
+move the intended off-route stimulus to 40 m (above the current 37.5 m
+threshold at 5 m/s), provide temporary storage and verify the written CSV,
+and preserve the city-neutral fallback. The existing before-repair commit
+and failing log remain available. No threshold or underground model was tuned
+for the sale.

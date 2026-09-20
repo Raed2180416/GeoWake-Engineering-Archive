@@ -12,6 +12,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:geowake2/services/active_route_manager.dart' show RouteSwitchEvent;
 import 'package:geowake2/services/route_session_manager.dart';
 
 void main() {
