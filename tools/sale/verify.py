@@ -33,7 +33,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, GOOGLE_MAPS_API_KEY='test-maps-key',
                JWT_SECRET='test-jwt-secret-at-least-32-characters-long',
-               APP_BUNDLE_ID='com.yourcompany.geowake2', NODE_ENV='test')
+               APP_BUNDLE_ID='com.geowake.app', NODE_ENV='test')
     checks = [('toolchain', [flutter, '--version'], ROOT)]
     if not args.skip_install:
         checks += [('flutter-dependencies', [flutter, 'pub', 'get'], ROOT),
