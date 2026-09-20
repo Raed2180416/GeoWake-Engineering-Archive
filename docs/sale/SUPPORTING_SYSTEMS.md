@@ -29,7 +29,7 @@ every observed consumable identifier as a freshly purchased duration.
 `playBillingVerifier.js` asks the Android Publisher API for matching line items,
 active/grace/canceled-but-unexpired state and expiry. Its credential is external
 configuration. Tests mock that boundary; no live sale or receipt is claimed.
-Asynchronous purchase events, pending payments, restore coalescing and startup
+Asynchronous purchase events, pending payments, independent restore waiters and startup
 reconciliation provide useful examples of state arriving after an initiating
 request has returned.
 

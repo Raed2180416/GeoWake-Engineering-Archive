@@ -2,8 +2,8 @@
 
 Written 20 September 2026 from existing code and Git history. These are new
 explanations of genuine changes, not historical tickets, reviews, or records of
-a multi-person team. The ZUPT example below has an observed fail-to-pass pair; the restore example
-remains a task candidate. Neither is a marketed benchmark dataset.
+a multi-person team. Both examples have observed fail-to-pass pairs; these individual historical
+exercises are not a marketed benchmark dataset.
 
 ## GPS-denied cruising mistaken for a stop
 
@@ -38,11 +38,13 @@ Read `lib/services/monetization/purchase_backend_impl.dart` alongside
 `test/monetization/purchase_backend_impl_test.dart`. The tests document the
 request/response and concurrency behavior without requiring real store access.
 
-A proposed task asks an agent to make concurrent restoration share the
-appropriate operation and result, preserving failure cleanup and later retries.
-Run the historical regression at both revisions before calling it a validated
-task. Passing the headless test does not establish Play Billing behavior on a
-device or entitlement security in a production deployment.
+The fix gives each caller its own waiter and delivers a stream event to each.
+It does **not** coalesce store restorePurchases() calls. The unchanged original
+test produced **2 passes and 1 intended failure** before (a concurrent caller
+waited 3,000 ms against a <1,000 ms assertion), and **3 passes afterward**.
+The standalone harness uses a fake store. Original test comments reveal the
+repair, so this is a transparent historical exercise rather than a blind
+benchmark. Device billing is not validated.
 
 ## Suggested evaluation delivery fields
 

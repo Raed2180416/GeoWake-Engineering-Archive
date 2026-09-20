@@ -25,7 +25,7 @@ pivot to dated commits and negative findings. [Founder clarifications](FOUNDER_C
 record the 40% pre-boarding threshold as experimental, friend-phone recording
 provenance and the experimental-only stopping point.
 [Engineering retrospectives](ENGINEERING_RETROSPECTIVES.md) distinguish a
-verified historical regression from further task candidates.
+two verified historical regressions.
 
 ## What can be checked
 
@@ -53,6 +53,7 @@ Original history is preserved privately. The buyer export removes identified
 credentials, optional raw data and excluded third-party material, with a
 mapping rather than pretending those bytes were never present.
 
-[Rights and exclusions](RIGHTS_AND_EXCLUSIONS.md) defines the delivery scope.
+[Export scope](EXPORT_SCOPE.md) records actual exclusions and verification effects.
+[Rights and exclusions](RIGHTS_AND_EXCLUSIONS.md) is the wider provenance inventory.
 The transaction concerns existing material, without a further-development
 commitment. The optional recording candidate has its own provenance and scope.

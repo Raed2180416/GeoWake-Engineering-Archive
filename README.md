@@ -15,6 +15,10 @@ systems, genuine debugging changes, rejected assumptions and unfinished plans.
 The project was solo-led and AI-assisted. No further product-development or
 launch engagement is included in the proposed sale.
 
+**Data scope:** mixed-source metro catalogs and certain route/scale data are
+withheld. Labeled schema stubs preserve code interfaces. Read the
+[export scope and verification effects](docs/sale/EXPORT_SCOPE.md).
+
 ## Start here
 
 | Review question | Guide |
@@ -32,8 +36,8 @@ launch engagement is included in the proposed sale.
 | What is excluded or separately licensed? | [Rights and scope](docs/sale/RIGHTS_AND_EXCLUSIONS.md) |
 
 The delivered evidence bundle supplies exact-revision file hashes, a source and
-test navigation index, raw check receipts and a verified historical ZUPT
-fail-to-pass example. The short narrated demo is a historical development
+test navigation index, raw check receipts and two verified historical
+fail-to-pass examples. The short narrated demo is a historical development
 simulation; it is not a field-accuracy measurement or proof of the final commit.
 
 ## Read the history accurately
